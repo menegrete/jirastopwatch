@@ -75,7 +75,8 @@ namespace StopWatch
             // 
             // pbSettings
             // 
-            this.pbSettings.BackgroundImage = global::StopWatch.Properties.Resources.settings22;
+            this.pbSettings.BackgroundImage = global::StopWatch.Properties.Resources.settings16;
+            this.pbSettings.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbSettings.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pbSettings.Location = new System.Drawing.Point(846, 5);
             this.pbSettings.Margin = new System.Windows.Forms.Padding(2);
@@ -181,7 +182,8 @@ namespace StopWatch
             // 
             // pbAddIssue
             // 
-            this.pbAddIssue.BackgroundImage = global::StopWatch.Properties.Resources.addissue22;
+            this.pbAddIssue.BackgroundImage = global::StopWatch.Properties.Resources.addissue16;
+            this.pbAddIssue.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbAddIssue.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pbAddIssue.Location = new System.Drawing.Point(822, 2);
             this.pbAddIssue.Margin = new System.Windows.Forms.Padding(2);
@@ -194,11 +196,12 @@ namespace StopWatch
             // 
             // pbHelp
             // 
-            this.pbHelp.BackgroundImage = global::StopWatch.Properties.Resources.help22;
+            this.pbHelp.BackgroundImage = global::StopWatch.Properties.Resources.help16;
+            this.pbHelp.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbHelp.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbHelp.Location = new System.Drawing.Point(846, 3);
+            this.pbHelp.Location = new System.Drawing.Point(846, 2);
             this.pbHelp.Name = "pbHelp";
-            this.pbHelp.Size = new System.Drawing.Size(22, 20);
+            this.pbHelp.Size = new System.Drawing.Size(22, 21);
             this.pbHelp.TabIndex = 12;
             this.pbHelp.TabStop = false;
             this.ttMain.SetToolTip(this.pbHelp, "Open help page in your browser");

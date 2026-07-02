@@ -139,18 +139,18 @@ namespace StopWatch
 
             if (WatchTimer.Running)
             {
-                btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.pause26);
+                btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.pause16);
                 tbTime.BackColor = Color.PaleGreen;
             }
             else {
-                btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.play26);
+                btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.play16);
                 tbTime.BackColor = SystemColors.Control;
             }
 
             if (string.IsNullOrEmpty(Comment))
-                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttime26;
+                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttime16;
             else
-                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttimenote26;
+                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttimenote16;
 
             btnOpen.Enabled = cbJira.Text.Trim() != "";
             btnReset.Enabled = WatchTimer.Running || WatchTimer.TimeElapsed.Ticks > 0;
@@ -330,7 +330,7 @@ namespace StopWatch
             // btnRemoveIssue
             // 
             this.btnRemoveIssue.Enabled = false;
-            this.btnRemoveIssue.Image = global::StopWatch.Properties.Resources.delete24;
+            this.btnRemoveIssue.Image = global::StopWatch.Properties.Resources.delete16;
             this.btnRemoveIssue.Location = new System.Drawing.Point(843, 2);
             this.btnRemoveIssue.Name = "btnRemoveIssue";
             this.btnRemoveIssue.Size = new System.Drawing.Size(24, 24);
@@ -342,7 +342,7 @@ namespace StopWatch
             // btnPostAndReset
             // 
             this.btnPostAndReset.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnPostAndReset.Image = global::StopWatch.Properties.Resources.posttime26;
+            this.btnPostAndReset.Image = global::StopWatch.Properties.Resources.posttime16;
             this.btnPostAndReset.Location = new System.Drawing.Point(783, 2);
             this.btnPostAndReset.Name = "btnPostAndReset";
             this.btnPostAndReset.Size = new System.Drawing.Size(24, 24);
@@ -355,7 +355,7 @@ namespace StopWatch
             // btnReset
             // 
             this.btnReset.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnReset.Image = global::StopWatch.Properties.Resources.reset24;
+            this.btnReset.Image = global::StopWatch.Properties.Resources.reset16;
             this.btnReset.Location = new System.Drawing.Point(813, 2);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(24, 24);
@@ -368,7 +368,7 @@ namespace StopWatch
             // btnStartStop
             // 
             this.btnStartStop.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnStartStop.Image = global::StopWatch.Properties.Resources.play26;
+            this.btnStartStop.Image = global::StopWatch.Properties.Resources.play16;
             this.btnStartStop.Location = new System.Drawing.Point(640, 2);
             this.btnStartStop.Name = "btnStartStop";
             this.btnStartStop.Size = new System.Drawing.Size(24, 24);
@@ -381,7 +381,7 @@ namespace StopWatch
             // btnOpen
             // 
             this.btnOpen.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnOpen.Image = global::StopWatch.Properties.Resources.openbrowser26;
+            this.btnOpen.Image = global::StopWatch.Properties.Resources.openbrowser16;
             this.btnOpen.Location = new System.Drawing.Point(164, 0);
             this.btnOpen.Name = "btnOpen";
             this.btnOpen.Size = new System.Drawing.Size(24, 24);
