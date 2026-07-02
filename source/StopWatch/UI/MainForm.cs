@@ -22,11 +22,13 @@
 
 using StopWatch.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -70,8 +72,46 @@ namespace StopWatch
             // First run should be almost immediately after start
             ticker.Interval = firstDelay;
             ticker.Tick += ticker_Tick;
+
+            ExportResImages();
         }
 
+        private void ExportResImages()
+        {
+
+            string resxFile = @"..\..\Properties\Resources.resx";
+            string outputFolder = @"ExtractedImages";
+
+            Directory.CreateDirectory(outputFolder);
+
+            using (ResXResourceReader reader = new ResXResourceReader(resxFile))
+            {
+                foreach (DictionaryEntry entry in reader)
+                {
+                    string fileName = Path.Combine(
+                            outputFolder,
+                            $"{entry.Key}");
+
+                    if (entry.Value is Image image)
+                    {
+                        fileName += ".png";
+                        image.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
+                        Console.WriteLine($"Saved: {fileName}");
+                    }
+                    else
+                    {
+                        fileName += ".bmp";
+                        if (entry.Value is byte[] data)
+                        {
+                            File.WriteAllBytes($"{entry.Key}", data);
+                            Console.WriteLine($"Saved: {fileName}");
+                        }
+
+                    }
+                }
+            }
+
+        }
 
         public void HandleSessionLock()
         {
