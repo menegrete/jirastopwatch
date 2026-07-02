@@ -135,6 +135,7 @@ namespace StopWatch
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.lblLicense);
             this.Controls.Add(this.lblNameVersion);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = global::StopWatch.Properties.Resources.stopwatchicon;
             this.Name = "AboutForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

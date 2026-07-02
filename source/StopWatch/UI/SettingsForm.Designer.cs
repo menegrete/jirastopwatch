@@ -405,6 +405,7 @@ namespace StopWatch
             this.Controls.Add(this.lblDisplayOptions);
             this.Controls.Add(this.tbJiraBaseUrl);
             this.Controls.Add(this.lblJiraBaseUrl);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = global::StopWatch.Properties.Resources.stopwatchicon;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "SettingsForm";
