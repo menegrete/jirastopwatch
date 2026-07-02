@@ -22,11 +22,13 @@
 
 using StopWatch.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -72,7 +74,6 @@ namespace StopWatch
             ticker.Tick += ticker_Tick;
         }
 
-
         public void HandleSessionLock()
         {
             if (settings.PauseOnSessionLock == PauseAndResumeSetting.NoPause)
@@ -90,7 +91,6 @@ namespace StopWatch
                 }
             }
         }
-
 
         public void HandleSessionUnlock()
         {

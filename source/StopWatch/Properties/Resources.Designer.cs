@@ -19,7 +19,7 @@ namespace StopWatch.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -63,9 +63,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap addissue22 {
+        internal static System.Drawing.Bitmap addissue16 {
             get {
-                object obj = ResourceManager.GetObject("addissue22", resourceCulture);
+                object obj = ResourceManager.GetObject("addissue16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,9 +73,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap delete24 {
+        internal static System.Drawing.Bitmap delete16 {
             get {
-                object obj = ResourceManager.GetObject("delete24", resourceCulture);
+                object obj = ResourceManager.GetObject("delete16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap help22 {
+        internal static System.Drawing.Bitmap help16 {
             get {
-                object obj = ResourceManager.GetObject("help22", resourceCulture);
+                object obj = ResourceManager.GetObject("help16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap login22 {
+        internal static System.Drawing.Bitmap login16 {
             get {
-                object obj = ResourceManager.GetObject("login22", resourceCulture);
+                object obj = ResourceManager.GetObject("login16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,9 +103,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap openbrowser26 {
+        internal static System.Drawing.Bitmap openbrowser16 {
             get {
-                object obj = ResourceManager.GetObject("openbrowser26", resourceCulture);
+                object obj = ResourceManager.GetObject("openbrowser16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -113,9 +113,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap pause26 {
+        internal static System.Drawing.Bitmap pause16 {
             get {
-                object obj = ResourceManager.GetObject("pause26", resourceCulture);
+                object obj = ResourceManager.GetObject("pause16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,9 +123,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap play26 {
+        internal static System.Drawing.Bitmap play16 {
             get {
-                object obj = ResourceManager.GetObject("play26", resourceCulture);
+                object obj = ResourceManager.GetObject("play16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -133,9 +133,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap posttime26 {
+        internal static System.Drawing.Bitmap posttime16 {
             get {
-                object obj = ResourceManager.GetObject("posttime26", resourceCulture);
+                object obj = ResourceManager.GetObject("posttime16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -143,9 +143,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap posttimenote26 {
+        internal static System.Drawing.Bitmap posttimenote16 {
             get {
-                object obj = ResourceManager.GetObject("posttimenote26", resourceCulture);
+                object obj = ResourceManager.GetObject("posttimenote16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,9 +153,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap reset24 {
+        internal static System.Drawing.Bitmap reset16 {
             get {
-                object obj = ResourceManager.GetObject("reset24", resourceCulture);
+                object obj = ResourceManager.GetObject("reset16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -163,9 +163,9 @@ namespace StopWatch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap settings22 {
+        internal static System.Drawing.Bitmap settings16 {
             get {
-                object obj = ResourceManager.GetObject("settings22", resourceCulture);
+                object obj = ResourceManager.GetObject("settings16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
