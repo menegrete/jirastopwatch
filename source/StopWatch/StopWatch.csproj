@@ -180,6 +180,9 @@
     <Compile Include="Jira\JiraApiRequester.cs" />
     <Compile Include="Jira\JiraApiRequestFactory.cs" />
     <Compile Include="Helpers\NativeMethods.cs" />
+    <Compile Include="UI\Theme.cs" />
+    <Compile Include="UI\ThemeApplier.cs" />
+    <Compile Include="UI\ThemeIcons.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

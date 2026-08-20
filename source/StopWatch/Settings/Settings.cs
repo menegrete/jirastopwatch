@@ -62,6 +62,7 @@ namespace StopWatch
         public bool IncludeProjectName { get; set; }
 
         public SaveTimerSetting SaveTimerState { get; set; }
+        public ThemeMode Theme { get; set; }
         public PauseAndResumeSetting PauseOnSessionLock { get; set; }
         public WorklogCommentSetting PostWorklogComment { get; set; }
 
@@ -132,6 +133,7 @@ namespace StopWatch
                 this.ApiToken = "";
             this.FirstRun = Properties.Settings.Default.FirstRun;
             this.SaveTimerState = (SaveTimerSetting)Properties.Settings.Default.SaveTimerState;
+            this.Theme = (ThemeMode)Properties.Settings.Default.Theme;
             this.PauseOnSessionLock = (PauseAndResumeSetting)Properties.Settings.Default.PauseOnSessionLock;
             this.PostWorklogComment = (WorklogCommentSetting)Properties.Settings.Default.PostWorklogComment;
 
@@ -168,6 +170,7 @@ namespace StopWatch
 
                 Properties.Settings.Default.FirstRun = this.FirstRun;
                 Properties.Settings.Default.SaveTimerState = (int)this.SaveTimerState;
+                Properties.Settings.Default.Theme = (int)this.Theme;
                 Properties.Settings.Default.PauseOnSessionLock = (int)this.PauseOnSessionLock;
                 Properties.Settings.Default.PostWorklogComment = (int)this.PostWorklogComment;
 

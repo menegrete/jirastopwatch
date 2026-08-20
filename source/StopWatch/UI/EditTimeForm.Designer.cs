@@ -59,7 +59,6 @@ namespace StopWatch
             // 
             // tbTime
             // 
-            this.tbTime.BackColor = System.Drawing.SystemColors.Window;
             this.tbTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.3F);
             this.tbTime.Location = new System.Drawing.Point(14, 25);
             this.tbTime.Name = "tbTime";

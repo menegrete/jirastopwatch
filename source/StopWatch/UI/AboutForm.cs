@@ -30,6 +30,8 @@ namespace StopWatch
         {
             InitializeComponent();
 
+            ThemeApplier.Apply(this);
+
             lblNameVersion.Text = string.Format("{0} v. {1}", Application.ProductName, Application.ProductVersion);
         }
 

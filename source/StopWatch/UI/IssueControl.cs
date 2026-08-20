@@ -75,11 +75,12 @@ namespace StopWatch
         {
             get
             {
-                return Current;
+                return _Current;
             }
             set
             {
-                BackColor = value ? SystemColors.GradientInactiveCaption : SystemColors.Window;
+                _Current = value;
+                ApplyCurrentBackColor();
             }
         }
 
@@ -128,6 +129,29 @@ namespace StopWatch
             this.btnRemoveIssue.Enabled = Enable;
         }
 
+        /// <summary>
+        /// Paints this row with the active theme. Called on every newly created
+        /// row, because rows are rebuilt whenever the issue count changes.
+        /// </summary>
+        public void ApplyTheme()
+        {
+            // The row's own background comes from its selected state, and the
+            // icon buttons blend into it, so it has to be set before the children
+            // are walked.
+            ApplyCurrentBackColor();
+
+            foreach (Control child in Controls)
+                ThemeApplier.Apply(child);
+
+            ThemeApplier.ApplyToToolTip(ttIssue, Theme.Current);
+
+            btnOpen.Image = ThemeIcons.OpenBrowser;
+            btnReset.Image = ThemeIcons.Reset;
+
+            // Re-colours the timer field for the running/stopped state.
+            UpdateOutput();
+        }
+
         public bool focusJiraField()
         {
             return this.cbJira.Focus();
@@ -140,12 +164,13 @@ namespace StopWatch
             if (WatchTimer.Running)
             {
                 btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.pause16);
-                tbTime.BackColor = Color.PaleGreen;
+                tbTime.BackColor = Theme.Current.TimerRunning;
             }
             else {
                 btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.play16);
-                tbTime.BackColor = SystemColors.Control;
+                tbTime.BackColor = Theme.Current.SurfaceDisabled;
             }
+            tbTime.ForeColor = Theme.Current.Text;
 
             if (string.IsNullOrEmpty(Comment))
                 btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttime16;
@@ -393,7 +418,7 @@ namespace StopWatch
             // 
             // IssueControl
             // 
-            this.BackColor = System.Drawing.SystemColors.Window;
+            this.BackColor = Theme.Current.Surface;
             this.Controls.Add(this.btnRemoveIssue);
             this.Controls.Add(this.btnPostAndReset);
             this.Controls.Add(this.lblSummary);
@@ -476,7 +501,7 @@ namespace StopWatch
                 e.Graphics.DrawString(item.Key, font, sb, r1);
 
             // Draw a line to isolate the columns 
-            using (Pen p = new Pen(Color.Black))
+            using (Pen p = new Pen(Theme.Current.Border))
                 e.Graphics.DrawLine(p, r1.Right, 0, r1.Right, r1.Bottom);
 
             // Draw the text on the second column
@@ -484,7 +509,7 @@ namespace StopWatch
                 e.Graphics.DrawString(item.Summary, font, sb, r2);
 
             // Draw a line to isolate the columns 
-            using (Pen p = new Pen(Color.Black))
+            using (Pen p = new Pen(Theme.Current.Border))
                 e.Graphics.DrawLine(p, r1.Right, 0, r1.Right, 140);
 
         }
@@ -736,6 +761,22 @@ namespace StopWatch
         }
         #endregion
 
+        #region private methods
+        private void ApplyCurrentBackColor()
+        {
+            BackColor = _Current ? Theme.Current.SurfaceActive : Theme.Current.Surface;
+
+            // Icon-only buttons read as part of the row, so they follow it.
+            foreach (Control child in Controls)
+            {
+                Button button = child as Button;
+                if (button != null && button.Image != null && String.IsNullOrEmpty(button.Text))
+                    button.BackColor = BackColor;
+            }
+        }
+        #endregion
+
+
         #region private members
         private ComboBox cbJira;
         private Button btnOpen;
@@ -757,6 +798,7 @@ namespace StopWatch
         private int RemainingEstimateSeconds;
         private Button btnRemoveIssue;
         private bool _MarkedForRemoval = false;
+        private bool _Current = false;
 
         private ComboTextBoxEvents cbJiraTbEvents;
         #endregion

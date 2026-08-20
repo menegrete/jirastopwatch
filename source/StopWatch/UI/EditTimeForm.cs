@@ -35,7 +35,9 @@ namespace StopWatch
         {
             InitializeComponent();
 
-            tbTime.BackColor = SystemColors.Window;
+            ThemeApplier.Apply(this);
+
+            tbTime.BackColor = Theme.Current.Surface;
 
             Time = time;
 
@@ -48,11 +50,11 @@ namespace StopWatch
             if (!ValidateTimeInput())
             {
                 DialogResult = DialogResult.None;
-                tbTime.BackColor = Color.Tomato;
+                tbTime.BackColor = Theme.Current.DangerSurface;
                 return;
             }
 
-            tbTime.BackColor = SystemColors.Window;
+            tbTime.BackColor = Theme.Current.Surface;
         }
 
 
@@ -69,7 +71,7 @@ namespace StopWatch
 
         private void tbTime_TextChanged(object sender, EventArgs e)
         {
-            tbTime.BackColor = SystemColors.Window;
+            tbTime.BackColor = Theme.Current.Surface;
         }
     }
 }
