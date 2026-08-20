@@ -102,6 +102,8 @@ namespace StopWatch
             cbLoggingEnabbled.Checked = this.settings.LoggingEnabled;
 
             cbCheckForUpdate.Checked = settings.CheckForUpdate;
+
+            nudMaxIssues.Value = this.settings.MaxIssues;
         }
         #endregion
 
@@ -130,6 +132,8 @@ namespace StopWatch
 
                 this.settings.LoggingEnabled = cbLoggingEnabbled.Checked;
                 settings.CheckForUpdate = cbCheckForUpdate.Checked;
+
+                this.settings.MaxIssues = (int)nudMaxIssues.Value;
             }
         }
 

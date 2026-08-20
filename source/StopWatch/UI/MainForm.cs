@@ -329,7 +329,7 @@ namespace StopWatch
 
         private void IssueAdd()
         {
-            if (this.settings.IssueCount < maxIssues || this.issueControls.Count() < maxIssues)
+            if (this.settings.IssueCount < settings.MaxIssues || this.issueControls.Count() < settings.MaxIssues)
             {
                 this.settings.IssueCount++;
                 this.InitializeIssueControls();
@@ -343,15 +343,15 @@ namespace StopWatch
         {
             this.SuspendLayout();
 
-            if (this.settings.IssueCount >= maxIssues)
+            if (this.settings.IssueCount >= settings.MaxIssues)
             {
-                // Max reached.  Reset number in case it is larger 
-                this.settings.IssueCount = maxIssues;
+                // Max reached.  Reset number in case it is larger
+                this.settings.IssueCount = settings.MaxIssues;
 
                 // Update tooltip to reflect the fact that you can't add anymore
                 // We don't disable the button since then the tooltip doesn't show but
                 // the click won't do anything if we have too many issues
-                this.ttMain.SetToolTip(this.pbAddIssue, string.Format("You have reached the max limit of {0} issues and cannot add another", maxIssues.ToString()));
+                this.ttMain.SetToolTip(this.pbAddIssue, string.Format("You have reached the max limit of {0} issues and cannot add another", settings.MaxIssues.ToString()));
                 this.pbAddIssue.Cursor = System.Windows.Forms.Cursors.No;
             }
             else
@@ -764,7 +764,6 @@ namespace StopWatch
         #region private consts
         private const int firstDelay = 500;
         private const int defaultDelay = 30000;
-        private const int maxIssues = 20;
         #endregion
 
         private int currentIssueIndex;
