@@ -250,5 +250,17 @@ namespace StopWatch.Properties {
                 this["IncludeProjectName"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public int MaxIssues {
+            get {
+                return ((int)(this["MaxIssues"]));
+            }
+            set {
+                this["MaxIssues"] = value;
+            }
+        }
     }
 }

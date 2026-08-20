@@ -331,11 +331,13 @@ namespace StopWatch
             // tbTime
             // 
             this.tbTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.tbTime.Location = new System.Drawing.Point(670, 4);
+            this.tbTime.Location = new System.Drawing.Point(670, 8);
+            this.tbTime.Margin = new System.Windows.Forms.Padding(5);
             this.tbTime.Name = "tbTime";
             this.tbTime.ReadOnly = true;
             this.tbTime.Size = new System.Drawing.Size(107, 20);
             this.tbTime.TabIndex = 3;
+            this.tbTime.Text = "0000";
             this.tbTime.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.tbTime.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbTime_KeyDown);
             this.tbTime.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.tbTime_MouseDoubleClick);
@@ -418,7 +420,6 @@ namespace StopWatch
             // 
             // IssueControl
             // 
-            this.BackColor = Theme.Current.Surface;
             this.Controls.Add(this.btnRemoveIssue);
             this.Controls.Add(this.btnPostAndReset);
             this.Controls.Add(this.lblSummary);

@@ -79,6 +79,8 @@ namespace StopWatch
         public bool LoggingEnabled { get; set; }
 
         public bool CheckForUpdate { get; set; }
+
+        public int MaxIssues { get; set; }
         #endregion
 
 
@@ -148,6 +150,8 @@ namespace StopWatch
             this.LoggingEnabled = Properties.Settings.Default.LoggingEnabled;
 
             CheckForUpdate = Properties.Settings.Default.CheckForUpdate;
+
+            this.MaxIssues = Properties.Settings.Default.MaxIssues;
         }
 
 
@@ -185,6 +189,8 @@ namespace StopWatch
                 Properties.Settings.Default.LoggingEnabled = this.LoggingEnabled;
 
                 Properties.Settings.Default.CheckForUpdate = CheckForUpdate;
+
+                Properties.Settings.Default.MaxIssues = this.MaxIssues;
 
                 Properties.Settings.Default.Save();
             }
