@@ -227,6 +227,8 @@ namespace StopWatch
             // 
             this.startDatePicker.AccessibleDescription = "Start Date";
             this.startDatePicker.AccessibleName = "StartDate";
+            this.startDatePicker.CustomFormat = "dd/MM/yyyy";
+            this.startDatePicker.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.startDatePicker.Location = new System.Drawing.Point(124, 176);
             this.startDatePicker.Name = "startDatePicker";
             this.startDatePicker.ShowUpDown = true;

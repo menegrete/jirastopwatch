@@ -43,6 +43,8 @@ namespace StopWatch
 
             InitializeComponent();
 
+            ThemeApplier.Apply(this);
+
             // Mono for MacOSX and Linux do not implement the notifyIcon
             // so ignore this feature if we are not running on Windows
             cbMinimizeToTray.Visible = CrossPlatformHelpers.IsWindowsEnvironment();
@@ -86,6 +88,15 @@ namespace StopWatch
             };
             cbPostWorklogComment.SelectedValue = this.settings.PostWorklogComment;
 
+            cbTheme.DisplayMember = "Text";
+            cbTheme.ValueMember = "Value";
+            cbTheme.DataSource = new[]
+            {
+                new { Text = "Dark", Value = ThemeMode.Dark },
+                new { Text = "Light", Value = ThemeMode.Light }
+            };
+            cbTheme.SelectedValue = this.settings.Theme;
+
             tbStartTransitions.Text = this.settings.StartTransitions;
 
             cbLoggingEnabbled.Checked = this.settings.LoggingEnabled;
@@ -112,6 +123,8 @@ namespace StopWatch
                 this.settings.SaveTimerState = (SaveTimerSetting)cbSaveTimerState.SelectedValue;
                 this.settings.PauseOnSessionLock = (PauseAndResumeSetting)cbPauseOnSessionLock.SelectedValue;
                 this.settings.PostWorklogComment = (WorklogCommentSetting)cbPostWorklogComment.SelectedValue;
+
+                this.settings.Theme = (ThemeMode)cbTheme.SelectedValue;
 
                 this.settings.StartTransitions = tbStartTransitions.Text;
 

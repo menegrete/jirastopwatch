@@ -108,6 +108,9 @@ namespace StopWatch
                 initialStartTime = startTime;
             }
             InitializeComponent();
+
+            ThemeApplier.Apply(this);
+
             if (!String.IsNullOrEmpty(comment))
             {
                 tbComment.Text = String.Format("{0}{0}{1}", Environment.NewLine, comment);
@@ -243,27 +246,27 @@ namespace StopWatch
                     case "rdEstimateAdjustAuto":
                         this._estimateUpdateMethod = EstimateUpdateMethods.Auto;
                         this.tbSetTo.Enabled = false;
-                        this.tbSetTo.BackColor = SystemColors.Window;
+                        this.tbSetTo.BackColor = Theme.Current.Surface;
                         this.tbReduceBy.Enabled = false;
-                        this.tbReduceBy.BackColor = SystemColors.Window;
+                        this.tbReduceBy.BackColor = Theme.Current.Surface;
                         break;
                     case "rdEstimateAdjustLeave":
                         this._estimateUpdateMethod = EstimateUpdateMethods.Leave;
                         this.tbSetTo.Enabled = false;
-                        this.tbSetTo.BackColor = SystemColors.Window;
+                        this.tbSetTo.BackColor = Theme.Current.Surface;
                         this.tbReduceBy.Enabled = false;
-                        this.tbReduceBy.BackColor = SystemColors.Window;
+                        this.tbReduceBy.BackColor = Theme.Current.Surface;
                         break;
                     case "rdEstimateAdjustSetTo":
                         this._estimateUpdateMethod = EstimateUpdateMethods.SetTo;
                         this.tbSetTo.Enabled = true;
                         this.tbReduceBy.Enabled = false;
-                        this.tbReduceBy.BackColor = SystemColors.Window;
+                        this.tbReduceBy.BackColor = Theme.Current.Surface;
                         break;
                     case "rdEstimateAdjustManualDecrease":
                         this._estimateUpdateMethod = EstimateUpdateMethods.ManualDecrease;
                         this.tbSetTo.Enabled = false;
-                        this.tbSetTo.BackColor = SystemColors.Window;
+                        this.tbSetTo.BackColor = Theme.Current.Surface;
                         this.tbReduceBy.Enabled = true;                        
                         break;
                 }
@@ -364,7 +367,7 @@ namespace StopWatch
             {
                 if (string.IsNullOrWhiteSpace(tb.Text))
                 {
-                    tb.BackColor = Color.Tomato;
+                    tb.BackColor = Theme.Current.DangerSurface;
                     if (FocusIfInvalid)
                     {
                         tb.Select();
@@ -376,7 +379,7 @@ namespace StopWatch
                     TimeSpan? time = JiraTimeHelpers.JiraTimeToTimeSpan(tb.Text);
                     if (time == null)
                     {
-                        tb.BackColor = Color.Tomato;
+                        tb.BackColor = Theme.Current.DangerSurface;
                         if (FocusIfInvalid)
                         {
                             tb.Select(0, tb.Text.Length);
@@ -384,7 +387,7 @@ namespace StopWatch
                         fieldIsValid = false;
                     }
                     else{
-                        tb.BackColor = SystemColors.Window;
+                        tb.BackColor = Theme.Current.Surface;
                         fieldIsValid = true;
                     }
                 }

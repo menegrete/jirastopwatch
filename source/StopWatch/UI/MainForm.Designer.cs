@@ -115,7 +115,6 @@ namespace StopWatch
             // 
             this.lblActiveFilter.AutoSize = true;
             this.lblActiveFilter.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.lblActiveFilter.ForeColor = System.Drawing.Color.White;
             this.lblActiveFilter.Location = new System.Drawing.Point(3, 5);
             this.lblActiveFilter.Name = "lblActiveFilter";
             this.lblActiveFilter.Size = new System.Drawing.Size(29, 13);
@@ -141,7 +140,6 @@ namespace StopWatch
             // 
             // tbTotalTime
             // 
-            this.tbTotalTime.BackColor = System.Drawing.SystemColors.Window;
             this.tbTotalTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tbTotalTime.Location = new System.Drawing.Point(674, 4);
             this.tbTotalTime.Name = "tbTotalTime";
@@ -153,7 +151,6 @@ namespace StopWatch
             // 
             // pMain
             // 
-            this.pMain.BackColor = System.Drawing.SystemColors.Window;
             this.pMain.Location = new System.Drawing.Point(0, 26);
             this.pMain.Margin = new System.Windows.Forms.Padding(0);
             this.pMain.Name = "pMain";
@@ -209,7 +206,6 @@ namespace StopWatch
             // 
             // pTop
             // 
-            this.pTop.BackColor = System.Drawing.Color.SteelBlue;
             this.pTop.Controls.Add(this.pbHelp);
             this.pTop.Controls.Add(this.lblActiveFilter);
             this.pTop.Controls.Add(this.cbFilters);
@@ -223,7 +219,6 @@ namespace StopWatch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Window;
             this.ClientSize = new System.Drawing.Size(871, 176);
             this.Controls.Add(this.pTop);
             this.Controls.Add(this.pBottom);

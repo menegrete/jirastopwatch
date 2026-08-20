@@ -43,6 +43,10 @@ namespace StopWatch
             if (!settings.Load())
                 MessageBox.Show(string.Format("An error occurred while loading settings for Jira StopWatch. Your configuration file has most likely become corrupted.{0}{0}And older configuration file has been loaded instead, so please verify your settings.", Environment.NewLine), "Jira StopWatch");
 
+            // Before InitializeComponent, so every control is built with the
+            // right palette already in place.
+            Theme.Current = Theme.ForMode(settings.Theme);
+
             Logger.Instance.LogfilePath = Path.Combine(Application.UserAppDataPath, "jirastopwatch.log");
             Logger.Instance.Enabled = settings.LoggingEnabled;
 
@@ -72,6 +76,29 @@ namespace StopWatch
             // First run should be almost immediately after start
             ticker.Interval = firstDelay;
             ticker.Tick += ticker_Tick;
+
+            ApplyTheme();
+        }
+
+
+        /// <summary>
+        /// Paints the main window with the active theme. Called at construction
+        /// and again whenever the user changes the theme setting.
+        /// </summary>
+        public void ApplyTheme()
+        {
+            ThemeApplier.Apply(this);
+
+            // The top strip is an accent band, not a plain surface, so it and its
+            // caption are the two places the generic walk cannot get right.
+            pTop.BackColor = Theme.Current.Accent;
+            lblActiveFilter.BackColor = Color.Transparent;
+            lblActiveFilter.ForeColor = Theme.Current.AccentText;
+
+            pbSettings.BackgroundImage = ThemeIcons.Settings;
+
+            foreach (var issue in issueControls)
+                issue.ApplyTheme();
         }
 
         public void HandleSessionLock()
@@ -270,7 +297,7 @@ namespace StopWatch
                         () =>
                         {
                             lblConnectionStatus.Text = "Connecting...";
-                            lblConnectionStatus.ForeColor = SystemColors.ControlText;
+                            lblConnectionStatus.ForeColor = Theme.Current.Text;
                         }
                     );
 
@@ -362,6 +389,7 @@ namespace StopWatch
                 issue.TimerReset += Issue_TimerReset;
                 issue.Selected += Issue_Selected;
                 issue.TimeEdited += Issue_TimeEdited;
+                issue.ApplyTheme();
                 this.pMain.Controls.Add(issue);
             }
 
@@ -489,14 +517,14 @@ namespace StopWatch
                     if (connected)
                     {
                         lblConnectionStatus.Text = "Connected";
-                        lblConnectionStatus.ForeColor = Color.DarkGreen;
+                        lblConnectionStatus.ForeColor = Theme.Current.Success;
                         lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular);
                         lblConnectionStatus.Cursor = Cursors.Default;
                     }
                     else
                     {
                         lblConnectionStatus.Text = "Not connected";
-                        lblConnectionStatus.ForeColor = Color.Tomato;
+                        lblConnectionStatus.ForeColor = Theme.Current.Danger;
                         lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular | FontStyle.Underline);
                         lblConnectionStatus.Cursor = Cursors.Hand;
                     }
@@ -540,6 +568,14 @@ namespace StopWatch
             {
                 if (form.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
                 {
+                    // Repaint before the issue rows are rebuilt below, so the new
+                    // rows are created with the theme already switched.
+                    if (Theme.Current.Mode != this.settings.Theme)
+                    {
+                        Theme.Current = Theme.ForMode(this.settings.Theme);
+                        ApplyTheme();
+                    }
+
                     restClientFactory.BaseUrl = this.settings.JiraBaseUrl;
                     Logging.Logger.Instance.Enabled = settings.LoggingEnabled;
                     if (IsJiraEnabled)

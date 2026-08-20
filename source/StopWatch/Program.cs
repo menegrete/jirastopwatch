@@ -46,6 +46,10 @@ namespace StopWatch
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
+                // Has to happen before the first window exists, otherwise the
+                // DarkMode_* window themes are ignored.
+                NativeMethods.AllowDarkModeForApp(true);
+
                 Application.ThreadException += new ThreadExceptionEventHandler(Application_ThreadException);
                 AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
