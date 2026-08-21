@@ -27,6 +27,7 @@ namespace StopWatch
         public string Summary { get; set; }
         public TimetrackingFields Timetracking { get; set; }
         public ProjectFields Project { get; set; }
+        public ParentFields Parent { get; set; }
     }
 
     internal class TimetrackingFields
@@ -37,6 +38,12 @@ namespace StopWatch
 
     internal class ProjectFields
     {
-        public string Name { get; set; } 
+        public string Name { get; set; }
+    }
+
+    internal class ParentFields
+    {
+        public string Key { get; set; }
+        public IssueFields Fields { get; set; }
     }
 }

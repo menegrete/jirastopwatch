@@ -156,6 +156,91 @@ namespace StopWatchTest
             Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(""));
         }
 
+
+        [Test, Description("GetIssueSummary: When issue is a subtask with a parent summary, it prefixes the parent summary")]
+        public void GetIssueSummary_WithParent_It_Returns_Parent_And_Issue_Summary()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    Parent = new ParentFields
+                    {
+                        Key = "DG-1",
+                        Fields = new IssueFields { Summary = "Dirk Gently's Holistic Detective Agency" }
+                    }
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo("Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+        }
+
+
+        [Test, Description("GetIssueSummary: When issue has no parent, it returns only the issue summary")]
+        public void GetIssueSummary_WithoutParent_It_Returns_Issue_Summary_Only()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    Parent = null
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+        }
+
+
+        [Test, Description("GetIssueSummary: When parent has no summary, it returns only the issue summary")]
+        public void GetIssueSummary_WithParentWithoutSummary_It_Returns_Issue_Summary_Only()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    Parent = new ParentFields
+                    {
+                        Key = "DG-1",
+                        Fields = new IssueFields { Summary = null }
+                    }
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+        }
+
+
+        [Test, Description("GetIssueSummary: With parent and addProjectName, project name stays the outermost prefix")]
+        public void GetIssueSummary_WithParentAndProjectName_It_Returns_Project_Parent_And_Issue_Summary()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    Project = new ProjectFields { Name = "Dirk Gently" },
+                    Parent = new ParentFields
+                    {
+                        Key = "DG-1",
+                        Fields = new IssueFields { Summary = "Dirk Gently's Holistic Detective Agency" }
+                    }
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", true), Is.EqualTo("Dirk Gently: Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+        }
+
         [Test, Description("GetIssueTimetracking: On success it returns a timetracking object")]
         public void GetIssueTimetracking_OnSuccess_It_Returns_RemainingTime()
         {

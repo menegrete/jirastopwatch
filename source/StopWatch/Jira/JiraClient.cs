@@ -104,7 +104,13 @@ namespace StopWatch
             try
             {
                 var issue = jiraApiRequester.DoAuthenticatedRequest<Issue>(request).Fields;
-                return addProjectName ? issue.Project.Name + ": " + issue.Summary : issue.Summary;
+
+                string summary = issue.Summary;
+                string parentSummary = issue.Parent?.Fields?.Summary;
+                if (!string.IsNullOrEmpty(parentSummary))
+                    summary = parentSummary + " / " + summary;
+
+                return addProjectName ? issue.Project.Name + ": " + summary : summary;
             }
             catch (RequestDeniedException)
             {
