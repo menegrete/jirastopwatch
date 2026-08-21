@@ -165,6 +165,7 @@ namespace StopWatchTest
                 Fields = new IssueFields
                 {
                     Summary = "The long dark tea-time of the soul",
+                    IssueType = new IssueTypeFields { Subtask = true },
                     Parent = new ParentFields
                     {
                         Key = "DG-1",
@@ -176,6 +177,29 @@ namespace StopWatchTest
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
             Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo("Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+        }
+
+
+        [Test, Description("GetIssueSummary: When issue is not a subtask but has a parent (e.g. an Epic link), it returns only the issue summary")]
+        public void GetIssueSummary_WithParentButNotSubtask_It_Returns_Issue_Summary_Only()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    IssueType = new IssueTypeFields { Subtask = false },
+                    Parent = new ParentFields
+                    {
+                        Key = "DG-1",
+                        Fields = new IssueFields { Summary = "Dirk Gently's Holistic Detective Agency" }
+                    }
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
         }
 
 
@@ -228,6 +252,7 @@ namespace StopWatchTest
                 {
                     Summary = "The long dark tea-time of the soul",
                     Project = new ProjectFields { Name = "Dirk Gently" },
+                    IssueType = new IssueTypeFields { Subtask = true },
                     Parent = new ParentFields
                     {
                         Key = "DG-1",

@@ -107,7 +107,7 @@ namespace StopWatch
 
                 string summary = issue.Summary;
                 string parentSummary = issue.Parent?.Fields?.Summary;
-                if (!string.IsNullOrEmpty(parentSummary))
+                if (issue.IssueType?.Subtask == true && !string.IsNullOrEmpty(parentSummary))
                     summary = parentSummary + " / " + summary;
 
                 return addProjectName ? issue.Project.Name + ": " + summary : summary;
