@@ -331,7 +331,7 @@ namespace StopWatch
             // tbTime
             // 
             this.tbTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.tbTime.Location = new System.Drawing.Point(670, 8);
+            this.tbTime.Location = new System.Drawing.Point(880, 8);
             this.tbTime.Margin = new System.Windows.Forms.Padding(5);
             this.tbTime.Name = "tbTime";
             this.tbTime.ReadOnly = true;
@@ -349,7 +349,7 @@ namespace StopWatch
             this.lblSummary.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblSummary.Location = new System.Drawing.Point(194, 6);
             this.lblSummary.Name = "lblSummary";
-            this.lblSummary.Size = new System.Drawing.Size(443, 17);
+            this.lblSummary.Size = new System.Drawing.Size(650, 17);
             this.lblSummary.TabIndex = 6;
             this.lblSummary.Text = "xyzXYZ";
             this.lblSummary.MouseUp += new System.Windows.Forms.MouseEventHandler(this.lblSummary_MouseUp);
@@ -358,7 +358,7 @@ namespace StopWatch
             // 
             this.btnRemoveIssue.Enabled = false;
             this.btnRemoveIssue.Image = global::StopWatch.Properties.Resources.delete16;
-            this.btnRemoveIssue.Location = new System.Drawing.Point(843, 2);
+            this.btnRemoveIssue.Location = new System.Drawing.Point(1053, 2);
             this.btnRemoveIssue.Name = "btnRemoveIssue";
             this.btnRemoveIssue.Size = new System.Drawing.Size(24, 24);
             this.btnRemoveIssue.TabIndex = 7;
@@ -370,7 +370,7 @@ namespace StopWatch
             // 
             this.btnPostAndReset.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnPostAndReset.Image = global::StopWatch.Properties.Resources.posttime16;
-            this.btnPostAndReset.Location = new System.Drawing.Point(783, 2);
+            this.btnPostAndReset.Location = new System.Drawing.Point(993, 2);
             this.btnPostAndReset.Name = "btnPostAndReset";
             this.btnPostAndReset.Size = new System.Drawing.Size(24, 24);
             this.btnPostAndReset.TabIndex = 4;
@@ -383,7 +383,7 @@ namespace StopWatch
             // 
             this.btnReset.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnReset.Image = global::StopWatch.Properties.Resources.reset16;
-            this.btnReset.Location = new System.Drawing.Point(813, 2);
+            this.btnReset.Location = new System.Drawing.Point(1023, 2);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(24, 24);
             this.btnReset.TabIndex = 5;
@@ -396,7 +396,7 @@ namespace StopWatch
             // 
             this.btnStartStop.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnStartStop.Image = global::StopWatch.Properties.Resources.play16;
-            this.btnStartStop.Location = new System.Drawing.Point(640, 2);
+            this.btnStartStop.Location = new System.Drawing.Point(850, 2);
             this.btnStartStop.Name = "btnStartStop";
             this.btnStartStop.Size = new System.Drawing.Size(24, 24);
             this.btnStartStop.TabIndex = 2;
@@ -429,7 +429,7 @@ namespace StopWatch
             this.Controls.Add(this.btnOpen);
             this.Controls.Add(this.cbJira);
             this.Name = "IssueControl";
-            this.Size = new System.Drawing.Size(870, 28);
+            this.Size = new System.Drawing.Size(1080, 28);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.IssueControl_MouseUp);
             this.ResumeLayout(false);
             this.PerformLayout();

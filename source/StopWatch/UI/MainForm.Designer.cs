@@ -78,7 +78,7 @@ namespace StopWatch
             this.pbSettings.BackgroundImage = global::StopWatch.Properties.Resources.settings16;
             this.pbSettings.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbSettings.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbSettings.Location = new System.Drawing.Point(846, 5);
+            this.pbSettings.Location = new System.Drawing.Point(1056, 5);
             this.pbSettings.Margin = new System.Windows.Forms.Padding(2);
             this.pbSettings.Name = "pbSettings";
             this.pbSettings.Size = new System.Drawing.Size(18, 18);
@@ -106,7 +106,7 @@ namespace StopWatch
             this.cbFilters.Location = new System.Drawing.Point(37, 2);
             this.cbFilters.Margin = new System.Windows.Forms.Padding(2);
             this.cbFilters.Name = "cbFilters";
-            this.cbFilters.Size = new System.Drawing.Size(784, 21);
+            this.cbFilters.Size = new System.Drawing.Size(994, 21);
             this.cbFilters.TabIndex = 4;
             this.cbFilters.DropDown += new System.EventHandler(this.cbFilters_DropDown);
             this.cbFilters.SelectedIndexChanged += new System.EventHandler(this.cbFilters_SelectedIndexChanged);
@@ -131,7 +131,7 @@ namespace StopWatch
             // 
             this.lblTotalTime.AutoSize = true;
             this.lblTotalTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.lblTotalTime.Location = new System.Drawing.Point(637, 8);
+            this.lblTotalTime.Location = new System.Drawing.Point(847, 8);
             this.lblTotalTime.Name = "lblTotalTime";
             this.lblTotalTime.Size = new System.Drawing.Size(31, 13);
             this.lblTotalTime.TabIndex = 6;
@@ -141,7 +141,7 @@ namespace StopWatch
             // tbTotalTime
             // 
             this.tbTotalTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbTotalTime.Location = new System.Drawing.Point(674, 4);
+            this.tbTotalTime.Location = new System.Drawing.Point(884, 4);
             this.tbTotalTime.Name = "tbTotalTime";
             this.tbTotalTime.ReadOnly = true;
             this.tbTotalTime.Size = new System.Drawing.Size(102, 20);
@@ -154,7 +154,7 @@ namespace StopWatch
             this.pMain.Location = new System.Drawing.Point(0, 26);
             this.pMain.Margin = new System.Windows.Forms.Padding(0);
             this.pMain.Name = "pMain";
-            this.pMain.Size = new System.Drawing.Size(871, 70);
+            this.pMain.Size = new System.Drawing.Size(1081, 70);
             this.pMain.TabIndex = 9;
             // 
             // pBottom
@@ -166,7 +166,7 @@ namespace StopWatch
             this.pBottom.Controls.Add(this.lblConnectionStatus);
             this.pBottom.Location = new System.Drawing.Point(0, 140);
             this.pBottom.Name = "pBottom";
-            this.pBottom.Size = new System.Drawing.Size(871, 32);
+            this.pBottom.Size = new System.Drawing.Size(1081, 32);
             this.pBottom.TabIndex = 10;
             // 
             // lblDivider
@@ -182,7 +182,7 @@ namespace StopWatch
             this.pbAddIssue.BackgroundImage = global::StopWatch.Properties.Resources.addissue16;
             this.pbAddIssue.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbAddIssue.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbAddIssue.Location = new System.Drawing.Point(822, 2);
+            this.pbAddIssue.Location = new System.Drawing.Point(1032, 2);
             this.pbAddIssue.Margin = new System.Windows.Forms.Padding(2);
             this.pbAddIssue.Name = "pbAddIssue";
             this.pbAddIssue.Size = new System.Drawing.Size(22, 21);
@@ -196,7 +196,7 @@ namespace StopWatch
             this.pbHelp.BackgroundImage = global::StopWatch.Properties.Resources.help16;
             this.pbHelp.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pbHelp.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbHelp.Location = new System.Drawing.Point(846, 2);
+            this.pbHelp.Location = new System.Drawing.Point(1056, 2);
             this.pbHelp.Name = "pbHelp";
             this.pbHelp.Size = new System.Drawing.Size(22, 21);
             this.pbHelp.TabIndex = 12;
@@ -212,14 +212,14 @@ namespace StopWatch
             this.pTop.Controls.Add(this.pbAddIssue);
             this.pTop.Location = new System.Drawing.Point(0, 0);
             this.pTop.Name = "pTop";
-            this.pTop.Size = new System.Drawing.Size(871, 26);
+            this.pTop.Size = new System.Drawing.Size(1081, 26);
             this.pTop.TabIndex = 11;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(871, 176);
+            this.ClientSize = new System.Drawing.Size(1081, 176);
             this.Controls.Add(this.pTop);
             this.Controls.Add(this.pBottom);
             this.Controls.Add(this.pMain);
