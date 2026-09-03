@@ -15,6 +15,16 @@ There is [documentation] available for [installing] Jira StopWatch and walk-thro
 
 Feature requests, [contributions], and/or [questions and feedback] are more than welcome :-)
 
+## Building and releasing
+
+Jira StopWatch targets `net10.0-windows` and is distributed as a single framework-dependent executable - no installer. Running it requires the [.NET 10 Desktop Runtime][dotnet-10-runtime] to already be installed on the machine; if it's missing, Windows shows its own prompt to install it.
+
+To produce a release build:
+
+```
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
+```
+
 ## Mac OSX and Linux users
 
 Jira StopWatch has been compiled and tested to work on Linux Mint 17.0 with the [Xamarin] packages.
@@ -41,6 +51,7 @@ All icons on buttons were downloaded from [Icons8].
 [RestSharp]: https://github.com/restsharp/RestSharp
 [Icons8]: https://icons8.com
 [LICENSE]: LICENSE.md
+[dotnet-10-runtime]: https://dotnet.microsoft.com/download/dotnet/10.0
 
 <!-- DOCUMENTATION -->
 

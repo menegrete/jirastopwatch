@@ -22,8 +22,15 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
-// General Information about an assembly is controlled through the following 
+// Normally emitted automatically by the SDK for a "-windows" TargetFramework,
+// but that's tied to GenerateAssemblyInfo, which is off here to avoid clashing
+// with the explicit attributes below. Without it, the platform-compatibility
+// analyzer (CA1416) can't tell this assembly is Windows-only.
+[assembly: SupportedOSPlatform("windows")]
+
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("StopWatchTest")]

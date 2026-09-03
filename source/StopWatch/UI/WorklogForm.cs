@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -67,6 +68,7 @@ namespace StopWatch
                 return this.startDatePicker.Value.Date + this.startTimePicker.Value.TimeOfDay;
             }
         }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string RemainingEstimate
         {
             get
@@ -80,6 +82,7 @@ namespace StopWatch
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int RemainingEstimateSeconds
         {
             get
@@ -99,14 +102,7 @@ namespace StopWatch
         public WorklogForm(DateTimeOffset startTime, TimeSpan TimeElapsed, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
         {            
             this.TimeElapsed = TimeElapsed;
-            DateTimeOffset initialStartTime;
-            if (startTime == null)
-            {
-                initialStartTime = DateTimeOffset.UtcNow.Subtract(TimeElapsed);
-            }else
-            {
-                initialStartTime = startTime;
-            }
+            DateTimeOffset initialStartTime = startTime;
             InitializeComponent();
 
             ThemeApplier.Apply(this);
@@ -301,7 +297,7 @@ namespace StopWatch
                 rdEstimateAdjustLeave.Text = string.Format("&Leave As {0}", _RemainingEstimate);
             }
 
-            if( TimeElapsed != null && RemainingEstimateSeconds > 0){
+            if (RemainingEstimateSeconds > 0){
                 rdEstimateAdjustAuto.Text = string.Format("Adjust &Automatically (to {0})", calculatedAdjustedRemainingEstimate());
             }else {
                 rdEstimateAdjustAuto.Text = "Adjust &Automatically";
