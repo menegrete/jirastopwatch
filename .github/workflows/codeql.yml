@@ -65,13 +65,12 @@ jobs:
         name: "Setup Dotnet"
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 10.0.x
 
       - if: matrix.language == 'csharp'
         name: "Build (${{ matrix.language }})"
         run: |
           dotnet restore "${SOLUTION_NAME}"
-          nuget restore "${SOLUTION_NAME}"
           dotnet build --configuration "${CONFIGURATION}" --no-restore "${SOLUTION_NAME}"
 
       - name: "Perform CodeQL Analysis"

@@ -195,7 +195,11 @@ namespace StopWatch
             if (this.settings.FirstRun)
             {
                 this.settings.FirstRun = false;
-                EditSettings();
+
+                // Deferred rather than called inline: showing a modal dialog
+                // from within the Shown event races the main window's own
+                // activation, and the dialog can end up behind it.
+                this.BeginInvoke(new Action(EditSettings));
             }
             else
             {

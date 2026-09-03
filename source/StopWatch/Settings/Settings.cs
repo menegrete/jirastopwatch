@@ -23,8 +23,10 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Formats.Nrbf;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
+using StopWatch.Logging;
 
 namespace StopWatch
 {
@@ -198,33 +200,96 @@ namespace StopWatch
 
         public List<PersistedIssue> ReadIssues(string data)
         {
-            if (string.IsNullOrEmpty(Properties.Settings.Default.PersistedIssues))
+            if (string.IsNullOrEmpty(data))
                 return new List<PersistedIssue>();
 
-            using (MemoryStream ms = new MemoryStream(Convert.FromBase64String(data)))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                return (List<PersistedIssue>)bf.Deserialize(ms);
-            }
+            // Going-forward format: a plain JSON array.
+            if (data.TrimStart().StartsWith("["))
+                return JsonSerializer.Deserialize<List<PersistedIssue>>(data) ?? new List<PersistedIssue>();
 
+            // Anything else is a pre-upgrade BinaryFormatter blob. Decode it with
+            // System.Formats.Nrbf (safe: it walks the record graph without ever
+            // instantiating/executing the serialized types) and immediately
+            // re-save as JSON, so this path only ever runs once per installation.
+            try
+            {
+                List<PersistedIssue> issues = ReadLegacyIssues(data);
+
+                Properties.Settings.Default.PersistedIssues = WriteIssues(issues);
+                Properties.Settings.Default.Save();
+
+                return issues;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log("Failed to read legacy persisted issues; starting with an empty list.", ex);
+                return new List<PersistedIssue>();
+            }
         }
 
 
         public string WriteIssues(List<PersistedIssue> issues)
         {
-            string s;
+            return JsonSerializer.Serialize(issues);
+        }
+        #endregion
 
-            using (MemoryStream ms = new MemoryStream())
+
+        #region legacy BinaryFormatter migration
+        private static List<PersistedIssue> ReadLegacyIssues(string data)
+        {
+            byte[] bytes = Convert.FromBase64String(data);
+
+            using (MemoryStream ms = new MemoryStream(bytes))
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(ms, issues);
-                ms.Position = 0;
-                byte[] buffer = new byte[(int)ms.Length];
-                ms.Read(buffer, 0, buffer.Length);
-                s = Convert.ToBase64String(buffer);
-            }
+                ClassRecord listRecord = (ClassRecord)NrbfDecoder.Decode(ms);
 
-            return s;
+                int count = (int)listRecord.GetRawValue("_size");
+                SZArrayRecord<SerializationRecord> items = (SZArrayRecord<SerializationRecord>)listRecord.GetRawValue("_items");
+                SerializationRecord[] array = items.GetArray();
+
+                List<PersistedIssue> issues = new List<PersistedIssue>();
+                for (int i = 0; i < count; i++)
+                    issues.Add(ReadLegacyIssue((ClassRecord)array[i]));
+
+                return issues;
+            }
+        }
+
+
+        // PersistedIssue's auto-properties are read back by their compiler-generated
+        // backing field names ("<PropertyName>k__BackingField"), which is how
+        // BinaryFormatter recorded them.
+        private static PersistedIssue ReadLegacyIssue(ClassRecord record)
+        {
+            return new PersistedIssue
+            {
+                Key = (string)record.GetRawValue("<Key>k__BackingField"),
+                TimerRunning = (bool)record.GetRawValue("<TimerRunning>k__BackingField"),
+                InitialStartTime = ReadLegacyDateTimeOffset(record.GetRawValue("<InitialStartTime>k__BackingField")),
+                SessionStartTime = (DateTime)record.GetRawValue("<SessionStartTime>k__BackingField"),
+                TotalTime = (TimeSpan)record.GetRawValue("<TotalTime>k__BackingField"),
+                Comment = (string)record.GetRawValue("<Comment>k__BackingField"),
+                EstimateUpdateMethod = (EstimateUpdateMethods)(int)((ClassRecord)record.GetRawValue("<EstimateUpdateMethod>k__BackingField")).GetRawValue("value__"),
+                EstimateUpdateValue = (string)record.GetRawValue("<EstimateUpdateValue>k__BackingField"),
+            };
+        }
+
+
+        // DateTimeOffset serializes itself (ISerializable) as an internal UTC-ish
+        // "DateTime" field plus an "OffsetMinutes" field - not as the local/clock
+        // value its own public members expose. Reconstructing it means treating
+        // that field as UTC and then converting to the recorded offset.
+        private static DateTimeOffset? ReadLegacyDateTimeOffset(object raw)
+        {
+            if (raw is null)
+                return null;
+
+            ClassRecord dtoRecord = (ClassRecord)raw;
+            DateTime utcish = (DateTime)dtoRecord.GetRawValue("DateTime");
+            short offsetMinutes = (short)dtoRecord.GetRawValue("OffsetMinutes");
+
+            return new DateTimeOffset(DateTime.SpecifyKind(utcish, DateTimeKind.Utc)).ToOffset(TimeSpan.FromMinutes(offsetMinutes));
         }
         #endregion
 

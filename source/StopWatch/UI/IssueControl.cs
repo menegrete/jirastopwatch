@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -31,6 +32,7 @@ namespace StopWatch
     internal class IssueControl : UserControl
     {
         #region public members
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string IssueKey
         {
             get
@@ -56,6 +58,7 @@ namespace StopWatch
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IEnumerable<Issue> AvailableIssues
         {
             set
@@ -67,10 +70,14 @@ namespace StopWatch
         }
 
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Comment { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public EstimateUpdateMethods EstimateUpdateMethod { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string EstimateUpdateValue { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Current
         {
             get

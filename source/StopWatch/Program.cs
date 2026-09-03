@@ -23,7 +23,6 @@
 using Microsoft.Win32;
 using System;
 using System.IO;
-using System.Net;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -41,8 +40,6 @@ namespace StopWatch
         {
             if (mutex.WaitOne(TimeSpan.Zero, true))
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
