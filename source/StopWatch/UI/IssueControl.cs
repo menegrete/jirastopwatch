@@ -645,7 +645,7 @@ namespace StopWatch
             using (var worklogForm = new WorklogForm(WatchTimer.GetInitialStartTime(), WatchTimer.TimeElapsedNearestMinute, Comment, EstimateUpdateMethod, EstimateUpdateValue))
             {
                 UpdateRemainingEstimate(worklogForm);
-                var formResult = worklogForm.ShowDialog(this);
+                var formResult = ModalDialog.ShowOver(worklogForm, this);
                 if (formResult == DialogResult.OK)
                 {
                     Comment = worklogForm.Comment.Trim();
@@ -769,7 +769,7 @@ namespace StopWatch
         {
             using (var editTimeForm = new EditTimeForm(WatchTimer.TimeElapsed))
             {
-                if (editTimeForm.ShowDialog(this) == DialogResult.OK)
+                if (ModalDialog.ShowOver(editTimeForm, this) == DialogResult.OK)
                 {
                     WatchTimer.TimeElapsed = editTimeForm.Time;
 

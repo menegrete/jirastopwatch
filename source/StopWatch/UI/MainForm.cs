@@ -202,11 +202,10 @@ namespace StopWatch
 
         private void pbSettings_Click(object sender, EventArgs e)
         {
-            if (settings.AlwaysOnTop)
-                this.TopMost = false;
+            // No topmost juggling here any more: ModalDialog.ShowOver keeps the
+            // dialog above this window, and InitializeIssueControls re-applies
+            // TopMost from the setting once the dialog is accepted.
             EditSettings();
-            if (settings.AlwaysOnTop)
-                this.TopMost = settings.AlwaysOnTop;
         }
 
 
@@ -675,7 +674,7 @@ namespace StopWatch
         {
             using (var form = new SettingsForm(this.settings))
             {
-                if (form.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+                if (ModalDialog.ShowOver(form, this) == System.Windows.Forms.DialogResult.OK)
                 {
                     // Repaint before the issue rows are rebuilt below, so the new
                     // rows are created with the theme already switched.
