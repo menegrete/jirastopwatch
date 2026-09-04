@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -78,7 +78,6 @@ namespace StopWatch
             InitializeComponent();
 
             DataContext = viewModel;
-            ApplyTheme();
 
             ticker = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
             ticker.Interval = TimeSpan.FromSeconds(1);
@@ -87,16 +86,6 @@ namespace StopWatch
             IsVisibleChanged += MiniTimerWindow_IsVisibleChanged;
             MouseLeftButtonDown += MiniTimerWindow_MouseLeftButtonDown;
             Closing += MiniTimerWindow_Closing;
-        }
-
-
-        /// <summary>
-        /// Repaints with the active theme. Called at construction and again
-        /// whenever the user changes the theme setting.
-        /// </summary>
-        public void ApplyTheme()
-        {
-            ThemeBrushes.Apply(Resources);
         }
 
 
@@ -121,10 +110,6 @@ namespace StopWatch
 
             MovePillTo(ScreenPlacement.EnsureOnScreen(desired, pill));
             RememberLocation();
-
-            // A modeless WPF window inside a WinForms message loop gets no
-            // keyboard input unless the loop is told to forward it.
-            System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(this);
         }
         #endregion
 

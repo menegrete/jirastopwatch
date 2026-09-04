@@ -274,5 +274,29 @@ namespace StopWatch.Properties {
                 this["MiniViewLocation"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ListDensity {
+            get {
+                return ((int)(this["ListDensity"]));
+            }
+            set {
+                this["ListDensity"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1081")]
+        public int MainWindowWidth {
+            get {
+                return ((int)(this["MainWindowWidth"]));
+            }
+            set {
+                this["MainWindowWidth"] = value;
+            }
+        }
     }
 }

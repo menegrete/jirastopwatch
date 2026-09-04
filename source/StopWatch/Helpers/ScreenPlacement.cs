@@ -130,6 +130,34 @@ namespace StopWatch
 
 
         /// <summary>
+        /// Returns a width that fits the screen the window will appear on.
+        ///
+        /// The main window's width is remembered between runs, so it has the
+        /// same problem as a remembered position: the screen may be narrower
+        /// now than it was when the width was saved. Clamped up to
+        /// <paramref name="minimum"/> as well, so that a settings file carrying
+        /// a nonsense value cannot produce a window with no room for the issue
+        /// key and the elapsed time.
+        /// </summary>
+        public static int ClampWidth(int desired, int minimum, Rectangle workingArea)
+        {
+            int widest = Math.Max(minimum, workingArea.Width);
+
+            if (desired > widest)
+                return widest;
+
+            return desired < minimum ? minimum : desired;
+        }
+
+
+        /// <summary>Same as ClampWidth, against the primary screen.</summary>
+        public static int ClampWidth(int desired, int minimum)
+        {
+            return ClampWidth(desired, minimum, Screen.PrimaryScreen.WorkingArea);
+        }
+
+
+        /// <summary>
         /// Snaps to whichever edges of <paramref name="area"/> the window was
         /// dropped near, leaving the other axis untouched.
         /// </summary>

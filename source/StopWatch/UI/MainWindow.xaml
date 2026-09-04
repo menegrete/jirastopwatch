@@ -1,0 +1,492 @@
+<Window x:Class="StopWatch.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:StopWatch"
+        x:ClassModifier="internal"
+        Title="Jira StopWatch"
+        Icon="/stopwatchicon.ico"
+        Background="{DynamicResource Background}"
+        MinWidth="620"
+        SizeToContent="Height"
+        ResizeMode="CanResize"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI"
+        FontSize="12">
+
+    <!--
+        The height is derived, not chosen: SizeToContent="Height" makes the
+        window as tall as the rows need, which is why a row is free to be one or
+        two lines tall. ResizeMode stays CanResize so the user can drag the
+        width; a drag on the bottom edge is undone by the next layout pass,
+        which is the issue-list spec's "el alto no cambia".
+
+        MaxHeight is set from the working area in code, and the list sits in a
+        ScrollViewer so that a list taller than the screen can still be reached.
+    -->
+
+    <Window.Resources>
+
+        <!-- ==================== the issue key field ==================== -->
+
+        <!--
+            Two columns, key and summary, which is what the owner-draw
+            DrawItem/MeasureItem pair in IssueControl was painting by hand.
+        -->
+        <DataTemplate x:Key="IssueCompletion">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Key}"
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" />
+                <Border Grid.Column="0"
+                        Width="1"
+                        HorizontalAlignment="Right"
+                        Background="{DynamicResource Border}" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Fields.Summary}"
+                           Margin="6,0,0,0"
+                           Style="{StaticResource MutedText}"
+                           TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- ==================== the row, twice ==================== -->
+
+        <!--
+            Compact and spacious are two templates rather than one template
+            scaled by a factor. They differ in padding and type size today, and
+            the split leaves room for them to differ in more than that. See the
+            openspec design, D6.
+
+            Everything below binds to IssueViewModel. The height of each row is
+            whatever its own content needs: the summary wraps to a second line
+            when the width no longer fits it, and the row grows with it.
+        -->
+
+        <!-- Compact: what the WinForms window looked like. -->
+        <DataTemplate x:Key="IssueRowCompact">
+            <local:ThemeAnimatedBorder IsActive="{Binding IsCurrent}"
+                                       ActiveColor="SurfaceActive"
+                                       InactiveColor="Surface"
+                                       Padding="6,2"
+                                       MouseLeftButtonUp="Row_MouseSelected">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="155" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="0" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Selection, said again without colour: the transition is
+                         never the only carrier of the state. -->
+                    <Border Grid.Column="0"
+                            Width="3"
+                            Margin="0,1,5,1"
+                            CornerRadius="2"
+                            Background="{DynamicResource Accent}"
+                            Visibility="{Binding IsCurrent, Converter={StaticResource WhenTrue}}" />
+
+                    <ComboBox Grid.Column="1"
+                              IsEditable="True"
+                              MaxDropDownHeight="240"
+                              FontSize="12"
+                              TextSearch.TextPath="Key"
+                              ItemsSource="{Binding AvailableIssues}"
+                              ItemTemplate="{StaticResource IssueCompletion}"
+                              Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
+                              DropDownOpened="cbJira_DropDownOpened"
+                              SelectionChanged="cbJira_SelectionChanged"
+                              LostFocus="cbJira_LostFocus"
+                              KeyDown="cbJira_KeyDown"
+                              GotFocus="Row_Selected" />
+
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GlyphButton}"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanOpen}"
+                            ToolTip="Open issue in browser (CTRL-O)"
+                            Click="btnOpen_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+
+                    <!-- Up to two lines, then trimmed at the end of the second.
+                         The row is as tall as this ends up being. -->
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding Summary}"
+                               ToolTip="{Binding Summary}"
+                               Margin="8,0"
+                               FontSize="12"
+                               LineHeight="15"
+                               LineStackingStrategy="BlockLineHeight"
+                               MaxHeight="30"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+
+                    <Button Grid.Column="4"
+                            Style="{StaticResource GlyphButton}"
+                            Width="24" Height="24"
+                            ToolTip="Start/stop timer (CTRL-P)"
+                            Click="btnStartStop_Click">
+                        <Grid>
+                            <!-- Running or not, said with a shape as well as
+                                 with the colour of the field beside it. -->
+                            <Path Style="{StaticResource GlyphFill}"
+                                  Data="{StaticResource GlyphPause}"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource WhenTrue}}" />
+                            <Path Style="{StaticResource GlyphFill}"
+                                  Data="{StaticResource GlyphPlay}"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource WhenFalse}}" />
+                        </Grid>
+                    </Button>
+
+                    <local:ThemeAnimatedBorder Grid.Column="5"
+                                               IsActive="{Binding IsRunning}"
+                                               ActiveColor="TimerRunning"
+                                               InactiveColor="SurfaceDisabled"
+                                               BorderBrush="{DynamicResource Border}"
+                                               BorderThickness="1"
+                                               CornerRadius="3"
+                                               Width="100"
+                                               Padding="4,2"
+                                               ToolTip="Double-click to edit the time (CTRL-E)"
+                                               MouseLeftButtonUp="Row_MouseSelected"
+                                               MouseLeftButtonDown="Time_MouseDown">
+                        <TextBlock Text="{Binding TimeElapsedText}"
+                                   FontSize="12"
+                                   FontFamily="Consolas, Courier New, monospace"
+                                   TextAlignment="Right" />
+                    </local:ThemeAnimatedBorder>
+
+                    <Button Grid.Column="6"
+                            Style="{StaticResource GlyphButton}"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanPost}"
+                            ToolTip="Submit worklog to Jira and reset timer (CTRL-L)"
+                            Click="btnPost_Click">
+                        <Grid>
+                            <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphPost}" />
+                            <!-- A comment is waiting to go with the worklog. -->
+                            <Ellipse Width="4" Height="4"
+                                     Fill="{DynamicResource Success}"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding HasComment, Converter={StaticResource WhenTrue}}" />
+                        </Grid>
+                    </Button>
+
+                    <Button Grid.Column="7"
+                            Style="{StaticResource GlyphButton}"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanReset}"
+                            ToolTip="Reset timer (CTRL-R)"
+                            Click="btnReset_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphReset}" />
+                    </Button>
+
+                    <Button Grid.Column="8"
+                            x:Name="btnRemove"
+                            Style="{StaticResource GlyphButton}"
+                            Width="24" Height="24"
+                            ToolTip="Remove issue row (CTRL-DEL)"
+                            Click="btnRemove_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphRemove}" />
+                    </Button>
+                </Grid>
+            </local:ThemeAnimatedBorder>
+        </DataTemplate>
+
+        <!-- Spacious: the same row, given room to breathe. -->
+        <DataTemplate x:Key="IssueRowSpacious">
+            <local:ThemeAnimatedBorder IsActive="{Binding IsCurrent}"
+                                       ActiveColor="SurfaceActive"
+                                       InactiveColor="Surface"
+                                       Padding="8,6"
+                                       MouseLeftButtonUp="Row_MouseSelected">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="175" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="0" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Selection, said again without colour: the transition is
+                         never the only carrier of the state. -->
+                    <Border Grid.Column="0"
+                            Width="3"
+                            Margin="0,1,5,1"
+                            CornerRadius="2"
+                            Background="{DynamicResource Accent}"
+                            Visibility="{Binding IsCurrent, Converter={StaticResource WhenTrue}}" />
+
+                    <ComboBox Grid.Column="1"
+                              IsEditable="True"
+                              MaxDropDownHeight="240"
+                              FontSize="13"
+                              TextSearch.TextPath="Key"
+                              ItemsSource="{Binding AvailableIssues}"
+                              ItemTemplate="{StaticResource IssueCompletion}"
+                              Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
+                              DropDownOpened="cbJira_DropDownOpened"
+                              SelectionChanged="cbJira_SelectionChanged"
+                              LostFocus="cbJira_LostFocus"
+                              KeyDown="cbJira_KeyDown"
+                              GotFocus="Row_Selected" />
+
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GlyphButton}"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanOpen}"
+                            ToolTip="Open issue in browser (CTRL-O)"
+                            Click="btnOpen_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+
+                    <!-- Up to two lines, then trimmed at the end of the second.
+                         The row is as tall as this ends up being. -->
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding Summary}"
+                               ToolTip="{Binding Summary}"
+                               Margin="8,0"
+                               FontSize="13"
+                               LineHeight="18"
+                               LineStackingStrategy="BlockLineHeight"
+                               MaxHeight="36"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+
+                    <Button Grid.Column="4"
+                            Style="{StaticResource GlyphButton}"
+                            Width="28" Height="28"
+                            ToolTip="Start/stop timer (CTRL-P)"
+                            Click="btnStartStop_Click">
+                        <Grid>
+                            <!-- Running or not, said with a shape as well as
+                                 with the colour of the field beside it. -->
+                            <Path Style="{StaticResource GlyphFill}"
+                                  Data="{StaticResource GlyphPause}"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource WhenTrue}}" />
+                            <Path Style="{StaticResource GlyphFill}"
+                                  Data="{StaticResource GlyphPlay}"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource WhenFalse}}" />
+                        </Grid>
+                    </Button>
+
+                    <local:ThemeAnimatedBorder Grid.Column="5"
+                                               IsActive="{Binding IsRunning}"
+                                               ActiveColor="TimerRunning"
+                                               InactiveColor="SurfaceDisabled"
+                                               BorderBrush="{DynamicResource Border}"
+                                               BorderThickness="1"
+                                               CornerRadius="3"
+                                               Width="112"
+                                               Padding="4,2"
+                                               ToolTip="Double-click to edit the time (CTRL-E)"
+                                               MouseLeftButtonUp="Row_MouseSelected"
+                                               MouseLeftButtonDown="Time_MouseDown">
+                        <TextBlock Text="{Binding TimeElapsedText}"
+                                   FontSize="13"
+                                   FontFamily="Consolas, Courier New, monospace"
+                                   TextAlignment="Right" />
+                    </local:ThemeAnimatedBorder>
+
+                    <Button Grid.Column="6"
+                            Style="{StaticResource GlyphButton}"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanPost}"
+                            ToolTip="Submit worklog to Jira and reset timer (CTRL-L)"
+                            Click="btnPost_Click">
+                        <Grid>
+                            <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphPost}" />
+                            <!-- A comment is waiting to go with the worklog. -->
+                            <Ellipse Width="4" Height="4"
+                                     Fill="{DynamicResource Success}"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding HasComment, Converter={StaticResource WhenTrue}}" />
+                        </Grid>
+                    </Button>
+
+                    <Button Grid.Column="7"
+                            Style="{StaticResource GlyphButton}"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanReset}"
+                            ToolTip="Reset timer (CTRL-R)"
+                            Click="btnReset_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphReset}" />
+                    </Button>
+
+                    <Button Grid.Column="8"
+                            x:Name="btnRemove"
+                            Style="{StaticResource GlyphButton}"
+                            Width="28" Height="28"
+                            ToolTip="Remove issue row (CTRL-DEL)"
+                            Click="btnRemove_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphRemove}" />
+                    </Button>
+                </Grid>
+            </local:ThemeAnimatedBorder>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ==================== top bar ==================== -->
+
+        <!-- An accent band, not a plain surface: the one place the palette
+             deliberately departs from the window background. -->
+        <Border Grid.Row="0" Background="{DynamicResource Accent}" Padding="6,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Filter"
+                           Foreground="{DynamicResource AccentText}"
+                           Margin="2,0,8,0" />
+
+                <ComboBox Grid.Column="1"
+                          x:Name="cbFilters"
+                          DisplayMemberPath="Name"
+                          MaxDropDownHeight="240"
+                          DropDownOpened="cbFilters_DropDownOpened"
+                          SelectionChanged="cbFilters_SelectionChanged" />
+
+                <TextBlock Grid.Column="3"
+                           x:Name="lblConnectionStatus"
+                           Margin="8,0"
+                           Foreground="{DynamicResource AccentText}"
+                           MouseLeftButtonUp="lblConnectionStatus_Click" />
+
+                <Button Grid.Column="4"
+                        x:Name="btnMiniView"
+                        Style="{StaticResource GlyphButton}"
+                        ToolTip="Shrink to the floating mini timer"
+                        Click="btnMiniView_Click">
+                    <Path Style="{StaticResource AccentGlyphPath}" Data="{StaticResource GlyphMiniView}" />
+                </Button>
+
+                <Button Grid.Column="5"
+                        x:Name="btnSettings"
+                        Style="{StaticResource GlyphButton}"
+                        ToolTip="Settings"
+                        Click="btnSettings_Click">
+                    <Grid Width="11" Height="11">
+                        <Path Style="{StaticResource AccentGlyphPath}"
+                              Data="{StaticResource GlyphSettingsBars}"
+                              HorizontalAlignment="Stretch" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource AccentText}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 Margin="2.5,0.5,0,0" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource AccentText}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                 Margin="5,0,0,0.5" />
+                    </Grid>
+                </Button>
+
+                <Button Grid.Column="6"
+                        x:Name="btnHelp"
+                        Style="{StaticResource GlyphButton}"
+                        ToolTip="Open the documentation"
+                        Click="btnHelp_Click">
+                    <TextBlock Text="?"
+                               Foreground="{DynamicResource AccentText}"
+                               FontWeight="Bold"
+                               FontSize="13" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ==================== the list ==================== -->
+
+        <ScrollViewer Grid.Row="1"
+                      x:Name="issueScroller"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False">
+            <ItemsControl x:Name="issueList"
+                          ItemsSource="{Binding Issues}"
+                          HorizontalContentAlignment="Stretch">
+                <ItemsControl.Style>
+                    <!-- This is the mechanism that picks between the two row
+                         templates: change the density and every row is
+                         re-templated, timers and order untouched. -->
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="ItemTemplate" Value="{StaticResource IssueRowCompact}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Density}" Value="Spacious">
+                                <Setter Property="ItemTemplate" Value="{StaticResource IssueRowSpacious}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- ==================== bottom bar ==================== -->
+
+        <StackPanel Grid.Row="2">
+            <Border Style="{StaticResource Divider}" Margin="0" />
+            <Grid Margin="6,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        x:Name="btnAddIssue"
+                        Style="{StaticResource GlyphButton}"
+                        Click="btnAddIssue_Click">
+                    <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphAdd}" />
+                </Button>
+
+                <TextBlock Grid.Column="2"
+                           Text="Total"
+                           Style="{StaticResource MutedText}"
+                           Margin="0,0,8,0" />
+
+                <TextBox Grid.Column="3"
+                         Width="107"
+                         IsReadOnly="True"
+                         TextAlignment="Right"
+                         FontFamily="Consolas, Courier New, monospace"
+                         Text="{Binding TotalTimeText, Mode=OneWay}" />
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>

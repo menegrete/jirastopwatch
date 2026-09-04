@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -51,6 +51,17 @@ namespace StopWatch
         WorklogAndComment
     }
 
+    /// <summary>
+    /// How much room each issue row takes. Compact is what the WinForms window
+    /// looked like; spacious trades height for legibility. See the issue-list
+    /// spec, "El usuario elige la densidad de la lista".
+    /// </summary>
+    public enum ListDensity
+    {
+        Compact = 0,
+        Spacious = 1
+    }
+
     internal sealed class Settings
     {
         public static readonly Settings Instance = new Settings();
@@ -91,6 +102,17 @@ namespace StopWatch
         /// screen it refers to may not exist any more.
         /// </summary>
         public string MiniViewLocation { get; set; }
+
+        /// <summary>How much room each issue row takes.</summary>
+        public ListDensity ListDensity { get; set; }
+
+        /// <summary>
+        /// The width the user left the main window at. The height is not saved:
+        /// it is derived from the rows. Run it through
+        /// <see cref="ScreenPlacement"/> before using it - the screen it was
+        /// saved on may be smaller now.
+        /// </summary>
+        public int MainWindowWidth { get; set; }
         #endregion
 
 
@@ -164,6 +186,10 @@ namespace StopWatch
             this.MaxIssues = Properties.Settings.Default.MaxIssues;
 
             this.MiniViewLocation = Properties.Settings.Default.MiniViewLocation ?? "";
+
+            this.ListDensity = (ListDensity)Properties.Settings.Default.ListDensity;
+
+            this.MainWindowWidth = Properties.Settings.Default.MainWindowWidth;
         }
 
 
@@ -205,6 +231,10 @@ namespace StopWatch
                 Properties.Settings.Default.MaxIssues = this.MaxIssues;
 
                 Properties.Settings.Default.MiniViewLocation = this.MiniViewLocation ?? "";
+
+                Properties.Settings.Default.ListDensity = (int)this.ListDensity;
+
+                Properties.Settings.Default.MainWindowWidth = this.MainWindowWidth;
 
                 Properties.Settings.Default.Save();
             }

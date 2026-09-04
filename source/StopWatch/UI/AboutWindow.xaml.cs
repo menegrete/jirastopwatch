@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -20,29 +20,25 @@
  * limitations under the License.
  */
 
-using System.Windows.Forms;
+using System.Windows.Navigation;
 
 namespace StopWatch
 {
-    public partial class AboutForm : Form
+    /// <summary>Replaces AboutForm, with the same information.</summary>
+    internal partial class AboutWindow : System.Windows.Window
     {
-        public AboutForm()
+        public AboutWindow()
         {
             InitializeComponent();
 
-            ThemeApplier.Apply(this);
-
-            lblNameVersion.Text = string.Format("{0} v. {1}", Application.ProductName, Application.ProductVersion);
+            lblNameVersion.Text = string.Format("Jira StopWatch v. {0}", AppInfo.Version);
         }
 
-        private void lblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start("http://www.apache.org/licenses/LICENSE-2.0");
-        }
 
-        private void lblHomepage_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            System.Diagnostics.Process.Start("http://jirastopwatch.com");
+            AppInfo.OpenUrl(e.Uri.ToString());
+            e.Handled = true;
         }
     }
 }

@@ -1,0 +1,158 @@
+<Window x:Class="StopWatch.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="StopWatch Settings"
+        Background="{DynamicResource Background}"
+        SizeToContent="Height"
+        Width="470"
+        MaxHeight="720"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI"
+        FontSize="12">
+
+    <Window.Resources>
+        <!-- Label column width, so every row lines up. -->
+        <GridLength x:Key="LabelWidth">240</GridLength>
+    </Window.Resources>
+
+    <DockPanel Margin="16">
+
+        <!-- The buttons stay put; only the settings scroll, so a short screen
+             can still reach OK. -->
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,12,0,0">
+            <Button Content="About..." Click="btnAbout_Click" />
+            <Button Content="OK" Margin="8,0,0,0" IsDefault="True" Click="btnOk_Click" />
+            <Button Content="Cancel" Margin="8,0,0,0" IsCancel="True" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+
+                <!-- ==================== connection ==================== -->
+
+                <TextBlock Text="JIRA base url" />
+                <TextBox x:Name="tbJiraBaseUrl" Margin="0,3,0,8" />
+
+                <TextBlock Text="Username" />
+                <TextBox x:Name="tbUsername" Margin="0,3,0,8" />
+
+                <TextBlock Text="API Token" />
+                <TextBox x:Name="tbApiToken" Margin="0,3,0,3" />
+                <TextBlock>
+                    <Hyperlink NavigateUri="https://id.atlassian.com/manage/api-tokens"
+                               RequestNavigate="Link_RequestNavigate">Get an API Token</Hyperlink>
+                </TextBlock>
+
+                <Border Style="{StaticResource Divider}" />
+
+                <!-- ==================== display ==================== -->
+
+                <TextBlock Text="Display options" Style="{StaticResource SectionHeader}" />
+
+                <CheckBox x:Name="cbAlwaysOnTop" Content="Always keep window on top" />
+                <CheckBox x:Name="cbMinimizeToTray" Content="Minimize to tray" />
+                <CheckBox x:Name="cbIncludeProjectName" Content="Include project name in issue summary" />
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Theme" />
+                    <ComboBox Grid.Column="1" x:Name="cbTheme" DisplayMemberPath="Text" />
+                </Grid>
+
+                <!-- New with the WPF list: how much room a row takes. -->
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Issue list density" />
+                    <ComboBox Grid.Column="1" x:Name="cbListDensity" DisplayMemberPath="Text" />
+                </Grid>
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Max. display issues" />
+                    <TextBox Grid.Column="1"
+                             x:Name="tbMaxIssues"
+                             Width="56"
+                             HorizontalAlignment="Left"
+                             TextAlignment="Right"
+                             PreviewTextInput="Digits_PreviewTextInput"
+                             TextChanged="tbMaxIssues_TextChanged"
+                             ToolTip="Between 1 and 40" />
+                </Grid>
+
+                <Border Style="{StaticResource Divider}" />
+
+                <!-- ==================== general ==================== -->
+
+                <TextBlock Text="General options" Style="{StaticResource SectionHeader}" />
+
+                <CheckBox x:Name="cbAllowMultipleTimers" Content="Allow running multiple timers simultaneously" />
+                <CheckBox x:Name="cbCheckForUpdate" Content="Check for updates on application start" />
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Save timer states on program exit" TextWrapping="Wrap" />
+                    <ComboBox Grid.Column="1" x:Name="cbSaveTimerState" DisplayMemberPath="Text" />
+                </Grid>
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Pause timer on session lock" TextWrapping="Wrap" />
+                    <ComboBox Grid.Column="1" x:Name="cbPauseOnSessionLock" DisplayMemberPath="Text" />
+                </Grid>
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="How to post the worklog comment" TextWrapping="Wrap" />
+                    <ComboBox Grid.Column="1" x:Name="cbPostWorklogComment" DisplayMemberPath="Text" />
+                </Grid>
+
+                <TextBlock Text="Possible state changes when pressing play (seperate by newline)"
+                           Margin="0,8,0,0"
+                           TextWrapping="Wrap" />
+                <TextBox x:Name="tbStartTransitions"
+                         Margin="0,3,0,0"
+                         Height="60"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         VerticalContentAlignment="Top" />
+
+                <Border Style="{StaticResource Divider}" />
+
+                <!-- ==================== diagnostics ==================== -->
+
+                <CheckBox x:Name="cbLoggingEnabled" Content="Enable debug logging" />
+                <TextBlock Margin="0,3,0,0">
+                    <Hyperlink RequestNavigate="OpenLogFolder_RequestNavigate"
+                               NavigateUri="about:log">Open log folder</Hyperlink>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
