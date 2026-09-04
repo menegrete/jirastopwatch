@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -60,6 +60,11 @@ namespace StopWatch
 
             jiraClient = new JiraClient(jiraApiRequestFactory, jiraApiRequester);
 
+            jiraService = new IssueJiraService(jiraClient, this.settings);
+
+            filterProvider = new FilterProvider(jiraClient, this.settings);
+            filterProvider.FiltersLoaded += filterProvider_FiltersLoaded;
+
             InitializeComponent();
 
             pMain.HorizontalScroll.Maximum = 0;
@@ -120,6 +125,9 @@ namespace StopWatch
                 return;
 
             lastRunningIssue = issue;
+            // The last place InvokeIfRequired earns its keep: SessionSwitch
+            // arrives on a thread with no synchronization context, so there is
+            // no await that would bring this back to the UI thread by itself.
             issue.InvokeIfRequired(
                 () => issue.Pause()
             );
@@ -244,7 +252,9 @@ namespace StopWatch
 
             InitializeIssueControls();
 
-            // Add issuekeys from settings to issueControl controls
+            // Restore what the last run left behind. The rows hand this to their
+            // own model; the key still goes through the control, because that is
+            // what triggers the summary lookup.
             int i = 0;
             foreach (var issueControl in this.issueControls)
             {
@@ -252,21 +262,7 @@ namespace StopWatch
                 {
                     var persistedIssue = settings.PersistedIssues[i];
                     issueControl.IssueKey = persistedIssue.Key;
-
-                    if (this.settings.SaveTimerState != SaveTimerSetting.NoSave)
-                    {
-                        TimerState timerState = new TimerState
-                        {
-                            Running = this.settings.SaveTimerState == SaveTimerSetting.SavePause ? false : persistedIssue.TimerRunning,
-                            SessionStartTime = persistedIssue.SessionStartTime,
-                            InitialStartTime = persistedIssue.InitialStartTime,
-                            TotalTime = persistedIssue.TotalTime
-                        };
-                        issueControl.WatchTimer.SetState(timerState);
-                        issueControl.Comment = persistedIssue.Comment;
-                        issueControl.EstimateUpdateMethod = persistedIssue.EstimateUpdateMethod;
-                        issueControl.EstimateUpdateValue = persistedIssue.EstimateUpdateValue;
-                    }
+                    issueControl.Model.Hydrate(persistedIssue, this.settings.SaveTimerState);
                 }
                 i++;
             }
@@ -283,8 +279,25 @@ namespace StopWatch
 
         private void cbFilters_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var item = (CBFilterItem)cbFilters.SelectedItem;
-            this.settings.CurrentFilter = item.Id;
+            // The provider owns which filter is active, and saves it.
+            filterProvider.Current = (FilterItem)cbFilters.SelectedItem;
+        }
+
+
+        /// <summary>
+        /// Repaints the filter combo from the provider. The provider decides
+        /// what the list is and which entry is selected; this only shows it.
+        /// </summary>
+        private void filterProvider_FiltersLoaded(object sender, EventArgs e)
+        {
+            FilterItem current = filterProvider.Current;
+
+            cbFilters.Items.Clear();
+            foreach (var filter in filterProvider.Filters)
+                cbFilters.Items.Add(filter);
+
+            if (current != null)
+                cbFilters.SelectedItem = current;
         }
 
 
@@ -393,27 +406,23 @@ namespace StopWatch
 
         private void AuthenticateJira(string username, string apiToken)
         {
-            Task.Factory.StartNew(
-                () =>
-                {
-                    this.InvokeIfRequired(
-                        () =>
-                        {
-                            lblConnectionStatus.Text = "Connecting...";
-                            lblConnectionStatus.ForeColor = Theme.Current.Text;
-                        }
-                    );
+            _ = AuthenticateJiraAsync(username, apiToken);
+        }
 
-                    if (jiraClient.Authenticate(username, apiToken))
-                        this.InvokeIfRequired(
-                            () => UpdateIssuesOutput(true)
-                        );
 
-                    this.InvokeIfRequired(
-                        () => UpdateJiraRelatedData(true)
-                    );
-                }
-            );
+        private async Task AuthenticateJiraAsync(string username, string apiToken)
+        {
+            lblConnectionStatus.Text = "Connecting...";
+            lblConnectionStatus.ForeColor = Theme.Current.Text;
+
+            // Everything after the await is back on the UI thread, so the
+            // controls below are touched directly.
+            bool authenticated = await Task.Run(() => jiraClient.Authenticate(username, apiToken));
+
+            if (authenticated)
+                UpdateIssuesOutput(true);
+
+            UpdateJiraRelatedData(true);
         }
 
         private void issue_RemoveMeTriggered(object sender, EventArgs e)
@@ -486,7 +495,7 @@ namespace StopWatch
             // Create issueControl controls needed
             while (this.issueControls.Count() < this.settings.IssueCount)
             {
-                var issue = new IssueControl(this.jiraClient, this.settings);
+                var issue = new IssueControl(this.settings, this.jiraService, this.filterProvider);
                 issue.RemoveMeTriggered += new EventHandler(this.issue_RemoveMeTriggered);
                 issue.TimerStarted += issue_TimerStarted;
                 issue.TimerReset += Issue_TimerReset;
@@ -586,58 +595,48 @@ namespace StopWatch
 
         private void UpdateJiraRelatedData(bool firstTick)
         {
-            Task.Factory.StartNew(
-                () =>
-                {
-                    if (!IsJiraEnabled)
-                    {
-                        SetConnectionStatus(false);
-                        return;
-                    }
+            _ = UpdateJiraRelatedDataAsync(firstTick);
+        }
 
-                    if (jiraClient.SessionValid || jiraClient.ValidateSession())
-                    {
-                        SetConnectionStatus(true);
 
-                        this.InvokeIfRequired(
-                            () =>
-                            {
-                                if (firstTick)
-                                    LoadFilters();
+        private async Task UpdateJiraRelatedDataAsync(bool firstTick)
+        {
+            if (!IsJiraEnabled)
+            {
+                SetConnectionStatus(false);
+                return;
+            }
 
-                                UpdateIssuesOutput(firstTick);
-                            }
-                        );
-                        return;
-                    }
+            bool valid = jiraClient.SessionValid || await Task.Run(() => jiraClient.ValidateSession());
 
-                    SetConnectionStatus(false);
-                }
-            );
+            SetConnectionStatus(valid);
+
+            if (!valid)
+                return;
+
+            if (firstTick)
+                LoadFilters();
+
+            UpdateIssuesOutput(firstTick);
         }
 
 
         private void SetConnectionStatus(bool connected)
         {
-            this.InvokeIfRequired(
-                () =>
-                {
-                    if (connected)
-                    {
-                        lblConnectionStatus.Text = "Connected";
-                        lblConnectionStatus.ForeColor = Theme.Current.Success;
-                        lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular);
-                        lblConnectionStatus.Cursor = Cursors.Default;
-                    }
-                    else
-                    {
-                        lblConnectionStatus.Text = "Not connected";
-                        lblConnectionStatus.ForeColor = Theme.Current.Danger;
-                        lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular | FontStyle.Underline);
-                        lblConnectionStatus.Cursor = Cursors.Hand;
-                    }
-                }
-            );
+            if (connected)
+            {
+                lblConnectionStatus.Text = "Connected";
+                lblConnectionStatus.ForeColor = Theme.Current.Success;
+                lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular);
+                lblConnectionStatus.Cursor = Cursors.Default;
+            }
+            else
+            {
+                lblConnectionStatus.Text = "Not connected";
+                lblConnectionStatus.ForeColor = Theme.Current.Danger;
+                lblConnectionStatus.Font = new Font(lblConnectionStatus.Font, FontStyle.Regular | FontStyle.Underline);
+                lblConnectionStatus.Cursor = Cursors.Hand;
+            }
         }
 
 
@@ -646,27 +645,31 @@ namespace StopWatch
             if (string.IsNullOrWhiteSpace(settings.StartTransitions))
                 return;
 
-            Task.Factory.StartNew(
-                () =>
+            _ = ChangeIssueStateAsync(issueKey);
+        }
+
+
+        private async Task ChangeIssueStateAsync(string issueKey)
+        {
+            var startTransitions = this.settings.StartTransitions
+                .Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(l => l.Trim().ToLower()).ToArray();
+
+            await Task.Run(() =>
+            {
+                var availableTransitions = jiraClient.GetAvailableTransitions(issueKey);
+                if (availableTransitions == null || availableTransitions.Transitions.Count() == 0)
+                    return;
+
+                foreach (var t in availableTransitions.Transitions)
                 {
-                    var startTransitions = this.settings.StartTransitions
-                        .Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(l => l.Trim().ToLower()).ToArray();
-
-                    var availableTransitions = jiraClient.GetAvailableTransitions(issueKey);
-                    if (availableTransitions == null || availableTransitions.Transitions.Count() == 0)
-                        return;
-
-                    foreach (var t in availableTransitions.Transitions)
+                    if (startTransitions.Any(t.Name.ToLower().Contains))
                     {
-                        if (startTransitions.Any(t.Name.ToLower().Contains))
-                        {
-                            jiraClient.DoTransition(issueKey, t.Id);
-                            return;
-                        }
+                        jiraClient.DoTransition(issueKey, t.Id);
+                        return;
                     }
                 }
-            );
+            });
         }
 
 
@@ -699,23 +702,7 @@ namespace StopWatch
             settings.PersistedIssues.Clear();
 
             foreach (var issueControl in this.issueControls)
-            {
-                TimerState timerState = issueControl.WatchTimer.GetState();
-
-                var persistedIssue = new PersistedIssue
-                {
-                    Key = issueControl.IssueKey,
-                    TimerRunning = timerState.Running,
-                    SessionStartTime = timerState.SessionStartTime,
-                    InitialStartTime = timerState.InitialStartTime,
-                    TotalTime = timerState.TotalTime,
-                    Comment = issueControl.Comment,
-                    EstimateUpdateMethod = issueControl.EstimateUpdateMethod,
-                    EstimateUpdateValue = issueControl.EstimateUpdateValue
-                };
-
-                settings.PersistedIssues.Add(persistedIssue);
-            }
+                settings.PersistedIssues.Add(issueControl.Model.Persist());
 
             this.settings.Save();
         }
@@ -723,50 +710,9 @@ namespace StopWatch
 
         private void LoadFilters()
         {
-            Task.Factory.StartNew(
-                () =>
-                {
-                    List<Filter> filters = jiraClient.GetFavoriteFilters();
-                    if (filters == null)
-                        return;
-
-                    filters.Insert(0, new Filter
-                    {
-                        Id = -1,
-                        Name = "My open issues",
-                        Jql = "assignee = currentUser() AND resolution = Unresolved order by updated DESC"
-                    });
-
-                    if (filters.Count() > 1)
-                    {
-                        filters.Insert(1, new Filter
-                        {
-                            Id = 0,
-                            Name = "--------------",
-                            Jql = ""
-                        });
-                    }
-
-                    this.InvokeIfRequired(
-                        () =>
-                        {
-                            CBFilterItem currentItem = null;
-
-                            cbFilters.Items.Clear();
-                            foreach (var filter in filters)
-                            {
-                                var item = new CBFilterItem(filter.Id, filter.Name, filter.Jql);
-                                cbFilters.Items.Add(item);
-                                if (item.Id == this.settings.CurrentFilter)
-                                   currentItem = item;
-                            }
-
-                            if (currentItem != null)
-                                cbFilters.SelectedItem = currentItem;
-                        }
-                    );
-                }
-            );
+            // Fire and forget: the combo repaints itself from FiltersLoaded
+            // once the answer arrives, exactly as before.
+            _ = filterProvider.LoadAsync();
         }
 
 
@@ -809,30 +755,26 @@ namespace StopWatch
             if (!settings.CheckForUpdate)
                 return;
 
-            Task.Factory.StartNew(
-                () =>
-                {
-                    GithubRelease latestRelease = ReleaseHelper.GetLatestVersion();
-                    if (latestRelease == null)
-                        return;
+            _ = CheckForUpdatesAsync();
+        }
 
-                    string currentVersion = Application.ProductVersion;
-                    if (string.Compare(latestRelease.TagName, currentVersion) <= 0)
-                        return;
 
-                    this.InvokeIfRequired(
-                        () =>
-                        {
-                            string msg = string.Format("There is a newer version available of Jira StopWatch.{0}{0}Latest release is {1}. You are running version {2}.{0}{0}Do you want to download latest release?",
-                                Environment.NewLine,
-                                latestRelease.TagName,
-                                currentVersion);
-                            if (MessageBox.Show(msg, "New version available", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                                System.Diagnostics.Process.Start("https://github.com/jirastopwatch/jirastopwatch/releases/latest");
-                        }
-                    );
-                }
-            );
+        private async Task CheckForUpdatesAsync()
+        {
+            GithubRelease latestRelease = await Task.Run(() => ReleaseHelper.GetLatestVersion());
+            if (latestRelease == null)
+                return;
+
+            string currentVersion = Application.ProductVersion;
+            if (string.Compare(latestRelease.TagName, currentVersion) <= 0)
+                return;
+
+            string msg = string.Format("There is a newer version available of Jira StopWatch.{0}{0}Latest release is {1}. You are running version {2}.{0}{0}Do you want to download latest release?",
+                Environment.NewLine,
+                latestRelease.TagName,
+                currentVersion);
+            if (MessageBox.Show(msg, "New version available", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                System.Diagnostics.Process.Start("https://github.com/jirastopwatch/jirastopwatch/releases/latest");
 
 
 
@@ -876,6 +818,10 @@ namespace StopWatch
         private IssueControl lastRunningIssue = null;
 
         private ActiveTimerViewModel activeTimer;
+
+        private readonly IssueJiraService jiraService;
+
+        private readonly FilterProvider filterProvider;
 
         private MiniTimerWindow miniView;
         private bool inMiniView;
@@ -1063,19 +1009,6 @@ namespace StopWatch
         private void pbHelp_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("http://jirastopwatch.com/doc");
-        }
-    }
-
-    // content item for the combo box
-    public class CBFilterItem {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Jql { get; set; }
-
-        public CBFilterItem(int id, string name, string jql) {
-            Id = id;
-            Name = name;
-            Jql = jql;
         }
     }
 }

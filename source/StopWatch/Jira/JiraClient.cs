@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -25,7 +25,7 @@ using System.Collections.Generic;
 
 namespace StopWatch
 {
-    internal class JiraClient
+    internal class JiraClient : IJiraOperations
     {
         public bool SessionValid { get; private set; }
 

@@ -307,7 +307,12 @@ namespace StopWatch
 
 
         #region private methods
-        private Settings()
+        /// <summary>
+        /// Internal rather than private so that a test can hand a service its
+        /// own settings instead of mutating the process-wide
+        /// <see cref="Instance"/>. The application still uses only Instance.
+        /// </summary>
+        internal Settings()
         {
             this.PersistedIssues = new List<PersistedIssue>();
         }

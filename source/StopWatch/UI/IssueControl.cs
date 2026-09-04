@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -32,16 +32,25 @@ namespace StopWatch
     internal class IssueControl : UserControl, ITimerSource
     {
         #region public members
+        /// <summary>
+        /// This row's state. The controls below are presentation only: they read
+        /// from here and write back here, and never hold state of their own.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public IssueViewModel Model { get; private set; }
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string IssueKey
         {
             get
             {
-                return cbJira.Text;
+                return Model.IssueKey;
             }
 
             set
             {
+                // The combo's TextChanged writes the value into the model, so
+                // this is the one place the two are tied together.
                 cbJira.Text = value;
                 UpdateSummary();
             }
@@ -49,7 +58,7 @@ namespace StopWatch
 
 
         /// <summary>
-        /// The summary text as currently displayed, already carrying whatever
+        /// The summary as resolved from Jira, already carrying whatever
         /// UpdateSummary composed - project prefix and parent summary included.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -57,7 +66,7 @@ namespace StopWatch
         {
             get
             {
-                return lblSummary.Text;
+                return Model.Summary;
             }
         }
 
@@ -68,12 +77,18 @@ namespace StopWatch
         {
             get
             {
-                return Current;
+                return Model.IsCurrent;
             }
         }
 
 
-        public WatchTimer WatchTimer { get; private set; }
+        public WatchTimer WatchTimer
+        {
+            get
+            {
+                return Model.WatchTimer;
+            }
+        }
 
         public bool MarkedForRemoval
         {
@@ -88,30 +103,42 @@ namespace StopWatch
         {
             set
             {
-                cbJira.Items.Clear();
-                foreach (var issue in value)
-                    cbJira.Items.Add(new CBIssueItem(issue.Key, issue.Fields.Summary));
+                Model.AvailableIssues = value;
             }
         }
 
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public string Comment { get; set; }
+        public string Comment
+        {
+            get { return Model.Comment; }
+            set { Model.Comment = value; }
+        }
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public EstimateUpdateMethods EstimateUpdateMethod { get; set; }
+        public EstimateUpdateMethods EstimateUpdateMethod
+        {
+            get { return Model.EstimateUpdateMethod; }
+            set { Model.EstimateUpdateMethod = value; }
+        }
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public string EstimateUpdateValue { get; set; }
+        public string EstimateUpdateValue
+        {
+            get { return Model.EstimateUpdateValue; }
+            set { Model.EstimateUpdateValue = value; }
+        }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Current
         {
             get
             {
-                return _Current;
+                return Model.IsCurrent;
             }
             set
             {
-                _Current = value;
+                Model.IsCurrent = value;
                 ApplyCurrentBackColor();
             }
         }
@@ -132,7 +159,7 @@ namespace StopWatch
 
 
         #region public methods
-        public IssueControl(JiraClient jiraClient, Settings settings)
+        public IssueControl(Settings settings, IssueJiraService jiraService, FilterProvider filters)
             : base()
         {
             InitializeComponent();
@@ -141,14 +168,39 @@ namespace StopWatch
             cbJiraTbEvents.Paste += cbJiraTbEvents_Paste;
             cbJiraTbEvents.MouseDown += CbJiraTbEvents_MouseDown;
 
-            Comment = null;
-            EstimateUpdateMethod = EstimateUpdateMethods.Auto;
-            EstimateUpdateValue = null;
+            Model = new IssueViewModel();
+            Model.PropertyChanged += Model_PropertyChanged;
+
+            // The combo's text is what the user edits, so it is the one control
+            // that feeds the model rather than the other way round.
+            cbJira.TextChanged += cbJira_TextChanged;
 
             this.settings = settings;
+            this.jiraService = jiraService;
+            this.filters = filters;
+        }
 
-            this.jiraClient = jiraClient;
-            this.WatchTimer = new WatchTimer();
+
+        private void cbJira_TextChanged(object sender, EventArgs e)
+        {
+            Model.IssueKey = cbJira.Text;
+        }
+
+
+        private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case "Summary":
+                    lblSummary.Text = Model.Summary;
+                    break;
+
+                case "AvailableIssues":
+                    cbJira.Items.Clear();
+                    foreach (var issue in Model.AvailableIssues)
+                        cbJira.Items.Add(new CBIssueItem(issue.Key, issue.Fields.Summary));
+                    break;
+            }
         }
 
         private void CbJiraTbEvents_MouseDown(object sender, EventArgs e)
@@ -191,9 +243,11 @@ namespace StopWatch
 
         public void UpdateOutput(bool updateSummary = false)
         {
-            tbTime.Text = JiraTimeHelpers.TimeSpanToJiraTime(WatchTimer.TimeElapsed);
+            Model.Refresh();
 
-            if (WatchTimer.Running)
+            tbTime.Text = Model.TimeElapsedText;
+
+            if (Model.IsRunning)
             {
                 btnStartStop.Image = (System.Drawing.Image)(Properties.Resources.pause16);
                 tbTime.BackColor = Theme.Current.TimerRunning;
@@ -204,14 +258,14 @@ namespace StopWatch
             }
             tbTime.ForeColor = Theme.Current.Text;
 
-            if (string.IsNullOrEmpty(Comment))
-                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttime16;
-            else
+            if (Model.HasComment)
                 btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttimenote16;
+            else
+                btnPostAndReset.Image = (System.Drawing.Image)Properties.Resources.posttime16;
 
-            btnOpen.Enabled = cbJira.Text.Trim() != "";
-            btnReset.Enabled = WatchTimer.Running || WatchTimer.TimeElapsed.Ticks > 0;
-            btnPostAndReset.Enabled = WatchTimer.TimeElapsedNearestMinute.TotalMinutes >= 1;
+            btnOpen.Enabled = Model.CanOpen;
+            btnReset.Enabled = Model.CanReset;
+            btnPostAndReset.Enabled = Model.CanPost;
 
             if (updateSummary)
                 UpdateSummary();
@@ -241,88 +295,42 @@ namespace StopWatch
         #region private methods
         public void OpenJira()
         {
-            if (cbJira.Text == "")
+            if (Model.IssueKey == "")
                 return;
 
-            OpenIssueInBrowser(cbJira.Text);
+            OpenIssueInBrowser(Model.IssueKey);
         }
 
 
         private void UpdateSummary()
         {
-
-            if (cbJira.Text == "")
-            {
-                lblSummary.Text = "";
-                return;
-            }
-            if (!jiraClient.SessionValid)
-            {
-                lblSummary.Text = "";
-                return;
-            }
-
-            Task.Factory.StartNew(
-                () => {
-                    string key = "";
-                    string summary = "";
-                    this.InvokeIfRequired(
-                        () => key = cbJira.Text
-                    );
-                    try
-                    {
-                        summary = jiraClient.GetIssueSummary(key, settings.IncludeProjectName);
-                        this.InvokeIfRequired(
-                            () => lblSummary.Text = summary
-                        );
-                    }
-                    catch (RequestDeniedException)
-                    {
-                        // just leave the existing summary there when fetch fails
-                    }
-                }
-            );
+            // Fire and forget on purpose: the row keeps showing whatever summary
+            // it has until the answer arrives, exactly as before. The await
+            // inside comes back on the UI thread, so nothing has to marshal.
+            _ = UpdateSummaryAsync();
         }
 
-        private void UpdateRemainingEstimate(WorklogForm  worklogForm)
+
+        private async Task UpdateSummaryAsync()
         {
-            RemainingEstimate = "";
-            RemainingEstimateSeconds = -1;
+            string summary = await jiraService.GetSummaryAsync(Model.IssueKey);
 
-            if (cbJira.Text == "")
+            // null means Jira refused the request - leave the existing summary
+            // there when the fetch fails.
+            if (summary != null)
+                Model.Summary = summary;
+        }
+
+
+        private async Task UpdateRemainingEstimateAsync(WorklogForm worklogForm)
+        {
+            RemainingEstimate estimate = await jiraService.GetRemainingEstimateAsync(Model.IssueKey);
+
+            if (worklogForm == null || estimate.Seconds < 0)
                 return;
-            if (!jiraClient.SessionValid)
-                return;
 
-            Task.Factory.StartNew(
-                () =>
-                {
-                    string key = "";
-                    this.InvokeIfRequired(
-                        () => key = cbJira.Text
-                    );
-
-                    TimetrackingFields timetracking = jiraClient.GetIssueTimetracking(key);
-                    if (timetracking == null)
-                        return;
-
-                    this.InvokeIfRequired(
-                        () => RemainingEstimate = timetracking.RemainingEstimate
-                    );
-                    this.InvokeIfRequired(
-                        () => RemainingEstimateSeconds = timetracking.RemainingEstimateSeconds
-                    );
-                    if (worklogForm != null)
-                    {
-                        this.InvokeIfRequired(
-                            () => worklogForm.RemainingEstimate = timetracking.RemainingEstimate
-                        );
-                        this.InvokeIfRequired(
-                            () => worklogForm.RemainingEstimateSeconds = timetracking.RemainingEstimateSeconds
-                        );                        
-                    }
-                }
-            );
+            worklogForm.RemainingEstimate = estimate.Text;
+            worklogForm.RemainingEstimateSeconds = estimate.Seconds;
         }
 
         private void InitializeComponent()
@@ -595,9 +603,9 @@ namespace StopWatch
 
         public void CopyKeyToClipboard()
         {
-            if (string.IsNullOrEmpty(cbJira.Text))
+            if (string.IsNullOrEmpty(Model.IssueKey))
                 return;
-            Clipboard.SetText(cbJira.Text);
+            Clipboard.SetText(Model.IssueKey);
         }
 
         private void btnStartStop_Click(object sender, EventArgs e)
@@ -644,7 +652,9 @@ namespace StopWatch
         {
             using (var worklogForm = new WorklogForm(WatchTimer.GetInitialStartTime(), WatchTimer.TimeElapsedNearestMinute, Comment, EstimateUpdateMethod, EstimateUpdateValue))
             {
-                UpdateRemainingEstimate(worklogForm);
+                // Deliberately not awaited: the dialog has to come up right
+                // away, and the estimate fills itself in once Jira answers.
+                _ = UpdateRemainingEstimateAsync(worklogForm);
                 var formResult = ModalDialog.ShowOver(worklogForm, this);
                 if (formResult == DialogResult.OK)
                 {
@@ -652,7 +662,7 @@ namespace StopWatch
                     EstimateUpdateMethod = worklogForm.estimateUpdateMethod;
                     EstimateUpdateValue = worklogForm.EstimateValue;
 
-                    PostAndReset(cbJira.Text, worklogForm.InitialStartTime, WatchTimer.TimeElapsedNearestMinute, Comment, EstimateUpdateMethod, EstimateUpdateValue);
+                    PostAndReset(Model.IssueKey, worklogForm.InitialStartTime, WatchTimer.TimeElapsedNearestMinute, Comment, EstimateUpdateMethod, EstimateUpdateValue);
                 }
                 else if (formResult == DialogResult.Yes)
                 {
@@ -688,80 +698,50 @@ namespace StopWatch
         #region private methods
         private void PostAndReset(string key, DateTimeOffset startTime, TimeSpan timeElapsed, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
         {
-            Task.Factory.StartNew(
-                () =>
-                {
-                    this.InvokeIfRequired(
-                        () => {
-                            btnPostAndReset.Enabled = false;
-                            Cursor.Current = Cursors.WaitCursor;
-                        }
-                    );
+            _ = PostAndResetAsync(key, startTime, timeElapsed, comment, estimateUpdateMethod, estimateUpdateValue);
+        }
 
-                    bool postSuccesful = true;
 
-                    // First post comment in Comment-track - and clear the comment string, if it should only be posted here
-                    // Only actually post in Comment-track if text is not empty
-                    if (settings.PostWorklogComment != WorklogCommentSetting.WorklogOnly && !string.IsNullOrEmpty(comment))
-                    {
-                        postSuccesful = jiraClient.PostComment(key, comment);
-                        if (postSuccesful && settings.PostWorklogComment == WorklogCommentSetting.CommentOnly)
-                            comment = "";
-                    }
+        private async Task PostAndResetAsync(string key, DateTimeOffset startTime, TimeSpan timeElapsed, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
+        {
+            btnPostAndReset.Enabled = false;
+            Cursor.Current = Cursors.WaitCursor;
 
-                    // Now post the WorkLog with timeElapsed - and comment unless it was reset
-                    if (postSuccesful)
-                        postSuccesful = jiraClient.PostWorklog(key, startTime, timeElapsed, comment, estimateUpdateMethod, estimateUpdateValue);
+            try
+            {
+                // The order comment then worklog, and aborting on a failed
+                // comment, are the service rules now.
+                PostWorklogResult result = await jiraService.PostWorklogAsync(key, startTime, timeElapsed, comment, estimateUpdateMethod, estimateUpdateValue);
 
-                    if (postSuccesful)
-                    {
-                        this.InvokeIfRequired(
-                            () => Reset()
-                        );
-                    }
-
-                    this.InvokeIfRequired(
-                        () => {
-                            btnPostAndReset.Enabled = true;
-                            Cursor.Current = DefaultCursor;
-                        }
-                    );
-                }
-            );
+                if (result.Success)
+                    Reset();
+            }
+            finally
+            {
+                btnPostAndReset.Enabled = true;
+                Cursor.Current = DefaultCursor;
+            }
         }
 
 
         private void LoadIssues()
         {
-            // TODO: This + the datasource for cbFilters should be moved into a controller layer
-            var ctrlList = (Application.OpenForms[0] as MainForm).Controls.Find("cbFilters", true);
-            if (ctrlList.Length == 0)
+            _ = LoadIssuesAsync();
+        }
+
+
+        private async Task LoadIssuesAsync()
+        {
+            // The active filter JQL is handed to this row rather than looked up
+            // by walking the main window controls.
+            List<Issue> availableIssues = await jiraService.GetIssuesAsync(filters.CurrentJql);
+
+            if (availableIssues.Count == 0)
                 return;
 
-            var cbFilters = ctrlList[0] as ComboBox;
-            if (cbFilters.SelectedIndex < 0)
-                return;
-
-            string jql = (cbFilters.SelectedItem as CBFilterItem).Jql;
-
-            Task.Factory.StartNew(
-                () =>
-                {
-                    List<Issue> availableIssues = jiraClient.GetIssuesByJQL(jql).Issues;
-
-                    if (availableIssues == null)
-                        return;
-
-                    this.InvokeIfRequired(
-                        () =>
-                        {
-                            AvailableIssues = availableIssues;
-                            cbJira.DropDownHeight = 120;
-                            cbJira.Invalidate();
-                        }
-                    );
-                }
-            );
+            AvailableIssues = availableIssues;
+            cbJira.DropDownHeight = 120;
+            cbJira.Invalidate();
         }
 
 
@@ -797,7 +777,7 @@ namespace StopWatch
         #region private methods
         private void ApplyCurrentBackColor()
         {
-            BackColor = _Current ? Theme.Current.SurfaceActive : Theme.Current.Surface;
+            BackColor = Model.IsCurrent ? Theme.Current.SurfaceActive : Theme.Current.Surface;
 
             // Icon-only buttons read as part of the row, so they follow it.
             foreach (Control child in Controls)
@@ -822,16 +802,15 @@ namespace StopWatch
         private System.ComponentModel.IContainer components;
         private Button btnPostAndReset;
 
-        private JiraClient jiraClient;
-
         private Settings settings;
 
+        private readonly IssueJiraService jiraService;
+
+        private readonly FilterProvider filters;
+
         private int keyWidth;
-        private string RemainingEstimate;
-        private int RemainingEstimateSeconds;
         private Button btnRemoveIssue;
         private bool _MarkedForRemoval = false;
-        private bool _Current = false;
 
         private ComboTextBoxEvents cbJiraTbEvents;
         #endregion
