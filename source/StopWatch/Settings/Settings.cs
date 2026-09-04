@@ -83,6 +83,14 @@ namespace StopWatch
         public bool CheckForUpdate { get; set; }
 
         public int MaxIssues { get; set; }
+
+        /// <summary>
+        /// Where the mini timer view was left, as "x,y" in virtual screen
+        /// coordinates. Empty until the user has moved it at least once.
+        /// Run it through <see cref="ScreenPlacement"/> before using it: the
+        /// screen it refers to may not exist any more.
+        /// </summary>
+        public string MiniViewLocation { get; set; }
         #endregion
 
 
@@ -154,6 +162,8 @@ namespace StopWatch
             CheckForUpdate = Properties.Settings.Default.CheckForUpdate;
 
             this.MaxIssues = Properties.Settings.Default.MaxIssues;
+
+            this.MiniViewLocation = Properties.Settings.Default.MiniViewLocation ?? "";
         }
 
 
@@ -193,6 +203,8 @@ namespace StopWatch
                 Properties.Settings.Default.CheckForUpdate = CheckForUpdate;
 
                 Properties.Settings.Default.MaxIssues = this.MaxIssues;
+
+                Properties.Settings.Default.MiniViewLocation = this.MiniViewLocation ?? "";
 
                 Properties.Settings.Default.Save();
             }

@@ -29,7 +29,7 @@ using System.Windows.Forms;
 
 namespace StopWatch
 {
-    internal class IssueControl : UserControl
+    internal class IssueControl : UserControl, ITimerSource
     {
         #region public members
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -44,6 +44,31 @@ namespace StopWatch
             {
                 cbJira.Text = value;
                 UpdateSummary();
+            }
+        }
+
+
+        /// <summary>
+        /// The summary text as currently displayed, already carrying whatever
+        /// UpdateSummary composed - project prefix and parent summary included.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Summary
+        {
+            get
+            {
+                return lblSummary.Text;
+            }
+        }
+
+
+        /// <summary>ITimerSource view of <see cref="Current"/>.</summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool IsCurrent
+        {
+            get
+            {
+                return Current;
             }
         }
 

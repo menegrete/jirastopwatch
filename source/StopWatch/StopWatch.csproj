@@ -4,11 +4,17 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- The mini timer view is a WPF window living in this WinForms process.
+         See openspec design "D1. La vista mini se implementa en WPF". -->
+    <UseWPF>true</UseWPF>
     <RootNamespace>StopWatch</RootNamespace>
     <AssemblyName>StopWatch</AssemblyName>
     <ApplicationIcon>stopwatchicon.ico</ApplicationIcon>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- WPF's ThemeMode API is still experimental and emits WPF0001, which
+         TreatWarningsAsErrors would turn into a build failure. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

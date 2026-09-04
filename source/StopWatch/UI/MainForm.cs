@@ -77,6 +77,8 @@ namespace StopWatch
             ticker.Interval = firstDelay;
             ticker.Tick += ticker_Tick;
 
+            activeTimer = new ActiveTimerViewModel(() => this.issueControls.Cast<ITimerSource>());
+
             ApplyTheme();
         }
 
@@ -96,9 +98,14 @@ namespace StopWatch
             lblActiveFilter.ForeColor = Theme.Current.AccentText;
 
             pbSettings.BackgroundImage = ThemeIcons.Settings;
+            pbMiniView.BackgroundImage = ThemeIcons.MiniView;
 
             foreach (var issue in issueControls)
                 issue.ApplyTheme();
+
+            // Not part of the Control tree, so ThemeApplier's walk cannot reach it.
+            if (miniView != null)
+                miniView.ApplyTheme();
         }
 
         public void HandleSessionLock()
@@ -106,17 +113,17 @@ namespace StopWatch
             if (settings.PauseOnSessionLock == PauseAndResumeSetting.NoPause)
                 return;
 
-            foreach (var issue in issueControls)
-            {
-                if (issue.WatchTimer.Running)
-                {
-                    lastRunningIssue = issue;
-                    issue.InvokeIfRequired(
-                        () => issue.Pause()
-                    );
-                    return;
-                }
-            }
+            // Which rows are running is the active-timer model's job to know.
+            // As before, only the first running row is paused and remembered.
+            IssueControl issue = activeTimer.RunningSources.OfType<IssueControl>().FirstOrDefault();
+            if (issue == null)
+                return;
+
+            lastRunningIssue = issue;
+            issue.InvokeIfRequired(
+                () => issue.Pause()
+            );
+            activeTimer.Refresh();
         }
 
         public void HandleSessionUnlock()
@@ -126,10 +133,14 @@ namespace StopWatch
 
             if (lastRunningIssue != null)
             {
-                lastRunningIssue.InvokeIfRequired(
-                    () => lastRunningIssue.Start()
+                IssueControl resumed = lastRunningIssue;
+                resumed.InvokeIfRequired(
+                    () => resumed.Start()
                 );
                 lastRunningIssue = null;
+
+                // Start() does not raise TimerStarted, so tell the model directly.
+                activeTimer.NotifyTimerStarted(resumed);
             }
         }
         #endregion
@@ -141,18 +152,21 @@ namespace StopWatch
             IssueControl senderCtrl = (IssueControl)sender;
             ChangeIssueState(senderCtrl.IssueKey);
 
-            if (settings.AllowMultipleTimers)
-                return;
+            if (!settings.AllowMultipleTimers)
+            {
+                foreach (var issue in this.issueControls)
+                    if (issue != senderCtrl)
+                        issue.Pause();
+            }
 
-            foreach (var issue in this.issueControls)
-                if (issue != senderCtrl)
-                    issue.Pause();
+            activeTimer.NotifyTimerStarted(senderCtrl);
         }
 
 
         void Issue_TimerReset(object sender, EventArgs e)
         {
             UpdateTotalTime();
+            activeTimer.Refresh();
         }
 
 
@@ -174,6 +188,18 @@ namespace StopWatch
         }
 
 
+        private void pbMiniView_Click(object sender, EventArgs e)
+        {
+            EnterMiniView();
+        }
+
+
+        private void miniView_RestoreRequested(object sender, EventArgs e)
+        {
+            ExitMiniView();
+        }
+
+
         private void pbSettings_Click(object sender, EventArgs e)
         {
             if (settings.AlwaysOnTop)
@@ -186,6 +212,16 @@ namespace StopWatch
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            // Reached even while hidden behind the mini view - a session
+            // shutdown, for instance - so the mini view has to come down with
+            // it, and settings still get written exactly as before.
+            if (miniView != null)
+            {
+                miniView.ClosingForShutdown = true;
+                miniView.Close();
+                miniView = null;
+            }
+
             SaveSettingsAndIssueStates();
         }
 
@@ -260,6 +296,12 @@ namespace StopWatch
             if (!CrossPlatformHelpers.IsWindowsEnvironment())
                 return;
 
+            // While the mini view is up this window is hidden on purpose. The
+            // tray icon must not appear as well: two stand-ins for one hidden
+            // window is one too many.
+            if (inMiniView)
+                return;
+
             if (!this.settings.MinimizeToTray)
                 return;
 
@@ -292,6 +334,64 @@ namespace StopWatch
 
 
         #region private methods
+        /// <summary>
+        /// Hides this window and puts the floating mini view up in its place.
+        /// The window's geometry is remembered so that coming back lands
+        /// exactly where the user left it.
+        /// </summary>
+        private void EnterMiniView()
+        {
+            if (inMiniView)
+                return;
+
+            restoreBounds = new Rectangle(Location, Size);
+            restoreWindowState = WindowState;
+
+            if (miniView == null)
+            {
+                // Created on first use: nobody should pay WPF's start-up cost
+                // for a view they never open.
+                miniView = new MiniTimerWindow(activeTimer, settings);
+                miniView.RestoreRequested += miniView_RestoreRequested;
+            }
+
+            inMiniView = true;
+
+            // The tray icon belongs to the minimize-to-tray feature, not here.
+            notifyIcon.Visible = false;
+
+            miniView.ShowAt();
+            Hide();
+        }
+
+
+        /// <summary>Takes the mini view down and brings this window back as it was.</summary>
+        private void ExitMiniView()
+        {
+            if (!inMiniView)
+                return;
+
+            inMiniView = false;
+
+            if (miniView != null)
+                miniView.Hide();
+
+            Show();
+
+            WindowState = restoreWindowState == FormWindowState.Minimized
+                ? FormWindowState.Normal
+                : restoreWindowState;
+
+            if (!restoreBounds.IsEmpty)
+            {
+                Location = restoreBounds.Location;
+                Size = restoreBounds.Size;
+            }
+
+            Activate();
+        }
+
+
         private void AuthenticateJira(string username, string apiToken)
         {
             Task.Factory.StartNew(
@@ -437,6 +537,10 @@ namespace StopWatch
             this.ResumeLayout(false);
             this.PerformLayout();
             UpdateIssuesOutput(true);
+
+            // The set of rows just changed, so whatever the active-timer model
+            // resolved to may no longer be on screen.
+            activeTimer.Refresh();
         }
 
         private void Issue_TimeEdited(object sender, EventArgs e)
@@ -447,6 +551,7 @@ namespace StopWatch
         private void Issue_Selected(object sender, EventArgs e)
         {
             IssueSetCurrentByControl((IssueControl)sender);
+            activeTimer.Refresh();
         }
 
         private void IssueSetCurrentByControl(IssueControl control)
@@ -677,6 +782,14 @@ namespace StopWatch
 
         private void ShowOnTop()
         {
+            // Launching the app again while the mini view is up means the user
+            // wants the full window, not a second stand-in next to it.
+            if (inMiniView)
+            {
+                ExitMiniView();
+                return;
+            }
+
             if (WindowState == FormWindowState.Minimized) {
                 Show();
                 WindowState = FormWindowState.Normal;
@@ -762,6 +875,13 @@ namespace StopWatch
         private Settings settings;
 
         private IssueControl lastRunningIssue = null;
+
+        private ActiveTimerViewModel activeTimer;
+
+        private MiniTimerWindow miniView;
+        private bool inMiniView;
+        private Rectangle restoreBounds;
+        private FormWindowState restoreWindowState = FormWindowState.Normal;
         #endregion
 
 

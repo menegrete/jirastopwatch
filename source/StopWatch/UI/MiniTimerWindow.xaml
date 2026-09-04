@@ -1,0 +1,172 @@
+﻿<Window x:Class="StopWatch.MiniTimerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:StopWatch"
+        x:ClassModifier="internal"
+        Width="352" Height="40"
+        SizeToContent="Manual"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ShowActivated="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <local:BoolToVisibilityConverter x:Key="WhenTrue" />
+        <local:NotBoolToVisibilityConverter x:Key="WhenFalse" />
+
+        <!-- Flat, borderless icon button. Hover and pressed come from the
+             theme so the mini view reacts like the WinForms buttons do. -->
+        <Style x:Key="GlyphButton" TargetType="Button">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="chrome"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="chrome" Property="Background"
+                                        Value="{DynamicResource ButtonHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="chrome" Property="Background"
+                                        Value="{DynamicResource ButtonPressed}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Margin leaves room for the shadow to fall outside the pill. -->
+    <Border Margin="6"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Border}"
+            BorderThickness="1"
+            CornerRadius="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Direction="270" Opacity="0.45" Color="Black" />
+        </Border.Effect>
+
+        <Grid x:Name="pill">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <!-- stripe -->
+                <ColumnDefinition Width="Auto" />
+                <!-- key -->
+                <ColumnDefinition Width="*" MinWidth="0" />
+                <!-- summary -->
+                <ColumnDefinition Width="Auto" />
+                <!-- other-timers indicator -->
+                <ColumnDefinition Width="Auto" />
+                <!-- time -->
+                <ColumnDefinition Width="Auto" />
+                <!-- pause / resume -->
+                <ColumnDefinition Width="Auto" />
+                <!-- back to full window -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Running/paused state, as a coloured stripe down the left edge.
+                 Same colour the main window uses on the time field. -->
+            <Border Grid.Column="0"
+                    Width="4"
+                    Margin="4,5,6,5"
+                    CornerRadius="2">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource TimerRunning}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding IssueKey}"
+                       Foreground="{DynamicResource Text}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+
+            <!-- The pill is narrow by design, so the full text lives in the
+                 tooltip; only the key and the clock are guaranteed room. -->
+            <TextBlock Grid.Column="2"
+                       Text="{Binding Summary}"
+                       ToolTip="{Binding Summary}"
+                       Foreground="{DynamicResource TextMuted}"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="8,0,8,0"
+                       VerticalAlignment="Center" />
+
+            <!-- Says the time shown is not everything being recorded. -->
+            <Border Grid.Column="3"
+                    Visibility="{Binding HasOtherRunningTimers, Converter={StaticResource WhenTrue}}"
+                    Background="{DynamicResource Accent}"
+                    CornerRadius="4"
+                    Padding="4,1"
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    ToolTip="Another timer is also running">
+                <TextBlock Text="+1"
+                           Foreground="{DynamicResource AccentText}"
+                           FontSize="10"
+                           FontWeight="SemiBold" />
+            </Border>
+
+            <TextBlock Grid.Column="4"
+                       Text="{Binding ElapsedText}"
+                       Foreground="{DynamicResource Text}"
+                       FontFamily="Consolas, Courier New, monospace"
+                       FontWeight="Bold"
+                       Margin="0,0,4,0"
+                       VerticalAlignment="Center" />
+
+            <Button Grid.Column="5"
+                    x:Name="btnToggle"
+                    Style="{StaticResource GlyphButton}"
+                    Click="btnToggle_Click">
+                <Grid>
+                    <!-- pause: two bars -->
+                    <Path Visibility="{Binding IsRunning, Converter={StaticResource WhenTrue}}"
+                          Fill="{DynamicResource Text}"
+                          Data="M 0,0 H 3.5 V 11 H 0 Z M 6,0 H 9.5 V 11 H 6 Z" />
+                    <!-- play: triangle -->
+                    <Path Visibility="{Binding IsRunning, Converter={StaticResource WhenFalse}}"
+                          Fill="{DynamicResource Text}"
+                          Data="M 0,0 L 10,5.5 L 0,11 Z" />
+                </Grid>
+            </Button>
+
+            <Button Grid.Column="6"
+                    x:Name="btnRestore"
+                    Style="{StaticResource GlyphButton}"
+                    Margin="0,0,4,0"
+                    ToolTip="Back to the full window"
+                    Click="btnRestore_Click">
+                <!-- arrow out of a box, pointing up-right -->
+                <Path Stroke="{DynamicResource Text}"
+                      StrokeThickness="1.4"
+                      StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round"
+                      Data="M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2" />
+            </Button>
+        </Grid>
+    </Border>
+</Window>

@@ -29,6 +29,27 @@ namespace StopWatch
             return formatted.Substring(0, formatted.Length - 3) + formatted.Substring(formatted.Length - 2);
         }
 
+        /// <summary>
+        /// Formats a duration as a running clock: "1:23:45" past the hour,
+        /// "23:45" below it.
+        ///
+        /// Deliberately NOT Jira notation. TimeSpanToJiraTime has minute
+        /// resolution, which is right for a worklog but leaves a live display
+        /// frozen for a whole minute at a time.
+        /// </summary>
+        public static string TimeSpanToClockTime(TimeSpan ts)
+        {
+            if (ts < TimeSpan.Zero)
+                ts = TimeSpan.Zero;
+
+            int totalHours = (int)ts.TotalHours;
+
+            if (totalHours > 0)
+                return String.Format("{0}:{1:00}:{2:00}", totalHours, ts.Minutes, ts.Seconds);
+
+            return String.Format("{0}:{1:00}", ts.Minutes, ts.Seconds);
+        }
+
         public static string TimeSpanToJiraTime(TimeSpan ts)
         {
             if (Configuration == null || ts.TotalHours < Configuration.workingHoursPerDay)
