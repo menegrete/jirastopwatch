@@ -50,6 +50,12 @@ namespace StopWatch
         }
 
 
+        public static Image MiniView
+        {
+            get { return Pick(Properties.Resources.miniview16, Properties.Resources.miniview16light); }
+        }
+
+
         private static Image Pick(Image forLightTheme, Image forDarkTheme)
         {
             return Theme.Current.Mode == ThemeMode.Dark ? forDarkTheme : forLightTheme;

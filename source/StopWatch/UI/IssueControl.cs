@@ -29,7 +29,7 @@ using System.Windows.Forms;
 
 namespace StopWatch
 {
-    internal class IssueControl : UserControl
+    internal class IssueControl : UserControl, ITimerSource
     {
         #region public members
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -44,6 +44,31 @@ namespace StopWatch
             {
                 cbJira.Text = value;
                 UpdateSummary();
+            }
+        }
+
+
+        /// <summary>
+        /// The summary text as currently displayed, already carrying whatever
+        /// UpdateSummary composed - project prefix and parent summary included.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Summary
+        {
+            get
+            {
+                return lblSummary.Text;
+            }
+        }
+
+
+        /// <summary>ITimerSource view of <see cref="Current"/>.</summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool IsCurrent
+        {
+            get
+            {
+                return Current;
             }
         }
 
@@ -620,7 +645,7 @@ namespace StopWatch
             using (var worklogForm = new WorklogForm(WatchTimer.GetInitialStartTime(), WatchTimer.TimeElapsedNearestMinute, Comment, EstimateUpdateMethod, EstimateUpdateValue))
             {
                 UpdateRemainingEstimate(worklogForm);
-                var formResult = worklogForm.ShowDialog(this);
+                var formResult = ModalDialog.ShowOver(worklogForm, this);
                 if (formResult == DialogResult.OK)
                 {
                     Comment = worklogForm.Comment.Trim();
@@ -744,7 +769,7 @@ namespace StopWatch
         {
             using (var editTimeForm = new EditTimeForm(WatchTimer.TimeElapsed))
             {
-                if (editTimeForm.ShowDialog(this) == DialogResult.OK)
+                if (ModalDialog.ShowOver(editTimeForm, this) == DialogResult.OK)
                 {
                     WatchTimer.TimeElapsed = editTimeForm.Time;
 

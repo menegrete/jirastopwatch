@@ -53,6 +53,7 @@ namespace StopWatch
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.pbSettings = new System.Windows.Forms.PictureBox();
+            this.pbMiniView = new System.Windows.Forms.PictureBox();
             this.lblConnectionStatus = new System.Windows.Forms.Label();
             this.cbFilters = new System.Windows.Forms.ComboBox();
             this.lblActiveFilter = new System.Windows.Forms.Label();
@@ -67,6 +68,7 @@ namespace StopWatch
             this.pbHelp = new System.Windows.Forms.PictureBox();
             this.pTop = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.pbSettings)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbMiniView)).BeginInit();
             this.pBottom.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbAddIssue)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbHelp)).BeginInit();
@@ -86,6 +88,20 @@ namespace StopWatch
             this.pbSettings.TabStop = false;
             this.ttMain.SetToolTip(this.pbSettings, "Configure Jira Stopwatch");
             this.pbSettings.Click += new System.EventHandler(this.pbSettings_Click);
+            // 
+            // pbMiniView
+            // 
+            this.pbMiniView.BackgroundImage = global::StopWatch.Properties.Resources.miniview16;
+            this.pbMiniView.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.pbMiniView.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.pbMiniView.Location = new System.Drawing.Point(1028, 5);
+            this.pbMiniView.Margin = new System.Windows.Forms.Padding(2);
+            this.pbMiniView.Name = "pbMiniView";
+            this.pbMiniView.Size = new System.Drawing.Size(18, 18);
+            this.pbMiniView.TabIndex = 12;
+            this.pbMiniView.TabStop = false;
+            this.ttMain.SetToolTip(this.pbMiniView, "Shrink to the floating mini view");
+            this.pbMiniView.Click += new System.EventHandler(this.pbMiniView_Click);
             // 
             // lblConnectionStatus
             // 
@@ -162,6 +178,7 @@ namespace StopWatch
             this.pBottom.Controls.Add(this.lblDivider);
             this.pBottom.Controls.Add(this.tbTotalTime);
             this.pBottom.Controls.Add(this.pbSettings);
+            this.pBottom.Controls.Add(this.pbMiniView);
             this.pBottom.Controls.Add(this.lblTotalTime);
             this.pBottom.Controls.Add(this.lblConnectionStatus);
             this.pBottom.Location = new System.Drawing.Point(0, 140);
@@ -234,6 +251,7 @@ namespace StopWatch
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.Resize += new System.EventHandler(this.MainForm_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.pbSettings)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbMiniView)).EndInit();
             this.pBottom.ResumeLayout(false);
             this.pBottom.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbAddIssue)).EndInit();
@@ -247,6 +265,7 @@ namespace StopWatch
         #endregion
 
         private System.Windows.Forms.PictureBox pbSettings;
+        private System.Windows.Forms.PictureBox pbMiniView;
         private System.Windows.Forms.Label lblConnectionStatus;
         private System.Windows.Forms.ComboBox cbFilters;
         private System.Windows.Forms.Label lblActiveFilter;

@@ -262,5 +262,17 @@ namespace StopWatch.Properties {
                 this["MaxIssues"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MiniViewLocation {
+            get {
+                return ((string)(this["MiniViewLocation"]));
+            }
+            set {
+                this["MiniViewLocation"] = value;
+            }
+        }
     }
 }

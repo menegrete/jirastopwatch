@@ -142,7 +142,7 @@ namespace StopWatch
         {
             using (var aboutForm = new AboutForm())
             {
-                aboutForm.ShowDialog(this);
+                ModalDialog.ShowOver(aboutForm, this);
             }
         }
         #endregion
