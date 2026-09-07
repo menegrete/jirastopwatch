@@ -21,6 +21,12 @@
 
   <ItemGroup>
     <PackageReference Include="RestSharp" />
+    <!-- MIT-licensed (unlike Extended WPF Toolkit, which is Xceed's
+         non-commercial-only Community License) - brought in solely for its
+         TimePicker, since WPF has no built-in one. Its resource dictionaries
+         are merged locally around just that control (see WorklogWindow.xaml)
+         rather than app-wide, so they don't override this app's own theme. -->
+    <PackageReference Include="MaterialDesignThemes" />
   </ItemGroup>
 
   <ItemGroup>

@@ -21,7 +21,6 @@
  */
 
 using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -98,6 +97,8 @@ namespace StopWatch
 
             InitializeComponent();
 
+            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
+
             Result = WorklogResult.Cancel;
 
             if (!string.IsNullOrEmpty(comment))
@@ -112,8 +113,8 @@ namespace StopWatch
             // reading it repeatedly off the DateTimeOffset was observed to
             // shift the time zone.
             DateTime local = startTime.LocalDateTime;
-            tbStartDate.Text = local.ToString("d", CultureInfo.CurrentCulture);
-            tbStartTime.Text = local.ToString("HH:mm", CultureInfo.CurrentCulture);
+            dpStartDate.SelectedDate = local.Date;
+            tpStartTime.SelectedTime = local;
 
             switch (estimateUpdateMethod)
             {
@@ -247,27 +248,13 @@ namespace StopWatch
 
         private DateTime StartDate
         {
-            get
-            {
-                DateTime parsed;
-                if (DateTime.TryParse(tbStartDate.Text, CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed))
-                    return parsed.Date;
-
-                return DateTime.Now.Date;
-            }
+            get { return dpStartDate.SelectedDate ?? DateTime.Now.Date; }
         }
 
 
         private TimeSpan StartTimeOfDay
         {
-            get
-            {
-                DateTime parsed;
-                if (DateTime.TryParse(tbStartTime.Text, CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed))
-                    return parsed.TimeOfDay;
-
-                return DateTime.Now.TimeOfDay;
-            }
+            get { return tpStartTime.SelectedTime?.TimeOfDay ?? DateTime.Now.TimeOfDay; }
         }
 
 
