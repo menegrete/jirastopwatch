@@ -112,7 +112,8 @@
                             CornerRadius="3">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}" />
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -241,7 +242,7 @@
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
                         </Border>
-                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" />
+                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
@@ -282,7 +283,7 @@
                                      Width="6" Height="6"
                                      Fill="{DynamicResource Text}" />
                         </Border>
-                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" />
+                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">

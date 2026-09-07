@@ -35,8 +35,20 @@
 
         <TextBlock Text="Start Time" Style="{StaticResource SectionHeader}" />
 
+        <!--
+            Plain themed TextBoxes rather than a DatePicker: DatePicker's
+            default template (the calendar-icon button, the popup calendar)
+            is unstyled by anything in Styles.xaml, so it rendered with
+            WPF's stock light theme - unreadable against the rest of this
+            dialog, and its own internal layout kept it from lining up
+            cleanly with the time field beside it. A typed date needs no
+            template of its own to theme.
+        -->
         <StackPanel Orientation="Horizontal">
-            <DatePicker x:Name="startDatePicker" Width="130" />
+            <TextBox x:Name="tbStartDate"
+                     Width="100"
+                     TextAlignment="Center"
+                     ToolTip="Start date of the worklog" />
             <TextBox x:Name="tbStartTime"
                      Width="80"
                      Margin="8,0,0,0"

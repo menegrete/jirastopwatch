@@ -272,6 +272,20 @@ namespace StopWatchTest
 
 
         [Test]
+        public void CanPost_IsAnnouncedWhenSetDirectly()
+        {
+            // Regression test: CanPost used to read WatchTimer.TimeElapsed
+            // directly, which SetTimeElapsed had already updated by the time
+            // Refresh() took its "before" snapshot, so the before/after
+            // comparison never found a difference to announce - the value was
+            // right, but the post-worklog button's binding never learned that.
+            model.SetTimeElapsed(TimeSpan.FromMinutes(5));
+
+            Assert.That(changed, Contains.Item("CanPost"));
+        }
+
+
+        [Test]
         public void Reset_ClearsTheTimeAndAnnouncesIt()
         {
             model.SetTimeElapsed(TimeSpan.FromHours(2));

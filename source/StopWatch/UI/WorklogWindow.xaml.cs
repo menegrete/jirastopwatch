@@ -86,11 +86,7 @@ namespace StopWatch
 
         public DateTimeOffset InitialStartTime
         {
-            get
-            {
-                DateTime date = startDatePicker.SelectedDate ?? DateTime.Now.Date;
-                return date.Date + StartTimeOfDay;
-            }
+            get { return StartDate + StartTimeOfDay; }
         }
         #endregion
 
@@ -116,7 +112,7 @@ namespace StopWatch
             // reading it repeatedly off the DateTimeOffset was observed to
             // shift the time zone.
             DateTime local = startTime.LocalDateTime;
-            startDatePicker.SelectedDate = local.Date;
+            tbStartDate.Text = local.ToString("d", CultureInfo.CurrentCulture);
             tbStartTime.Text = local.ToString("HH:mm", CultureInfo.CurrentCulture);
 
             switch (estimateUpdateMethod)
@@ -246,6 +242,19 @@ namespace StopWatch
 
             Result = WorklogResult.Post;
             DialogResult = true;
+        }
+
+
+        private DateTime StartDate
+        {
+            get
+            {
+                DateTime parsed;
+                if (DateTime.TryParse(tbStartDate.Text, CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed))
+                    return parsed.Date;
+
+                return DateTime.Now.Date;
+            }
         }
 
 

@@ -156,10 +156,18 @@ namespace StopWatch
         /// <summary>
         /// Whether posting is available. Jira rejects a worklog below a minute,
         /// so a row under that threshold cannot post yet.
+        ///
+        /// Reads the cached <see cref="timeElapsed"/> rather than
+        /// WatchTimer.TimeElapsedNearestMinute directly - the same reason
+        /// CanReset does. Refresh() sets WatchTimer's value before it runs
+        /// (via SetTimeElapsed), so a getter that reads WatchTimer live would
+        /// already reflect the new value when Refresh() captures its "before"
+        /// snapshot, and the before/after comparison below would never see a
+        /// difference to announce.
         /// </summary>
         public bool CanPost
         {
-            get { return WatchTimer.TimeElapsedNearestMinute.TotalMinutes >= 1; }
+            get { return Math.Ceiling(timeElapsed.TotalMinutes) >= 1; }
         }
 
 
