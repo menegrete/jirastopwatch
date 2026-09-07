@@ -51,7 +51,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="155" />
+                        <ColumnDefinition Width="109" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
                         <ColumnDefinition Width="Auto" />
@@ -184,7 +184,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="175" />
+                        <ColumnDefinition Width="123" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
                         <ColumnDefinition Width="Auto" />
