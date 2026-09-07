@@ -132,6 +132,20 @@ namespace StopWatch
 
 
         /// <summary>
+        /// Announces that <see cref="Density"/> changed after being written
+        /// directly to Settings, as the settings dialog does, bypassing the
+        /// property setter above and the change notification it would
+        /// otherwise raise. Without this, the list keeps the row template it
+        /// already had until the next restart, even though the new density is
+        /// already saved.
+        /// </summary>
+        public void NotifyDensityChanged()
+        {
+            Raise("Density");
+        }
+
+
+        /// <summary>
         /// Fills the list from what the last run saved, one row per persisted
         /// issue and at least one row always.
         /// </summary>

@@ -982,6 +982,7 @@ namespace StopWatch
         {
             ThemeMode themeBefore = settings.Theme;
             int maxIssuesBefore = settings.MaxIssues;
+            ListDensity densityBefore = settings.ListDensity;
 
             var dialog = new SettingsWindow(settings) { Owner = this };
             if (dialog.ShowDialog() != true)
@@ -1001,6 +1002,13 @@ namespace StopWatch
 
             if (settings.MaxIssues != maxIssuesBefore)
                 UpdateAddIssueTooltip();
+
+            // The dialog wrote the new density straight to Settings, bypassing
+            // IssueListViewModel.Density's own change notification, so the
+            // list has to be told explicitly or it keeps the old row template
+            // until the app restarts.
+            if (settings.ListDensity != densityBefore)
+                issues.NotifyDensityChanged();
 
             ClampHeightToWorkingArea();
 
