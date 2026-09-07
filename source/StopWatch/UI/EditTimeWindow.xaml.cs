@@ -45,6 +45,7 @@ namespace StopWatch
             Time = time;
             tbTime.Text = JiraTimeHelpers.TimeSpanToJiraTime(Time);
 
+            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
             Loaded += (s, e) => { tbTime.SelectAll(); tbTime.Focus(); };
         }
         #endregion

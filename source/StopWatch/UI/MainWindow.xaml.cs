@@ -106,6 +106,7 @@ namespace StopWatch
         public void ApplyTheme()
         {
             ThemeBrushes.ApplyToApplication();
+            NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
 
             // Animated colours are held in each element's own brush rather than
             // in the dictionary, so they have to be told to re-read the theme.
@@ -191,6 +192,11 @@ namespace StopWatch
             HwndSource source = (HwndSource)PresentationSource.FromVisual(this);
             if (source != null)
                 source.AddHook(WndProcHook);
+
+            // The constructor's own ApplyTheme() call ran before the window
+            // had a handle, so the title bar's dark-mode flag never reached
+            // DWM then; now that SourceInitialized has fired, it can.
+            NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
         }
 
 

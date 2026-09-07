@@ -54,6 +54,8 @@ namespace StopWatch
 
             InitializeComponent();
 
+            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
+
             // Mono for MacOSX and Linux do not implement the notify icon, so
             // the feature is hidden where it does not exist.
             cbMinimizeToTray.Visibility = CrossPlatformHelpers.IsWindowsEnvironment()

@@ -22,6 +22,8 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Interop;
 
 namespace StopWatch
 {
@@ -33,9 +35,13 @@ namespace StopWatch
     ///
     /// What used to be here besides this was a block of dark-mode interop -
     /// DwmSetWindowAttribute, SetWindowTheme, and SetPreferredAppMode reached
-    /// through uxtheme by ordinal because it has no exported name. All of it
-    /// existed to make WinForms controls respect a dark palette. With the UI in
-    /// WPF the palette is the application's own, so none of it is needed.
+    /// through uxtheme by ordinal because it has no exported name. That block
+    /// existed to make WinForms CONTROLS respect a dark palette, and with the
+    /// UI in WPF none of it is needed for that. DwmSetWindowAttribute came
+    /// back on its own, though: it is what the OS actually reads to decide
+    /// whether a window's own title bar (which WPF does not draw or theme at
+    /// all - it is non-client area, owned by DWM) is light or dark, and
+    /// nothing about that changed by moving the client area to WPF.
     /// </summary>
     class NativeMethods
     {
@@ -48,6 +54,29 @@ namespace StopWatch
 
         [DllImport("user32")]
         public static extern int RegisterWindowMessage(string message);
+
+
+        /// <summary>
+        /// Tells DWM whether this window's own title bar should be dark or
+        /// light. A no-op before the window's handle exists (i.e. before
+        /// SourceInitialized) - callers made before then are expected to rely
+        /// on a later call, not on this one retrying.
+        /// </summary>
+        public static void SetTitleBarDarkMode(Window window, bool dark)
+        {
+            IntPtr hwnd = new WindowInteropHelper(window).Handle;
+            if (hwnd == IntPtr.Zero)
+                return;
+
+            int useDarkMode = dark ? 1 : 0;
+            DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+        }
+
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
     }
 
     public enum EstimateUpdateMethods
