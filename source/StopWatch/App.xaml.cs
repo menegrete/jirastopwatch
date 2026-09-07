@@ -131,10 +131,7 @@ namespace StopWatch
 
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            WriteLog("Unhandled Dispatcher Exception");
-            WriteException(e.Exception);
-
-            DisplayErrorHandled();
+            ReportException("Unhandled Dispatcher Exception", e.Exception);
 
             // Handled so that one failed interaction does not take the whole
             // application down, which is how the WinForms thread-exception
@@ -145,9 +142,22 @@ namespace StopWatch
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            WriteLog("Unhandled UI Exception");
+            ReportException("Unhandled UI Exception", e.ExceptionObject as Exception);
+        }
+        #endregion
 
-            WriteException(e.ExceptionObject as Exception);
+
+        #region internal methods
+        /// <summary>
+        /// The one place any caught-but-otherwise-unhandled exception is
+        /// reported from, whatever caught it: the dispatcher, the app domain,
+        /// or <see cref="FireAndForgetExtensions.FireAndForget"/> observing a
+        /// task nobody else was going to.
+        /// </summary>
+        internal static void ReportException(string context, Exception exception)
+        {
+            WriteLog(context);
+            WriteException(exception);
 
             DisplayErrorHandled();
         }
@@ -156,12 +166,16 @@ namespace StopWatch
 
         #region private methods
         /// <summary>
-        /// Reports a crash, once.
+        /// Reports a crash, guarding only against showing a second dialog while
+        /// the first is still open.
         ///
-        /// The guard is not paranoia: a failure raised from a layout pass is
-        /// raised again by the message loop this dialog runs, and without it
-        /// the report becomes an endless stack of dialogs that ends in a stack
-        /// overflow.
+        /// The guard is not paranoia: MessageBox.Show pumps its own message
+        /// loop, and a failure raised from a layout pass is raised again by
+        /// that loop - without a guard the report becomes an endless stack of
+        /// dialogs that ends in a stack overflow. The guard is released once
+        /// this dialog closes, so a later, unrelated crash still gets its own
+        /// report instead of being silently swallowed for the rest of the
+        /// process's life.
         /// </summary>
         private static void DisplayErrorHandled()
         {
@@ -169,10 +183,16 @@ namespace StopWatch
                 return;
 
             reportingError = true;
-
-            MessageBox.Show(
-                string.Format("Jira StopWatch encountered an unhandled error. A logfile has been created. If the error continues to occur, please send the logfile content to carsten@sarum.dk.\n\nSee more details in the logfile:\n\n{0}", LogPath),
-                "Unhandled error occurred");
+            try
+            {
+                MessageBox.Show(
+                    string.Format("Jira StopWatch encountered an unhandled error. A logfile has been created. If the error continues to occur, please send the logfile content to carsten@sarum.dk.\n\nSee more details in the logfile:\n\n{0}", LogPath),
+                    "Unhandled error occurred");
+            }
+            finally
+            {
+                reportingError = false;
+            }
         }
 
 

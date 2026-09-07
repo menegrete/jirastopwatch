@@ -29,7 +29,9 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Navigation;
+using Screen = System.Windows.Forms.Screen;
 
 namespace StopWatch
 {
@@ -60,7 +62,7 @@ namespace StopWatch
 
             tbJiraBaseUrl.Text = settings.JiraBaseUrl;
             tbUsername.Text = settings.Username;
-            tbApiToken.Text = settings.ApiToken;
+            tbApiToken.Password = settings.ApiToken;
 
             cbAlwaysOnTop.IsChecked = settings.AlwaysOnTop;
             cbMinimizeToTray.IsChecked = settings.MinimizeToTray;
@@ -106,7 +108,7 @@ namespace StopWatch
         {
             settings.JiraBaseUrl = tbJiraBaseUrl.Text;
             settings.Username = tbUsername.Text;
-            settings.ApiToken = tbApiToken.Text;
+            settings.ApiToken = tbApiToken.Password;
 
             settings.AlwaysOnTop = cbAlwaysOnTop.IsChecked == true;
             settings.MinimizeToTray = cbMinimizeToTray.IsChecked == true;
@@ -132,6 +134,21 @@ namespace StopWatch
         private void btnAbout_Click(object sender, RoutedEventArgs e)
         {
             new AboutWindow { Owner = this }.ShowDialog();
+        }
+
+
+        /// <summary>
+        /// Clamps the dialog to the working area of the screen it landed on,
+        /// rather than a fixed guess. A fixed cap shorter than the settings
+        /// list forced the inner ScrollViewer to scroll even on an ordinary
+        /// monitor; the real limit is only ever the screen itself.
+        /// </summary>
+        private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            var workingArea = Screen.FromHandle(handle).WorkingArea;
+
+            MaxHeight = Math.Max(workingArea.Height - 40, 300);
         }
 
 
@@ -216,6 +233,18 @@ namespace StopWatch
             {
                 Text = text;
                 Value = value;
+            }
+
+            /// <summary>
+            /// Defensive fallback: ItemTemplate is what actually renders a
+            /// choice, but anything that falls back to displaying the object
+            /// itself (a tooltip, automation, and previously the combo box's
+            /// own face before ItemTemplate replaced DisplayMemberPath here)
+            /// should still say the friendly text, not the generic type name.
+            /// </summary>
+            public override string ToString()
+            {
+                return Text;
             }
         }
         #endregion

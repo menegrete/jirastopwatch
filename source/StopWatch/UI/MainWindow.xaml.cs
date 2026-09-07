@@ -471,7 +471,7 @@ namespace StopWatch
 
         private void AuthenticateJira(string username, string apiToken)
         {
-            _ = AuthenticateJiraAsync(username, apiToken);
+            AuthenticateJiraAsync(username, apiToken).FireAndForget();
         }
 
 
@@ -490,7 +490,7 @@ namespace StopWatch
 
         private void UpdateJiraRelatedData(bool firstTick)
         {
-            _ = UpdateJiraRelatedDataAsync(firstTick);
+            UpdateJiraRelatedDataAsync(firstTick).FireAndForget();
         }
 
 
@@ -542,7 +542,7 @@ namespace StopWatch
 
         private void UpdateSummary(IssueViewModel issue)
         {
-            _ = UpdateSummaryAsync(issue);
+            UpdateSummaryAsync(issue).FireAndForget();
         }
 
 
@@ -561,7 +561,7 @@ namespace StopWatch
         {
             // Fire and forget: the combo repaints itself from FiltersLoaded
             // once the answer arrives.
-            _ = filterProvider.LoadAsync();
+            filterProvider.LoadAsync().FireAndForget();
         }
 
 
@@ -590,7 +590,7 @@ namespace StopWatch
             if (!settings.CheckForUpdate)
                 return;
 
-            _ = CheckForUpdatesAsync();
+            CheckForUpdatesAsync().FireAndForget();
         }
 
 
@@ -619,7 +619,7 @@ namespace StopWatch
             if (string.IsNullOrWhiteSpace(settings.StartTransitions))
                 return;
 
-            _ = ChangeIssueStateAsync(issueKey);
+            ChangeIssueStateAsync(issueKey).FireAndForget();
         }
 
 
@@ -958,7 +958,7 @@ namespace StopWatch
 
         private void LoadIssues(IssueViewModel issue)
         {
-            _ = LoadIssuesAsync(issue);
+            LoadIssuesAsync(issue).FireAndForget();
         }
 
 
@@ -1038,7 +1038,7 @@ namespace StopWatch
 
             // Deliberately not awaited: the dialog has to come up right away,
             // and the estimate fills itself in once Jira answers.
-            _ = FillRemainingEstimateAsync(dialog, issue.IssueKey);
+            FillRemainingEstimateAsync(dialog, issue.IssueKey).FireAndForget();
 
             dialog.ShowDialog();
 
@@ -1048,7 +1048,7 @@ namespace StopWatch
                 issue.EstimateUpdateMethod = dialog.EstimateUpdateMethod;
                 issue.EstimateUpdateValue = dialog.EstimateValue;
 
-                _ = PostWorklogAsync(issue, dialog.InitialStartTime);
+                PostWorklogAsync(issue, dialog.InitialStartTime).FireAndForget();
             }
             else if (dialog.Result == WorklogResult.SaveForLater)
             {

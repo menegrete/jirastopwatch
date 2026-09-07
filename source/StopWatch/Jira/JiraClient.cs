@@ -67,6 +67,12 @@ namespace StopWatch
                 ErrorMessage = jiraApiRequester.ErrorMessage;
                 return false;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                // No credentials to validate a session with yet - not a
+                // connection failure, just nothing to report as connected.
+                return false;
+            }
         }
 
 
@@ -81,6 +87,10 @@ namespace StopWatch
             {
                 return null;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return null;
+            }
         }
 
 
@@ -92,6 +102,10 @@ namespace StopWatch
                 return jiraApiRequester.DoAuthenticatedRequest<SearchResult>(request);
             }
             catch (RequestDeniedException)
+            {
+                return null;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return null;
             }
@@ -116,6 +130,10 @@ namespace StopWatch
             {
                 return string.Empty;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return string.Empty;
+            }
         }
 
         public TimetrackingFields GetIssueTimetracking(string key)
@@ -126,6 +144,10 @@ namespace StopWatch
                 return jiraApiRequester.DoAuthenticatedRequest<Issue>(request).Fields.Timetracking;
             }
             catch (RequestDeniedException)
+            {
+                return null;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return null;
             }
@@ -143,6 +165,10 @@ namespace StopWatch
             {
                 return null;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return null;
+            }
         }
 
         public bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
@@ -154,6 +180,10 @@ namespace StopWatch
                 return true;
             }
             catch (RequestDeniedException)
+            {
+                return false;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return false;
             }
@@ -172,6 +202,10 @@ namespace StopWatch
             {
                 return false;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return false;
+            }
         }
 
 
@@ -183,6 +217,10 @@ namespace StopWatch
                 return jiraApiRequester.DoAuthenticatedRequest<AvailableTransitions>(request);
             }
             catch (RequestDeniedException)
+            {
+                return null;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return null;
             }
@@ -198,6 +236,10 @@ namespace StopWatch
                 return true;
             }
             catch (RequestDeniedException)
+            {
+                return false;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return false;
             }

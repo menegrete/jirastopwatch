@@ -72,6 +72,25 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Danger}" />
     </Style>
 
+    <!-- Same look as TextBox, for the one field - the API token - that has to
+         mask what it holds. PasswordBox is not a TextBox, so it needs its own
+         style rather than BasedOn. -->
+    <Style TargetType="PasswordBox">
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="3,2" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource SurfaceActive}" />
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ==================== buttons ==================== -->
 
     <Style TargetType="Button">
