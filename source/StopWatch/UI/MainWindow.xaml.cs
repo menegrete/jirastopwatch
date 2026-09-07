@@ -532,6 +532,13 @@ namespace StopWatch
 
         private void UpdateSummary(IssueViewModel issue)
         {
+            // Null happens: LostFocus can still fire for a row's key field
+            // while its container is being torn down (removed via Ctrl+Delete,
+            // for instance), by which point RowOf(sender) reads a DataContext
+            // that has already been cleared.
+            if (issue == null)
+                return;
+
             UpdateSummaryAsync(issue).FireAndForget();
         }
 
@@ -601,12 +608,6 @@ namespace StopWatch
         private void btnMiniView_Click(object sender, RoutedEventArgs e)
         {
             EnterMiniView();
-        }
-
-
-        private void btnHelp_Click(object sender, RoutedEventArgs e)
-        {
-            AppInfo.OpenUrl("http://jirastopwatch.com/doc");
         }
 
 
@@ -724,6 +725,60 @@ namespace StopWatch
 
 
         #region actions, one per shortcut
+        /// <summary>
+        /// Six of the thirteen shortcuts share their gesture with a built-in
+        /// TextBox editing command - Ctrl+Up/Down (move by paragraph), Ctrl+C/V
+        /// (copy/paste the selection), Ctrl+Delete (delete next word) and
+        /// Ctrl+I (toggle italic). Those claim the key first whenever the
+        /// issue-key field has focus and mark it handled, even though a
+        /// single-line field has no paragraph to move by or formatting to
+        /// toggle - so the CommandBindings below never see the keystroke.
+        ///
+        /// Catching them here, at the window's Preview (tunnelling) stage,
+        /// wins the race: the event reaches the window before it reaches the
+        /// focused TextBox, so this runs first regardless of what has focus.
+        /// </summary>
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control)
+                return;
+
+            switch (e.Key)
+            {
+                case Key.Up:
+                    issues.SelectPrevious();
+                    BringCurrentIntoView();
+                    break;
+
+                case Key.Down:
+                    issues.SelectNext();
+                    BringCurrentIntoView();
+                    break;
+
+                case Key.C:
+                    CopyKey(issues.Current);
+                    break;
+
+                case Key.V:
+                    PasteKey(issues.Current);
+                    break;
+
+                case Key.Delete:
+                    RemoveIssue(issues.Current);
+                    break;
+
+                case Key.I:
+                    FocusKey(issues.Current);
+                    break;
+
+                default:
+                    return;
+            }
+
+            e.Handled = true;
+        }
+
+
         private void RegisterCommands()
         {
             Bind(StopWatchCommands.SelectPrevious, () => { issues.SelectPrevious(); BringCurrentIntoView(); });

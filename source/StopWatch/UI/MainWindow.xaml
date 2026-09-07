@@ -12,7 +12,8 @@
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
         FontFamily="Segoe UI"
-        FontSize="12">
+        FontSize="12"
+        PreviewKeyDown="MainWindow_PreviewKeyDown">
 
     <!--
         The height is derived, not chosen: SizeToContent="Height" makes the
@@ -49,15 +50,15 @@
                                        MouseLeftButtonUp="Row_MouseSelected">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" SharedSizeGroup="RowStripe" />
-                        <ColumnDefinition Width="155" SharedSizeGroup="RowKey" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowOpen" />
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="155" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowStartStop" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowTime" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowPost" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowReset" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowRemove" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Selection, said again without colour: the transition is
@@ -182,15 +183,15 @@
                                        MouseLeftButtonUp="Row_MouseSelected">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" SharedSizeGroup="RowStripe" />
-                        <ColumnDefinition Width="175" SharedSizeGroup="RowKey" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowOpen" />
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="175" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowStartStop" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowTime" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowPost" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowReset" />
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="RowRemove" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Selection, said again without colour: the transition is
@@ -308,14 +309,7 @@
 
     </Window.Resources>
 
-    <!--
-        IsSharedSizeScope ties the row templates' column widths to the bottom
-        bar's, via the SharedSizeGroup names on their ColumnDefinitions below.
-        This is what keeps the Total field lined up under the time column
-        without hard-coding a width that would drift the moment the density,
-        font size, or window width changes.
-    -->
-    <Grid Grid.IsSharedSizeScope="True">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -350,29 +344,32 @@
         <!-- ==================== status bar ==================== -->
 
         <!--
-            Everything that used to live in the top accent band - connection
-            status, mini view, settings, help - moved down here once removing
-            Filter left that band with nothing else in it. Plain background
-            now, not the accent colour, so these use the same glyph/text
-            styles as everything else instead of the accent-band variants.
+            One line: add / mini view / settings / connection status, then
+            whatever room is left, then the total. DockPanel with
+            LastChildFill="False" - every child docks to a side and eats its
+            own strip, so the gap between the last Left child and the first
+            Right child is the free space, with no filler element needed.
+
+            The total's column no longer lines up under the list's time
+            column pixel-for-pixel: fitting four controls before the free
+            space left no room to keep mirroring the row's own columns
+            without also widening them (the row's key and open-in-browser
+            columns would have had to grow to fit controls that have nothing
+            to do with either).
         -->
         <StackPanel Grid.Row="1">
             <Border Style="{StaticResource Divider}" Margin="0" />
 
-            <Grid Margin="8,4,8,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <DockPanel Margin="8,4" LastChildFill="False">
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnAddIssue"
+                        Style="{StaticResource GlyphButton}"
+                        ToolTip="Add another issue row (CTRL-N)"
+                        Click="btnAddIssue_Click">
+                    <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphAdd}" />
+                </Button>
 
-                <TextBlock Grid.Column="0"
-                           x:Name="lblConnectionStatus"
-                           VerticalAlignment="Center"
-                           MouseLeftButtonUp="lblConnectionStatus_Click" />
-
-                <Button Grid.Column="1"
+                <Button DockPanel.Dock="Left"
                         x:Name="btnMiniView"
                         Style="{StaticResource GlyphButton}"
                         ToolTip="Shrink to the floating mini timer"
@@ -380,7 +377,7 @@
                     <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphMiniView}" />
                 </Button>
 
-                <Button Grid.Column="2"
+                <Button DockPanel.Dock="Left"
                         x:Name="btnSettings"
                         Style="{StaticResource GlyphButton}"
                         ToolTip="Settings"
@@ -400,57 +397,28 @@
                     </Grid>
                 </Button>
 
-                <Button Grid.Column="3"
-                        x:Name="btnHelp"
-                        Style="{StaticResource GlyphButton}"
-                        ToolTip="Open the documentation"
-                        Click="btnHelp_Click">
-                    <TextBlock Text="?" FontWeight="Bold" FontSize="13" />
-                </Button>
-            </Grid>
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblConnectionStatus"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           MouseLeftButtonUp="lblConnectionStatus_Click" />
 
-            <!--
-                Mirrors the row templates' column structure via the same
-                SharedSizeGroup names, columns 0-4 and 6-8 left empty on
-                purpose. That is what makes the Total field's column measure
-                to exactly the same width, at exactly the same X, as the time
-                field's column in whichever row template is active - rather
-                than a number picked by eye that would drift the moment the
-                density or window width changes.
-            -->
-            <Grid Margin="8,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="4" SharedSizeGroup="RowStripe" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowKey" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowOpen" />
-                    <ColumnDefinition Width="*" MinWidth="0" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowStartStop" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowTime" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowPost" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowReset" />
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="RowRemove" />
-                </Grid.ColumnDefinitions>
-
-                <Button Grid.Column="1"
-                        x:Name="btnAddIssue"
-                        Style="{StaticResource GlyphButton}"
-                        HorizontalAlignment="Left"
-                        Click="btnAddIssue_Click">
-                    <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphAdd}" />
-                </Button>
-
-                <TextBlock Grid.Column="4"
-                           Text="Total"
-                           Style="{StaticResource MutedText}"
-                           HorizontalAlignment="Right"
-                           Margin="0,0,8,0" />
-
-                <TextBox Grid.Column="5"
+                <!-- Right-docked children carve from the right inward, so the
+                     value has to be listed before its label to end up to the
+                     label's right. -->
+                <TextBox DockPanel.Dock="Right"
+                         Width="90"
                          IsReadOnly="True"
                          TextAlignment="Right"
                          FontFamily="Consolas, Courier New, monospace"
                          Text="{Binding TotalTimeText, Mode=OneWay}" />
-            </Grid>
+
+                <TextBlock DockPanel.Dock="Right"
+                           Text="Total"
+                           Style="{StaticResource MutedText}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+            </DockPanel>
         </StackPanel>
     </Grid>
 </Window>
