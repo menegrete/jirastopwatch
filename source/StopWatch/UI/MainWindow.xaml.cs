@@ -700,23 +700,23 @@ namespace StopWatch
         }
 
 
-        private void cbJira_LostFocus(object sender, RoutedEventArgs e)
+        private void tbIssueKey_LostFocus(object sender, RoutedEventArgs e)
         {
             UpdateSummary(RowOf(sender));
         }
 
 
-        private void cbJira_KeyDown(object sender, KeyEventArgs e)
+        private void tbIssueKey_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key != Key.Enter)
                 return;
 
-            ComboBox combo = (ComboBox)sender;
+            TextBox field = (TextBox)sender;
             IssueViewModel issue = RowOf(sender);
             if (issue == null)
                 return;
 
-            issue.IssueKey = combo.Text;
+            issue.IssueKey = field.Text;
             UpdateSummary(issue);
             e.Handled = true;
         }
@@ -738,7 +738,6 @@ namespace StopWatch
             Bind(StopWatchCommands.CopyKey, () => CopyKey(issues.Current));
             Bind(StopWatchCommands.PasteKey, () => PasteKey(issues.Current));
             Bind(StopWatchCommands.OpenInBrowser, () => OpenInBrowser(issues.Current));
-            Bind(StopWatchCommands.OpenKeyList, () => OpenKeyList(issues.Current));
         }
 
 
@@ -797,20 +796,9 @@ namespace StopWatch
 
         private void FocusKey(IssueViewModel issue)
         {
-            ComboBox combo = KeyFieldOf(issue);
-            if (combo != null)
-                combo.Focus();
-        }
-
-
-        private void OpenKeyList(IssueViewModel issue)
-        {
-            ComboBox combo = KeyFieldOf(issue);
-            if (combo == null)
-                return;
-
-            combo.Focus();
-            combo.IsDropDownOpen = true;
+            TextBox field = KeyFieldOf(issue);
+            if (field != null)
+                field.Focus();
         }
 
 
@@ -1032,10 +1020,10 @@ namespace StopWatch
         }
 
 
-        private ComboBox KeyFieldOf(IssueViewModel issue)
+        private TextBox KeyFieldOf(IssueViewModel issue)
         {
             FrameworkElement container = ContainerOf(issue);
-            return container == null ? null : Descendants<ComboBox>(container).FirstOrDefault();
+            return container == null ? null : Descendants<TextBox>(container).FirstOrDefault();
         }
 
 

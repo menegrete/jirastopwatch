@@ -28,10 +28,13 @@ namespace StopWatch
     /// The main window's keyboard shortcuts, one command per shortcut with its
     /// gesture attached.
     ///
-    /// These are the thirteen shortcuts MainForm.ProcessCmdKey handled as a
-    /// chain of if statements. They were listed one by one in the change's
-    /// inventory.md before that method was deleted, and each one here carries
-    /// the same gesture and drives the same action as the entry it came from.
+    /// These started as the thirteen shortcuts MainForm.ProcessCmdKey handled
+    /// as a chain of if statements, listed one by one in the change's
+    /// inventory.md before that method was deleted; each one here carries the
+    /// same gesture and drives the same action as the entry it came from.
+    /// Alt+Down (open the key completion list) was later removed along with
+    /// the completion list itself, once the Filter feature that fed it was
+    /// gone.
     /// </summary>
     internal static class StopWatchCommands
     {
@@ -82,10 +85,6 @@ namespace StopWatch
         /// <summary>Ctrl+O - open the selected issue in a browser.</summary>
         public static readonly RoutedUICommand OpenInBrowser =
             Make("Open issue in browser", "OpenInBrowser", Key.O, ModifierKeys.Control);
-
-        /// <summary>Alt+Down - drop down the selected row's key field.</summary>
-        public static readonly RoutedUICommand OpenKeyList =
-            Make("Open issue key list", "OpenKeyList", Key.Down, ModifierKeys.Alt);
 
 
         private static RoutedUICommand Make(string text, string name, Key key, ModifierKeys modifiers)
