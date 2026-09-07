@@ -71,8 +71,11 @@ namespace StopWatch
 
         private void tbTime_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
-            // Typing clears the complaint, as it did before.
-            tbTime.Style = null;
+            // ClearValue, not Style = null: assigning null pins the field to
+            // "no style" rather than reverting to the implicit dark TextBox
+            // style, which is why the field would stay looking unstyled even
+            // once the complaint was actually gone.
+            tbTime.ClearValue(StyleProperty);
         }
         #endregion
     }

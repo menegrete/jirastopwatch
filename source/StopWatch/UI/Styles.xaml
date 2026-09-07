@@ -170,6 +170,43 @@
         </Setter>
     </Style>
 
+    <!--
+        One half of a numeric field's up/down stepper. RepeatButton rather than
+        Button: holding it down keeps incrementing, which is the one thing a
+        plain button can't do and the native up-down control could.
+    -->
+    <Style x:Key="StepperButton" TargetType="RepeatButton">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="11" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border x:Name="chrome"
+                            Background="{DynamicResource Surface}"
+                            BorderBrush="{DynamicResource Border}"
+                            BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ==================== toggles ==================== -->
 
     <!--
@@ -461,6 +498,8 @@
     <Geometry x:Key="GlyphOpenBrowser">M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2</Geometry>
     <Geometry x:Key="GlyphMiniView">M 0,1 H 11 V 10 H 0 Z M 6,6 H 10 V 9.5 H 6 Z</Geometry>
     <Geometry x:Key="GlyphSettingsBars">M 0,2.5 H 2.5 M 6.5,2.5 H 11 M 0,8.5 H 5 M 9,8.5 H 11</Geometry>
+    <Geometry x:Key="GlyphTriangleUp">M 0,4 L 4,0 L 8,4 Z</Geometry>
+    <Geometry x:Key="GlyphTriangleDown">M 0,0 L 8,0 L 4,4 Z</Geometry>
 
     <!-- A stroked glyph inside a GlyphButton. -->
     <Style x:Key="GlyphPath" TargetType="Path">

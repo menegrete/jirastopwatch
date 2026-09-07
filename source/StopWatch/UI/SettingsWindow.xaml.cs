@@ -68,7 +68,6 @@ namespace StopWatch
             cbMinimizeToTray.IsChecked = settings.MinimizeToTray;
             cbAllowMultipleTimers.IsChecked = settings.AllowMultipleTimers;
             cbIncludeProjectName.IsChecked = settings.IncludeProjectName;
-            cbCheckForUpdate.IsChecked = settings.CheckForUpdate;
             cbLoggingEnabled.IsChecked = settings.LoggingEnabled;
 
             Fill(cbSaveTimerState, settings.SaveTimerState,
@@ -114,7 +113,6 @@ namespace StopWatch
             settings.MinimizeToTray = cbMinimizeToTray.IsChecked == true;
             settings.AllowMultipleTimers = cbAllowMultipleTimers.IsChecked == true;
             settings.IncludeProjectName = cbIncludeProjectName.IsChecked == true;
-            settings.CheckForUpdate = cbCheckForUpdate.IsChecked == true;
             settings.LoggingEnabled = cbLoggingEnabled.IsChecked == true;
 
             settings.SaveTimerState = Selected<SaveTimerSetting>(cbSaveTimerState);
@@ -128,12 +126,6 @@ namespace StopWatch
             settings.MaxIssues = ParsedMaxIssues;
 
             DialogResult = true;
-        }
-
-
-        private void btnAbout_Click(object sender, RoutedEventArgs e)
-        {
-            new AboutWindow { Owner = this }.ShowDialog();
         }
 
 
@@ -185,7 +177,27 @@ namespace StopWatch
                 && parsed >= MinIssues
                 && parsed <= MaxIssues;
 
-            tbMaxIssues.Style = valid ? null : (Style)FindResource("InvalidInput");
+            if (valid)
+                // ClearValue, not Style = null: assigning null pins the local
+                // value to "no style" and permanently opts the control out of
+                // the implicit dark TextBox style, rather than reverting to
+                // it. Every other place in this codebase that clears a
+                // validation style has the same fix.
+                tbMaxIssues.ClearValue(StyleProperty);
+            else
+                tbMaxIssues.Style = (Style)FindResource("InvalidInput");
+        }
+
+
+        private void MaxIssuesUp_Click(object sender, RoutedEventArgs e)
+        {
+            StepMaxIssues(1);
+        }
+
+
+        private void MaxIssuesDown_Click(object sender, RoutedEventArgs e)
+        {
+            StepMaxIssues(-1);
         }
         #endregion
 
@@ -205,6 +217,22 @@ namespace StopWatch
 
                 return Math.Max(MinIssues, Math.Min(MaxIssues, parsed));
             }
+        }
+
+
+        /// <summary>
+        /// Moves the field by one step, clamped to the same range typing
+        /// enforces. Reads back whatever the field currently holds rather than
+        /// a remembered value, so a step lands correctly even after a manual
+        /// edit the field hasn't been left yet.
+        /// </summary>
+        private void StepMaxIssues(int delta)
+        {
+            int current;
+            if (!int.TryParse(tbMaxIssues.Text, out current))
+                current = settings.MaxIssues;
+
+            tbMaxIssues.Text = Math.Max(MinIssues, Math.Min(MaxIssues, current + delta)).ToString();
         }
 
 

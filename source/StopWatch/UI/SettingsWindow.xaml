@@ -35,8 +35,7 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,12,0,0">
-            <Button Content="About..." Click="btnAbout_Click" />
-            <Button Content="OK" Margin="8,0,0,0" IsDefault="True" Click="btnOk_Click" />
+            <Button Content="OK" IsDefault="True" Click="btnOk_Click" />
             <Button Content="Cancel" Margin="8,0,0,0" IsCancel="True" />
         </StackPanel>
 
@@ -93,14 +92,22 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Max. display issues" />
-                    <TextBox Grid.Column="1"
-                             x:Name="tbMaxIssues"
-                             Width="56"
-                             HorizontalAlignment="Left"
-                             TextAlignment="Right"
-                             PreviewTextInput="Digits_PreviewTextInput"
-                             TextChanged="tbMaxIssues_TextChanged"
-                             ToolTip="Between 1 and 40" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                        <TextBox x:Name="tbMaxIssues"
+                                 Width="40"
+                                 TextAlignment="Right"
+                                 PreviewTextInput="Digits_PreviewTextInput"
+                                 TextChanged="tbMaxIssues_TextChanged"
+                                 ToolTip="Between 1 and 40" />
+                        <StackPanel Orientation="Vertical" Margin="2,0,0,0" VerticalAlignment="Center">
+                            <RepeatButton Style="{StaticResource StepperButton}" Click="MaxIssuesUp_Click">
+                                <Path Style="{StaticResource GlyphFill}" Width="8" Height="4" Data="{StaticResource GlyphTriangleUp}" />
+                            </RepeatButton>
+                            <RepeatButton Style="{StaticResource StepperButton}" Click="MaxIssuesDown_Click">
+                                <Path Style="{StaticResource GlyphFill}" Width="8" Height="4" Data="{StaticResource GlyphTriangleDown}" />
+                            </RepeatButton>
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
 
                 <Border Style="{StaticResource Divider}" />
@@ -110,7 +117,6 @@
                 <TextBlock Text="General options" Style="{StaticResource SectionHeader}" />
 
                 <CheckBox x:Name="cbAllowMultipleTimers" Content="Allow running multiple timers simultaneously" />
-                <CheckBox x:Name="cbCheckForUpdate" Content="Check for updates on application start" />
 
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>

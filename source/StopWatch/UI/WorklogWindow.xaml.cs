@@ -182,8 +182,11 @@ namespace StopWatch
 
         private void EstimateValue_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Typing clears the complaint about this field.
-            ((TextBox)sender).Style = null;
+            // ClearValue, not Style = null: assigning null pins the field to
+            // "no style" rather than reverting to the implicit dark TextBox
+            // style, so typing would clear the complaint but leave the field
+            // looking unstyled.
+            ((TextBox)sender).ClearValue(StyleProperty);
         }
 
 
@@ -213,9 +216,9 @@ namespace StopWatch
             tbReduceBy.IsEnabled = estimateUpdateMethod == EstimateUpdateMethods.ManualDecrease;
 
             if (!tbSetTo.IsEnabled)
-                tbSetTo.Style = null;
+                tbSetTo.ClearValue(StyleProperty);
             if (!tbReduceBy.IsEnabled)
-                tbReduceBy.Style = null;
+                tbReduceBy.ClearValue(StyleProperty);
         }
 
 
@@ -318,7 +321,10 @@ namespace StopWatch
             bool valid = !string.IsNullOrWhiteSpace(field.Text)
                 && JiraTimeHelpers.JiraTimeToTimeSpan(field.Text) != null;
 
-            field.Style = valid ? null : (Style)FindResource("InvalidInput");
+            if (valid)
+                field.ClearValue(StyleProperty);
+            else
+                field.Style = (Style)FindResource("InvalidInput");
 
             if (!valid && focusIfInvalid)
             {

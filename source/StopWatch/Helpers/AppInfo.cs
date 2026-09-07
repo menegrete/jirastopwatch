@@ -21,36 +21,15 @@
  */
 
 using System.Diagnostics;
-using System.Reflection;
 
 namespace StopWatch
 {
     /// <summary>
-    /// The two things the windows used to get from
-    /// System.Windows.Forms.Application: the product version, and opening a URL
-    /// in the browser.
+    /// What windows used to get from System.Windows.Forms.Application: opening
+    /// a URL in the browser.
     /// </summary>
     internal static class AppInfo
     {
-        public const string Name = "Jira StopWatch";
-
-
-        public static string Version
-        {
-            get
-            {
-                if (version != null)
-                    return version;
-
-                version = FileVersionInfo
-                    .GetVersionInfo(Assembly.GetExecutingAssembly().Location)
-                    .ProductVersion ?? "";
-
-                return version;
-            }
-        }
-
-
         /// <summary>
         /// Opens a URL in the user's browser. UseShellExecute has to be set
         /// explicitly: unlike on .NET Framework, it defaults to false, and
@@ -60,8 +39,5 @@ namespace StopWatch
         {
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
-
-
-        private static string version;
     }
 }

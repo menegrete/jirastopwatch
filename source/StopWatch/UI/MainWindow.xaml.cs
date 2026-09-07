@@ -455,9 +455,6 @@ namespace StopWatch
             issues.Refresh();
             activeTimer.Refresh();
             SaveSettingsAndIssueStates();
-
-            if (firstTick)
-                CheckForUpdates();
         }
         #endregion
 
@@ -582,35 +579,6 @@ namespace StopWatch
             {
                 loadingFilters = false;
             }
-        }
-
-
-        private void CheckForUpdates()
-        {
-            if (!settings.CheckForUpdate)
-                return;
-
-            CheckForUpdatesAsync().FireAndForget();
-        }
-
-
-        private async Task CheckForUpdatesAsync()
-        {
-            GithubRelease latestRelease = await Task.Run(() => ReleaseHelper.GetLatestVersion());
-            if (latestRelease == null)
-                return;
-
-            string currentVersion = AppInfo.Version;
-            if (string.Compare(latestRelease.TagName, currentVersion) <= 0)
-                return;
-
-            string msg = string.Format("There is a newer version available of Jira StopWatch.{0}{0}Latest release is {1}. You are running version {2}.{0}{0}Do you want to download latest release?",
-                Environment.NewLine,
-                latestRelease.TagName,
-                currentVersion);
-
-            if (MessageBox.Show(this, msg, "New version available", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                AppInfo.OpenUrl("https://github.com/jirastopwatch/jirastopwatch/releases/latest");
         }
 
 

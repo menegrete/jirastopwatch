@@ -91,8 +91,6 @@ namespace StopWatch
 
         public bool LoggingEnabled { get; set; }
 
-        public bool CheckForUpdate { get; set; }
-
         public int MaxIssues { get; set; }
 
         /// <summary>
@@ -181,8 +179,6 @@ namespace StopWatch
 
             this.LoggingEnabled = Properties.Settings.Default.LoggingEnabled;
 
-            CheckForUpdate = Properties.Settings.Default.CheckForUpdate;
-
             this.MaxIssues = Properties.Settings.Default.MaxIssues;
 
             this.MiniViewLocation = Properties.Settings.Default.MiniViewLocation ?? "";
@@ -225,8 +221,6 @@ namespace StopWatch
                 Properties.Settings.Default.StartTransitions = this.StartTransitions;
 
                 Properties.Settings.Default.LoggingEnabled = this.LoggingEnabled;
-
-                Properties.Settings.Default.CheckForUpdate = CheckForUpdate;
 
                 Properties.Settings.Default.MaxIssues = this.MaxIssues;
 
