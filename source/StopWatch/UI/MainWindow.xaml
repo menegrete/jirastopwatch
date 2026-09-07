@@ -351,11 +351,13 @@
             Right child is the free space, with no filler element needed.
 
             The total's column no longer lines up under the list's time
-            column pixel-for-pixel: fitting four controls before the free
-            space left no room to keep mirroring the row's own columns
-            without also widening them (the row's key and open-in-browser
-            columns would have had to grow to fit controls that have nothing
-            to do with either).
+            column pixel-for-pixel on its left edge: fitting four controls
+            before the free space left no room to keep mirroring the row's
+            own columns without also widening them (the row's key and
+            open-in-browser columns would have had to grow to fit controls
+            that have nothing to do with either). The right edge is
+            approximated instead, with a trailing spacer the width of the
+            row's own trailing buttons - see below.
         -->
         <StackPanel Grid.Row="1">
             <Border Style="{StaticResource Divider}" Margin="0" />
@@ -402,6 +404,16 @@
                            VerticalAlignment="Center"
                            Margin="8,0,0,0"
                            MouseLeftButtonUp="lblConnectionStatus_Click" />
+
+                <!--
+                    Unlabelled spacer, docked first so it claims the
+                    rightmost strip: the width of the row's post/reset/remove
+                    buttons (24 each, no margin between them), so the total's
+                    right edge lines up with the time column's right edge
+                    above it, the same way the row's own trailing buttons
+                    push the time column in from the row's right edge.
+                -->
+                <Border DockPanel.Dock="Right" Width="72" />
 
                 <!-- Right-docked children carve from the right inward, so the
                      value has to be listed before its label to end up to the
