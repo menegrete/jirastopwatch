@@ -21,7 +21,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace StopWatch
 {
@@ -75,41 +74,6 @@ namespace StopWatch
             }
         }
 
-
-        public List<Filter> GetFavoriteFilters()
-        {
-            var request = jiraApiRequestFactory.CreateGetFavoriteFiltersRequest();
-            try
-            {
-                return jiraApiRequester.DoAuthenticatedRequest<List<Filter>>(request);
-            }
-            catch (RequestDeniedException)
-            {
-                return null;
-            }
-            catch (UsernameAndApiTokenNotSetException)
-            {
-                return null;
-            }
-        }
-
-
-        public SearchResult GetIssuesByJQL(string jql)
-        {
-            var request = jiraApiRequestFactory.CreateGetIssuesByJQLRequest(jql);
-            try
-            {
-                return jiraApiRequester.DoAuthenticatedRequest<SearchResult>(request);
-            }
-            catch (RequestDeniedException)
-            {
-                return null;
-            }
-            catch (UsernameAndApiTokenNotSetException)
-            {
-                return null;
-            }
-        }
 
 
         public string GetIssueSummary(string key, bool addProjectName)

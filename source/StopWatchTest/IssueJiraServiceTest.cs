@@ -326,55 +326,6 @@ namespace StopWatchTest
         #endregion
 
 
-        #region issue completions
-        [Test]
-        public async Task GetIssues_ReturnsWhatTheQueryFound()
-        {
-            jira.Setup(j => j.GetIssuesByJQL("project = TST")).Returns(new SearchResult
-            {
-                Issues = new List<Issue> { new Issue { Key = "TST-1" } }
-            });
-
-            List<Issue> issues = await service.GetIssuesAsync("project = TST");
-
-            Assert.That(issues.Count, Is.EqualTo(1));
-            Assert.That(issues[0].Key, Is.EqualTo("TST-1"));
-        }
-
-
-        [Test]
-        public async Task GetIssues_ReturnsEmptyWithoutAJql()
-        {
-            List<Issue> issues = await service.GetIssuesAsync("");
-
-            Assert.That(issues, Is.Empty);
-            jira.Verify(j => j.GetIssuesByJQL(It.IsAny<string>()), Times.Never);
-        }
-
-
-        [Test]
-        public async Task GetIssues_ReturnsEmptyWhenTheQueryFails()
-        {
-            jira.Setup(j => j.GetIssuesByJQL(It.IsAny<string>())).Returns((SearchResult)null);
-
-            List<Issue> issues = await service.GetIssuesAsync("project = TST");
-
-            Assert.That(issues, Is.Empty);
-        }
-
-
-        [Test]
-        public async Task GetIssues_ReturnsEmptyWhenTheResultCarriesNoIssues()
-        {
-            jira.Setup(j => j.GetIssuesByJQL(It.IsAny<string>())).Returns(new SearchResult { Issues = null });
-
-            List<Issue> issues = await service.GetIssuesAsync("project = TST");
-
-            Assert.That(issues, Is.Empty);
-        }
-        #endregion
-
-
         #region construction
         [Test]
         public void ItRefusesToBeBuiltWithoutItsCollaborators()

@@ -83,8 +83,6 @@ namespace StopWatch
         public string ApiToken { get; set; }
         public bool FirstRun { get; set; }
 
-        public int CurrentFilter { get; set; }
-
         public List<PersistedIssue> PersistedIssues { get; private set; }
 
         public string StartTransitions { get; set; }
@@ -169,8 +167,6 @@ namespace StopWatch
             this.PauseOnSessionLock = (PauseAndResumeSetting)Properties.Settings.Default.PauseOnSessionLock;
             this.PostWorklogComment = (WorklogCommentSetting)Properties.Settings.Default.PostWorklogComment;
 
-            this.CurrentFilter = Properties.Settings.Default.CurrentFilter;
-
             this.PersistedIssues = ReadIssues(Properties.Settings.Default.PersistedIssues);
 
             this.AllowMultipleTimers = Properties.Settings.Default.AllowMultipleTimers;
@@ -211,8 +207,6 @@ namespace StopWatch
                 Properties.Settings.Default.Theme = (int)this.Theme;
                 Properties.Settings.Default.PauseOnSessionLock = (int)this.PauseOnSessionLock;
                 Properties.Settings.Default.PostWorklogComment = (int)this.PostWorklogComment;
-
-                Properties.Settings.Default.CurrentFilter = this.CurrentFilter;
 
                 Properties.Settings.Default.PersistedIssues = WriteIssues(this.PersistedIssues);
 

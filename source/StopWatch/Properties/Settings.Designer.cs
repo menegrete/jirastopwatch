@@ -133,18 +133,6 @@ namespace StopWatch.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int CurrentFilter {
-            get {
-                return ((int)(this["CurrentFilter"]));
-            }
-            set {
-                this["CurrentFilter"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool MinimizeToTray {
             get {

@@ -21,16 +21,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace StopWatch
 {
     /// <summary>
     /// The slice of <see cref="JiraClient"/> that the issue-row services need.
     ///
-    /// Exists so that the worklog rules and the filter lookup can be tested
-    /// without going through the REST request plumbing, which is already
-    /// covered by JiraClient's own tests.
+    /// Exists so that the worklog rules can be tested without going through
+    /// the REST request plumbing, which is already covered by JiraClient's own
+    /// tests.
     /// </summary>
     internal interface IJiraOperations
     {
@@ -43,9 +42,5 @@ namespace StopWatch
         bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue);
 
         bool PostComment(string key, string comment);
-
-        SearchResult GetIssuesByJQL(string jql);
-
-        List<Filter> GetFavoriteFilters();
     }
 }

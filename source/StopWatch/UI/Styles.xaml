@@ -518,9 +518,4 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <!-- Same, in the accent band, where the text colour is different. -->
-    <Style x:Key="AccentGlyphPath" TargetType="Path" BasedOn="{StaticResource GlyphPath}">
-        <Setter Property="Stroke" Value="{DynamicResource AccentText}" />
-    </Style>
-
 </ResourceDictionary>

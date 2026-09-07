@@ -168,21 +168,6 @@ namespace StopWatch
         {
             get { return !string.IsNullOrEmpty(issueKey.Trim()); }
         }
-
-
-        /// <summary>
-        /// The issues offered as completions for the key, as loaded from the
-        /// active filter.
-        /// </summary>
-        public IEnumerable<Issue> AvailableIssues
-        {
-            get { return availableIssues; }
-            set
-            {
-                availableIssues = value ?? new List<Issue>();
-                Raise("AvailableIssues");
-            }
-        }
         #endregion
 
 
@@ -349,8 +334,6 @@ namespace StopWatch
 
         private TimeSpan timeElapsed;
         private bool isRunning;
-
-        private IEnumerable<Issue> availableIssues = new List<Issue>();
         #endregion
     }
 }

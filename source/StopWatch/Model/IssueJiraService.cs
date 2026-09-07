@@ -21,7 +21,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace StopWatch
@@ -177,27 +176,6 @@ namespace StopWatch
                     Text = timetracking.RemainingEstimate,
                     Seconds = timetracking.RemainingEstimateSeconds
                 };
-            });
-        }
-
-
-        /// <summary>
-        /// The issues offered as completions for an issue key, for the JQL of
-        /// the filter the user has active. An empty JQL means no filter is
-        /// selected, and there is nothing to offer.
-        /// </summary>
-        public async Task<List<Issue>> GetIssuesAsync(string jql)
-        {
-            if (string.IsNullOrEmpty(jql) || !jira.SessionValid)
-                return new List<Issue>();
-
-            return await Task.Run(() =>
-            {
-                SearchResult result = jira.GetIssuesByJQL(jql);
-                if (result == null || result.Issues == null)
-                    return new List<Issue>();
-
-                return result.Issues;
             });
         }
         #endregion

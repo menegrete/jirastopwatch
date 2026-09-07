@@ -28,8 +28,6 @@ namespace StopWatch
     internal interface IJiraApiRequestFactory
     {
         RestRequest CreateValidateSessionRequest();
-        RestRequest CreateGetFavoriteFiltersRequest();
-        RestRequest CreateGetIssuesByJQLRequest(string jql);
         RestRequest CreateGetIssueSummaryRequest(string key);
         RestRequest CreateGetIssueTimetrackingRequest(string key);
         RestRequest CreatePostWorklogRequest(string key, DateTimeOffset started, TimeSpan time, string comment, EstimateUpdateMethods adjustmentMethod, string adjustmentValue);

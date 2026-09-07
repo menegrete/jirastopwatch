@@ -33,8 +33,9 @@ using Screen = System.Windows.Forms.Screen;
 namespace StopWatch
 {
     /// <summary>
-    /// The main window: the filter and connection bar, the list of issue rows,
-    /// and the total at the bottom.
+    /// The main window: the list of issue rows, and the status bar with the
+    /// connection state, the mini-view/settings/help actions, the add button
+    /// and the total.
     ///
     /// Replaces MainForm. Two things it deliberately does differently:
     ///
@@ -68,9 +69,6 @@ namespace StopWatch
             jiraClient = new JiraClient(jiraApiRequestFactory, new JiraApiRequester(restClientFactory, jiraApiRequestFactory));
 
             jiraService = new IssueJiraService(jiraClient, settings);
-
-            filterProvider = new FilterProvider(jiraClient, settings);
-            filterProvider.FiltersLoaded += filterProvider_FiltersLoaded;
 
             issues = new IssueListViewModel(settings);
             issues.TimerStarted += issues_TimerStarted;
@@ -506,9 +504,6 @@ namespace StopWatch
             if (!valid)
                 return;
 
-            if (firstTick)
-                LoadFilters();
-
             UpdateSummaries();
         }
 
@@ -517,12 +512,10 @@ namespace StopWatch
         {
             lblConnectionStatus.Text = connected ? "Connected" : "Not connected";
 
-            // The band is the accent colour, so connected reads as plain accent
-            // text and a failure as the danger colour, which stays legible on
-            // it. A failure is also the only one that invites a click.
-            lblConnectionStatus.Foreground = connected
-                ? (Brush)FindResource("AccentText")
-                : ThemeBrushes.ToBrush(Theme.Current.DangerSurface);
+            // Sitting in the plain status bar now, not the accent band, so the
+            // state colours are the same ones a row uses for success/failure.
+            lblConnectionStatus.Foreground = ThemeBrushes.ToBrush(
+                connected ? Theme.Current.Success : Theme.Current.Danger);
 
             lblConnectionStatus.TextDecorations = connected ? null : TextDecorations.Underline;
             lblConnectionStatus.Cursor = connected ? Cursors.Arrow : Cursors.Hand;
@@ -551,34 +544,6 @@ namespace StopWatch
             // already has.
             if (summary != null)
                 issue.Summary = summary;
-        }
-
-
-        private void LoadFilters()
-        {
-            // Fire and forget: the combo repaints itself from FiltersLoaded
-            // once the answer arrives.
-            filterProvider.LoadAsync().FireAndForget();
-        }
-
-
-        private void filterProvider_FiltersLoaded(object sender, EventArgs e)
-        {
-            FilterItem current = filterProvider.Current;
-
-            loadingFilters = true;
-            try
-            {
-                cbFilters.Items.Clear();
-                foreach (FilterItem filter in filterProvider.Filters)
-                    cbFilters.Items.Add(filter);
-
-                cbFilters.SelectedItem = current;
-            }
-            finally
-            {
-                loadingFilters = false;
-            }
         }
 
 
@@ -616,23 +581,7 @@ namespace StopWatch
         #endregion
 
 
-        #region top and bottom bar handlers
-        private void cbFilters_DropDownOpened(object sender, EventArgs e)
-        {
-            LoadFilters();
-        }
-
-
-        private void cbFilters_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // Repainting the combo from the provider is not the user choosing.
-            if (loadingFilters)
-                return;
-
-            filterProvider.Current = cbFilters.SelectedItem as FilterItem;
-        }
-
-
+        #region status bar handlers
         private void lblConnectionStatus_Click(object sender, MouseButtonEventArgs e)
         {
             if (jiraClient.SessionValid)
@@ -748,29 +697,6 @@ namespace StopWatch
             issues.SetCurrent(issue);
             EditTime(issue);
             e.Handled = true;
-        }
-
-
-        private void cbJira_DropDownOpened(object sender, EventArgs e)
-        {
-            LoadIssues(RowOf(sender));
-        }
-
-
-        private void cbJira_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ComboBox combo = (ComboBox)sender;
-            Issue picked = combo.SelectedItem as Issue;
-            if (picked == null)
-                return;
-
-            IssueViewModel issue = RowOf(sender);
-            if (issue == null)
-                return;
-
-            issues.SetCurrent(issue);
-            issue.IssueKey = picked.Key;
-            UpdateSummary(issue);
         }
 
 
@@ -924,24 +850,6 @@ namespace StopWatch
         }
 
 
-        private void LoadIssues(IssueViewModel issue)
-        {
-            LoadIssuesAsync(issue).FireAndForget();
-        }
-
-
-        private async Task LoadIssuesAsync(IssueViewModel issue)
-        {
-            if (issue == null)
-                return;
-
-            // The active filter's JQL is handed over rather than looked up by
-            // walking the window's controls, which is what the row used to do.
-            var available = await jiraService.GetIssuesAsync(filterProvider.CurrentJql);
-
-            if (available.Count > 0)
-                issue.AvailableIssues = available;
-        }
         #endregion
 
 
@@ -1174,7 +1082,6 @@ namespace StopWatch
         private readonly RestClientFactory restClientFactory;
         private readonly JiraClient jiraClient;
         private readonly IssueJiraService jiraService;
-        private readonly FilterProvider filterProvider;
 
         private readonly IssueListViewModel issues;
         private readonly ActiveTimerViewModel activeTimer;
@@ -1191,8 +1098,6 @@ namespace StopWatch
         private WindowState restoreWindowState = WindowState.Normal;
 
         private IssueViewModel lastRunningIssue;
-
-        private bool loadingFilters;
         #endregion
 
 
