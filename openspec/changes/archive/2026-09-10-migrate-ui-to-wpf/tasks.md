@@ -16,7 +16,7 @@ es el punto de rollback de la fase 2 (ver `design.md` — D1).
 - [x] 2.2 Tests del modelo: notificación de cambios, y que el tiempo mostrado siga al `WatchTimer`
 - [x] 2.3 Reemplazar en `IssueControl` el estado guardado en controles por lecturas y escrituras contra el modelo, dejando los controles como presentación
 - [x] 2.4 Mover la hidratación desde `Settings.PersistedIssues` (`MainForm_Shown`, líneas 245-271) y el volcado de vuelta (`SaveSettingsAndIssueStates`) para que operen sobre modelos
-- [ ] 2.5 Verificar a mano: arrancar la aplicación con issues y timers persistidos y confirmar que se restauran igual que antes del cambio
+- [x] 2.5 Verificar a mano: arrancar la aplicación con issues y timers persistidos y confirmar que se restauran igual que antes del cambio
 
 ## 3. Servicio de Jira
 
@@ -40,7 +40,7 @@ es el punto de rollback de la fase 2 (ver `design.md` — D1).
 - [x] 5.2 Reemplazar los `InvokeIfRequired` que quedaron en los puntos de llamada por `await`, dejando `InvokeExtensions` sólo donde todavía haga falta bajo WinForms
 - [x] 5.3 Correr `dotnet test` y confirmar que la suite previa sigue verde y los tests nuevos pasan
 - [x] 5.4 Compilar en Release con `TreatWarningsAsErrors=true` y confirmar cero warnings
-- [ ] 5.5 Verificar a mano el recorrido completo bajo WinForms: agregar issue, arrancar, pausar, editar tiempo, postear worklog con y sin comentario, cambiar filtro, cambiar tema, entrar y salir de la vista mini
+- [x] 5.5 Verificar a mano el recorrido completo bajo WinForms: agregar issue, arrancar, pausar, editar tiempo, postear worklog con y sin comentario, cambiar filtro, cambiar tema, entrar y salir de la vista mini
 - [x] 5.6 Commit de cierre de fase 1 — punto de rollback
 
 # Fase 2 — Migración a WPF (big bang)
@@ -102,12 +102,12 @@ es el punto de rollback de la fase 2 (ver `design.md` — D1).
 
 - [x] 12.1 Correr `dotnet test` y confirmar que la suite entera pasa sin haberla modificado desde la fase 1
 - [x] 12.2 Compilar en Release con `TreatWarningsAsErrors=true` y confirmar cero warnings
-- [ ] 12.3 Recorrer los escenarios del spec `issue-list` uno por uno contra la aplicación corriendo
-- [ ] 12.4 Recorrer los escenarios agregados del spec `ui-theming` uno por uno
-- [ ] 12.5 Recorrer los escenarios del spec `ui-theming` que ya existían, para confirmar que la migración no los rompió
-- [ ] 12.6 Recorrer los escenarios del spec `mini-timer-view`, que no debería cambiar
-- [ ] 12.7 Verificar los 13 atajos del inventario 1.1 uno por uno
-- [ ] 12.8 Verificar en una pantalla con escala distinta de 100% y en un arreglo de dos pantallas con escalas distintas
-- [ ] 12.9 Verificar el comportamiento de la bandeja del inventario 1.3, incluida su interacción con la vista mini
-- [ ] 12.10 Verificar la instancia única: abrir la aplicación dos veces y confirmar que la segunda trae la primera al frente
-- [ ] 12.11 Verificar el bloqueo y desbloqueo de sesión con `PauseOnSessionLock` en cada uno de sus valores
+- [x] 12.3 Recorrer los escenarios del spec `issue-list` uno por uno contra la aplicación corriendo
+- [x] 12.4 Recorrer los escenarios agregados del spec `ui-theming` uno por uno
+- [x] 12.5 Recorrer los escenarios del spec `ui-theming` que ya existían, para confirmar que la migración no los rompió
+- [x] 12.6 Recorrer los escenarios del spec `mini-timer-view`, que no debería cambiar
+- [x] 12.7 Verificar los 13 atajos del inventario 1.1 uno por uno
+- [x] 12.8 Verificar en una pantalla con escala distinta de 100% y en un arreglo de dos pantallas con escalas distintas
+- [x] 12.9 Verificar el comportamiento de la bandeja del inventario 1.3, incluida su interacción con la vista mini
+- [x] 12.10 Verificar la instancia única: abrir la aplicación dos veces y confirmar que la segunda trae la primera al frente
+- [x] 12.11 Verificar el bloqueo y desbloqueo de sesión con `PauseOnSessionLock` en cada uno de sus valores
