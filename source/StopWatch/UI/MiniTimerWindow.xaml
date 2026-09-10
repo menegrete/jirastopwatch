@@ -15,43 +15,6 @@
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
 
-    <Window.Resources>
-        <local:BoolToVisibilityConverter x:Key="WhenTrue" />
-        <local:NotBoolToVisibilityConverter x:Key="WhenFalse" />
-
-        <!-- Flat, borderless icon button. Hover and pressed come from the
-             theme so the mini view reacts like the WinForms buttons do. -->
-        <Style x:Key="GlyphButton" TargetType="Button">
-            <Setter Property="Width" Value="26" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="chrome"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="5">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="chrome" Property="Background"
-                                        Value="{DynamicResource ButtonHover}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="chrome" Property="Background"
-                                        Value="{DynamicResource ButtonPressed}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
 
     <!-- Margin leaves room for the shadow to fall outside the pill. -->
     <Border Margin="6"

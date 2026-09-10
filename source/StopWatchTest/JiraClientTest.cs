@@ -87,51 +87,6 @@ namespace StopWatchTest
         }
 
 
-        [Test, Description("GetFavoriteFilters: On success it returns a list of type filter")]
-        public void GetFavoriteFilters_OnSuccess_It_Returns_List_Of_Filters()
-        {
-            List<Filter> returnData = new List<Filter>();
-            returnData.Add(new Filter { Id = 5, Name = "Foo", Jql = "Project=Foo" });
-            returnData.Add(new Filter { Id = 6, Name = "bar", Jql = "Project=Bar" });
-
-            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<List<Filter>>(It.IsAny<RestRequest>())).Returns(returnData);
-
-            Assert.That(jiraClient.GetFavoriteFilters(), Is.EqualTo(returnData));
-        }
-
-
-        [Test, Description("GetFavoriteFilters: On failure it returns null")]
-        public void GetFavoriteFilters_OnFailure_It_Returns_Null()
-        {
-            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<List<Filter>>(It.IsAny<RestRequest>())).Throws<RequestDeniedException>();
-            Assert.That(jiraClient.GetFavoriteFilters(), Is.Null);
-        }
-
-
-        [Test, Description("GetIssuesByJQL: On success it returns a list of type filter")]
-        public void GetIssuesByJQL_OnSuccess_It_Returns_List_Of_Issues()
-        {
-            SearchResult returnData = new SearchResult
-            {
-                Issues = new List<Issue>()
-            };
-            returnData.Issues.Add(new Issue { Key = "FOO-1", Fields = new IssueFields { Summary = "Summary for FOO-1" } });
-            returnData.Issues.Add(new Issue { Key = "FOO-2", Fields = new IssueFields { Summary = "Summary for FOO-2" } });
-
-            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<SearchResult>(It.IsAny<RestRequest>())).Returns(returnData);
-
-            Assert.That(jiraClient.GetIssuesByJQL("testjql"), Is.EqualTo(returnData));
-        }
-
-
-        [Test, Description("GetIssuesByJQL: On failure it returns null")]
-        public void GetIssuesByJQL_OnFailure_It_Returns_Null()
-        {
-            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<List<Filter>>(It.IsAny<RestRequest>())).Throws<RequestDeniedException>();
-            Assert.That(jiraClient.GetIssuesByJQL("testjql"), Is.Null);
-        }
-
-
         [Test, Description("GetIssueSummary: On success it returns a list of type filter")]
         public void GetIssueSummary_OnSuccess_It_Returns_Issue_Summary()
         {

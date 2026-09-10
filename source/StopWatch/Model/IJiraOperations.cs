@@ -20,21 +20,27 @@
  * limitations under the License.
  */
 
-using RestSharp;
 using System;
 
 namespace StopWatch
 {
-    internal interface IJiraApiRequestFactory
+    /// <summary>
+    /// The slice of <see cref="JiraClient"/> that the issue-row services need.
+    ///
+    /// Exists so that the worklog rules can be tested without going through
+    /// the REST request plumbing, which is already covered by JiraClient's own
+    /// tests.
+    /// </summary>
+    internal interface IJiraOperations
     {
-        RestRequest CreateValidateSessionRequest();
-        RestRequest CreateGetIssueSummaryRequest(string key);
-        RestRequest CreateGetIssueTimetrackingRequest(string key);
-        RestRequest CreatePostWorklogRequest(string key, DateTimeOffset started, TimeSpan time, string comment, EstimateUpdateMethods adjustmentMethod, string adjustmentValue);
-        RestRequest CreatePostCommentRequest(string key, string comment);
-        RestRequest CreateGetAvailableTransitions(string key);
-        RestRequest CreateDoTransition(string key, int transitionId);
-        RestRequest CreateGetConfigurationRequest();
-    }
+        bool SessionValid { get; }
 
+        string GetIssueSummary(string key, bool addProjectName);
+
+        TimetrackingFields GetIssueTimetracking(string key);
+
+        bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue);
+
+        bool PostComment(string key, string comment);
+    }
 }

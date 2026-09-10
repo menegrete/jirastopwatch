@@ -58,23 +58,6 @@ namespace StopWatchTest
 
 
         [Test]
-        public void CreateGetFavoriteFiltersRequest_CreatesValidRequest()
-        {
-            var request = jiraApiRequestFactory.CreateGetFavoriteFiltersRequest();
-            requestFactoryMock.Verify(m => m.Create("/rest/api/2/filter/favourite", Method.Get));
-        }
-        
-
-        [Test]
-        public void CreateGetIssuesByJQLRequest_CreatesValidRequest()
-        {
-            string jql = "status%3Dopen";
-            var request = jiraApiRequestFactory.CreateGetIssuesByJQLRequest(jql);
-            requestFactoryMock.Verify(m => m.Create(String.Format("/rest/api/2/search?jql={0}&maxResults=200", jql), Method.Get));
-        }
-
-
-        [Test]
         public void CreateGetIssueSummaryRequest_CreatesValidRequest()
         {
             string key = "FOO-42";

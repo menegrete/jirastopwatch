@@ -1,0 +1,903 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:StopWatch">
+
+    <!--
+        The application's base styles.
+
+        Every colour comes from a DynamicResource whose key is a Theme property
+        name; ThemeBrushes fills those in from the active theme and refills them
+        when the user changes it. Nothing here names a literal colour, which is
+        the whole reason ThemeApplier's control walk could go away.
+
+        These are implicit styles: they have no x:Key, so they apply to every
+        control of their type in the application. That is what replaces the
+        recursive walk over the control tree.
+    -->
+
+    <local:BoolToVisibilityConverter x:Key="WhenTrue" />
+    <local:NotBoolToVisibilityConverter x:Key="WhenFalse" />
+
+    <!-- ==================== text ==================== -->
+
+    <Style TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="MutedText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    </Style>
+
+    <Style x:Key="SectionHeader" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,10,0,4" />
+    </Style>
+
+    <!-- A Label used as a horizontal rule, as the forms did with lblDivider. -->
+    <Style x:Key="Divider" TargetType="Border">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Border}" />
+        <Setter Property="Margin" Value="0,6" />
+    </Style>
+
+    <!-- ==================== text input ==================== -->
+
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="3,2" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource SurfaceActive}" />
+        <Style.Triggers>
+            <Trigger Property="IsReadOnly" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        Marks a field whose content does not parse. The edit-time dialog used a
+        red background for this; keeping it as a style means the signal is a
+        theme colour rather than a literal red.
+    -->
+    <Style x:Key="InvalidInput" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Background" Value="{DynamicResource DangerSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Danger}" />
+    </Style>
+
+    <!-- Same look as TextBox, for the one field - the API token - that has to
+         mask what it holds. PasswordBox is not a TextBox, so it needs its own
+         style rather than BasedOn. -->
+    <Style TargetType="PasswordBox">
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="3,2" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource SurfaceActive}" />
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ==================== buttons ==================== -->
+
+    <Style TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinWidth" Value="75" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Flat, borderless icon button. Hover and pressed come from the theme so
+        that it reacts like the WinForms icon buttons did. Shared with the mini
+        view, which is where this style started.
+    -->
+    <Style x:Key="GlyphButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="chrome"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="5">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        One half of a numeric field's up/down stepper. RepeatButton rather than
+        Button: holding it down keeps incrementing, which is the one thing a
+        plain button can't do and the native up-down control could.
+    -->
+    <Style x:Key="StepperButton" TargetType="RepeatButton">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="11" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border x:Name="chrome"
+                            Background="{DynamicResource Surface}"
+                            BorderBrush="{DynamicResource Border}"
+                            BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================== toggles ==================== -->
+
+    <!--
+        The box is drawn here rather than by the OS. That is what the hand-drawn
+        checkbox glyph in ThemeApplier existed to work around: WinForms filled
+        the box interior with SystemColors.Window whatever the theme said.
+    -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="box"
+                                Width="14" Height="14"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource Border}"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                VerticalAlignment="Center">
+                            <Path x:Name="tick"
+                                  Visibility="Collapsed"
+                                  Stroke="{DynamicResource Text}"
+                                  StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Data="M 2,6 L 5,9 L 10,3"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Border>
+                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="tick" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="box" Property="BorderBrush" Value="{DynamicResource Text}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                            <Setter TargetName="box" Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="ring"
+                                Width="14" Height="14"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource Border}"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                VerticalAlignment="Center">
+                            <Ellipse x:Name="dot"
+                                     Visibility="Collapsed"
+                                     Width="6" Height="6"
+                                     Fill="{DynamicResource Text}" />
+                        </Border>
+                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="dot" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ring" Property="BorderBrush" Value="{DynamicResource Text}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                            <Setter TargetName="ring" Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================== combo box ==================== -->
+
+    <!--
+        Templated by hand for the same reason as the checkbox: the OS combo box
+        ignored the theme, which is what the UseDarkComboBox native call was
+        for.
+    -->
+    <Style x:Key="ComboToggle" TargetType="ToggleButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ClickMode" Value="Press" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="{DynamicResource Background}"
+                            BorderBrush="{DynamicResource Border}"
+                            BorderThickness="1"
+                            CornerRadius="3">
+                        <Path HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Margin="0,0,7,0"
+                              Fill="{DynamicResource Text}"
+                              Data="M 0,0 L 7,0 L 3.5,4 Z" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="5,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="chrome"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource SurfaceActive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Grid.Column="0"
+                                      Style="{StaticResource ComboToggle}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                        <ContentPresenter x:Name="face"
+                                          Margin="6,3,22,3"
+                                          IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          VerticalAlignment="Center" />
+
+                        <!-- Only present on an editable combo, which is what
+                             the issue key field is. -->
+                        <TextBox x:Name="PART_EditableTextBox"
+                                 Visibility="Collapsed"
+                                 Margin="3,1,20,1"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Foreground="{DynamicResource Text}"
+                                 VerticalContentAlignment="Center" />
+
+                        <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide">
+                            <Border Background="{DynamicResource Background}"
+                                    BorderBrush="{DynamicResource Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <ScrollViewer>
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="face" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================== grouping ==================== -->
+
+    <Style TargetType="GroupBox">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Margin" Value="0,6" />
+    </Style>
+
+    <!-- ==================== links ==================== -->
+
+    <Style TargetType="Hyperlink">
+        <Setter Property="Foreground" Value="{DynamicResource Link}" />
+        <Setter Property="TextDecorations" Value="Underline" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource Text}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ==================== scrolling ==================== -->
+
+    <!--
+        Drawn here for the same reason as the rest: the dark scroll bar was a
+        native call (UseDarkScrollBars) that only worked on some builds.
+    -->
+    <Style x:Key="ScrollThumb" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{DynamicResource Border}"
+                            CornerRadius="3"
+                            Margin="2,0" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Width" Value="10" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ScrollThumb}" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================== tooltips ==================== -->
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,3" />
+    </Style>
+
+    <!-- ==================== glyphs ==================== -->
+
+    <!--
+        Drawn as vectors rather than loaded as bitmaps. The bitmap set needed a
+        second, lighter copy of three icons to stay legible on a dark surface -
+        which is what ThemeIcons picked between. A vector takes its colour from
+        the theme, so one geometry serves both themes and scales with DPI.
+    -->
+
+    <Geometry x:Key="GlyphPlay">M 0,0 L 10,5.5 L 0,11 Z</Geometry>
+    <Geometry x:Key="GlyphPause">M 0,0 H 3.5 V 11 H 0 Z M 6,0 H 9.5 V 11 H 6 Z</Geometry>
+    <Geometry x:Key="GlyphAdd">M 5.5,0 V 11 M 0,5.5 H 11</Geometry>
+    <Geometry x:Key="GlyphRemove">M 1,1 L 10,10 M 10,1 L 1,10</Geometry>
+    <Geometry x:Key="GlyphReset">M 1,6 A 5,5 0 1 0 6,1 M 6,1 L 3.5,1 M 6,1 L 6,3.5</Geometry>
+    <Geometry x:Key="GlyphPost">M 5.5,8 V 1 M 2,4.5 L 5.5,1 L 9,4.5 M 0.5,10.5 H 10.5</Geometry>
+    <Geometry x:Key="GlyphOpenBrowser">M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2</Geometry>
+    <Geometry x:Key="GlyphMiniView">M 0,1 H 11 V 10 H 0 Z M 6,6 H 10 V 9.5 H 6 Z</Geometry>
+    <Geometry x:Key="GlyphSettingsBars">M 0,2.5 H 2.5 M 6.5,2.5 H 11 M 0,8.5 H 5 M 9,8.5 H 11</Geometry>
+    <Geometry x:Key="GlyphTriangleUp">M 0,4 L 4,0 L 8,4 Z</Geometry>
+    <Geometry x:Key="GlyphTriangleDown">M 0,0 L 8,0 L 4,4 Z</Geometry>
+
+    <!-- A stroked glyph inside a GlyphButton. -->
+    <Style x:Key="GlyphPath" TargetType="Path">
+        <Setter Property="Stroke" Value="{DynamicResource Text}" />
+        <Setter Property="StrokeThickness" Value="1.4" />
+        <Setter Property="StrokeStartLineCap" Value="Round" />
+        <Setter Property="StrokeEndLineCap" Value="Round" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- A filled glyph, for the shapes that read better solid. -->
+    <Style x:Key="GlyphFill" TargetType="Path">
+        <Setter Property="Fill" Value="{DynamicResource Text}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ==================== date picker ==================== -->
+
+    <!--
+        WPF's native DatePicker, themed by hand like the combo box above -
+        its default template is unstyled by anything here, so left alone it
+        rendered with the stock light theme.
+
+        PART_TextBox is a DatePickerTextBox, which derives from TextBox, so
+        it already picks up the implicit TextBox style above through WPF's
+        type-inheritance fallback for implicit styles; only its chrome
+        (border/background) is suppressed here since the outer Border draws
+        those instead.
+    -->
+    <Style TargetType="DatePicker">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="3,2" />
+        <!--
+            DatePicker builds its popup Calendar itself rather than from the
+            template above, so the implicit Style TargetType="Calendar"
+            below never reaches it on its own - CalendarStyle is the
+            property DatePicker actually reads to style that Calendar.
+        -->
+        <Setter Property="CalendarStyle" Value="{DynamicResource {x:Type Calendar}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3" />
+
+                        <DatePickerTextBox x:Name="PART_TextBox"
+                                           Grid.Column="0"
+                                           BorderThickness="0"
+                                           Background="Transparent"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           Padding="{TemplateBinding Padding}"
+                                           VerticalContentAlignment="Center" />
+
+                        <Button x:Name="PART_Button"
+                                Grid.Column="1"
+                                Focusable="False"
+                                Background="Transparent"
+                                Cursor="Hand"
+                                MinWidth="0"
+                                MinHeight="0"
+                                Padding="5,0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="chrome" Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          Margin="{TemplateBinding Padding}" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Path Style="{StaticResource GlyphPath}"
+                                  Width="10"
+                                  Height="9"
+                                  Data="M0,1 H10 V9 H0 Z M0,3.5 H10 M2,0 V2 M8,0 V2" />
+                        </Button>
+
+                        <Popup x:Name="PART_Popup"
+                               Grid.Column="0"
+                               Placement="Bottom"
+                               AllowsTransparency="True"
+                               StaysOpen="False" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        The popup calendar behind a DatePicker. Calendar hosts a single
+        CalendarItem (its own templated type, styled below); the outer
+        template here only draws the surrounding chrome.
+    -->
+    <Style TargetType="Calendar">
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Calendar">
+                    <CalendarItem x:Name="PART_CalendarItem"
+                                  Background="{TemplateBinding Background}"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  BorderThickness="{TemplateBinding BorderThickness}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        PART_MonthView/PART_YearView get their children (day-of-week headers,
+        CalendarDayButtons, CalendarButtons) from Calendar at runtime, but the
+        row/column definitions themselves have to already exist here - without
+        them every generated cell lands in the same single row and column and
+        stacks on top of itself.
+    -->
+    <Style TargetType="CalendarItem">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CalendarItem">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid Width="210" Margin="4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="2,2,2,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button x:Name="PART_PreviousButton"
+                                        Grid.Column="0"
+                                        Style="{StaticResource GlyphButton}"
+                                        Content="&#x25C4;" />
+
+                                <Button x:Name="PART_HeaderButton"
+                                        Grid.Column="1"
+                                        FontWeight="SemiBold"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="chrome" Background="{TemplateBinding Background}" CornerRadius="3">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,2" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="PART_NextButton"
+                                        Grid.Column="2"
+                                        Style="{StaticResource GlyphButton}"
+                                        Content="&#x25BA;" />
+                            </Grid>
+
+                            <!--
+                                Calendar's own day-of-week header (read from
+                                CalendarItem's DayTitleTemplateResourceKey
+                                rather than an ordinary implicit style) never
+                                rendered here, so this is drawn as ordinary
+                                static content instead - see CalendarDayNames.
+                            -->
+                            <ItemsControl Grid.Row="1"
+                                          Margin="0,0,0,2"
+                                          Focusable="False"
+                                          ItemsSource="{x:Static local:CalendarDayNames.OrderedAbbreviations}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="7" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                   HorizontalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource TextMuted}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.Style>
+                                    <Style TargetType="ItemsControl">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Year">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Decade">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ItemsControl.Style>
+                            </ItemsControl>
+
+                            <!--
+                                Calendar (unlike CalendarItem's other parts)
+                                never toggles these two Grids' Visibility
+                                itself - the stock template does that with a
+                                DataTrigger on the owning Calendar's
+                                DisplayMode, which is reproduced here the same
+                                way.
+                            -->
+                            <Grid x:Name="PART_MonthView" Grid.Row="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Year">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Decade">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                            </Grid>
+                            <Grid x:Name="PART_YearView" Grid.Row="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Year">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DisplayMode, RelativeSource={RelativeSource AncestorType=Calendar}}" Value="Decade">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A single day, in PART_MonthView. -->
+    <Style TargetType="CalendarDayButton">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CalendarDayButton">
+                    <Border x:Name="chrome"
+                            Margin="1"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsInactive" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                        </Trigger>
+                        <Trigger Property="IsToday" Value="True">
+                            <Setter TargetName="chrome" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                            <Setter TargetName="chrome" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource SurfaceActive}" />
+                        </Trigger>
+                        <Trigger Property="IsBlackedOut" Value="True">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A month (in PART_YearView) or a year (in PART_YearView's decade mode). -->
+    <Style TargetType="CalendarButton">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CalendarButton">
+                    <Border x:Name="chrome"
+                            Margin="2"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsInactive" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource ButtonPressed}" />
+                        </Trigger>
+                        <!-- CalendarButton has no IsSelected of its own; this is
+                             true for the month/year that contains the date
+                             Calendar.SelectedDate is currently set to. -->
+                        <Trigger Property="HasSelectedDays" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource SurfaceActive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

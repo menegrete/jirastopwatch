@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -21,11 +21,10 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace StopWatch
 {
-    internal class JiraClient
+    internal class JiraClient : IJiraOperations
     {
         public bool SessionValid { get; private set; }
 
@@ -67,35 +66,14 @@ namespace StopWatch
                 ErrorMessage = jiraApiRequester.ErrorMessage;
                 return false;
             }
-        }
-
-
-        public List<Filter> GetFavoriteFilters()
-        {
-            var request = jiraApiRequestFactory.CreateGetFavoriteFiltersRequest();
-            try
+            catch (UsernameAndApiTokenNotSetException)
             {
-                return jiraApiRequester.DoAuthenticatedRequest<List<Filter>>(request);
-            }
-            catch (RequestDeniedException)
-            {
-                return null;
+                // No credentials to validate a session with yet - not a
+                // connection failure, just nothing to report as connected.
+                return false;
             }
         }
 
-
-        public SearchResult GetIssuesByJQL(string jql)
-        {
-            var request = jiraApiRequestFactory.CreateGetIssuesByJQLRequest(jql);
-            try
-            {
-                return jiraApiRequester.DoAuthenticatedRequest<SearchResult>(request);
-            }
-            catch (RequestDeniedException)
-            {
-                return null;
-            }
-        }
 
 
         public string GetIssueSummary(string key, bool addProjectName)
@@ -116,6 +94,10 @@ namespace StopWatch
             {
                 return string.Empty;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return string.Empty;
+            }
         }
 
         public TimetrackingFields GetIssueTimetracking(string key)
@@ -126,6 +108,10 @@ namespace StopWatch
                 return jiraApiRequester.DoAuthenticatedRequest<Issue>(request).Fields.Timetracking;
             }
             catch (RequestDeniedException)
+            {
+                return null;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return null;
             }
@@ -143,6 +129,10 @@ namespace StopWatch
             {
                 return null;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return null;
+            }
         }
 
         public bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
@@ -154,6 +144,10 @@ namespace StopWatch
                 return true;
             }
             catch (RequestDeniedException)
+            {
+                return false;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return false;
             }
@@ -172,6 +166,10 @@ namespace StopWatch
             {
                 return false;
             }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return false;
+            }
         }
 
 
@@ -183,6 +181,10 @@ namespace StopWatch
                 return jiraApiRequester.DoAuthenticatedRequest<AvailableTransitions>(request);
             }
             catch (RequestDeniedException)
+            {
+                return null;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return null;
             }
@@ -198,6 +200,10 @@ namespace StopWatch
                 return true;
             }
             catch (RequestDeniedException)
+            {
+                return false;
+            }
+            catch (UsernameAndApiTokenNotSetException)
             {
                 return false;
             }

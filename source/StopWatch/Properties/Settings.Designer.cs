@@ -133,18 +133,6 @@ namespace StopWatch.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int CurrentFilter {
-            get {
-                return ((int)(this["CurrentFilter"]));
-            }
-            set {
-                this["CurrentFilter"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool MinimizeToTray {
             get {
@@ -229,18 +217,6 @@ namespace StopWatch.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool CheckForUpdate {
-            get {
-                return ((bool)(this["CheckForUpdate"]));
-            }
-            set {
-                this["CheckForUpdate"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool IncludeProjectName {
             get {
@@ -272,6 +248,30 @@ namespace StopWatch.Properties {
             }
             set {
                 this["MiniViewLocation"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ListDensity {
+            get {
+                return ((int)(this["ListDensity"]));
+            }
+            set {
+                this["ListDensity"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1081")]
+        public int MainWindowWidth {
+            get {
+                return ((int)(this["MainWindowWidth"]));
+            }
+            set {
+                this["MainWindowWidth"] = value;
             }
         }
     }

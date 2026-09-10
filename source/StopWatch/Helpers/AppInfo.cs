@@ -20,21 +20,24 @@
  * limitations under the License.
  */
 
-using RestSharp;
-using System;
+using System.Diagnostics;
 
 namespace StopWatch
 {
-    internal interface IJiraApiRequestFactory
+    /// <summary>
+    /// What windows used to get from System.Windows.Forms.Application: opening
+    /// a URL in the browser.
+    /// </summary>
+    internal static class AppInfo
     {
-        RestRequest CreateValidateSessionRequest();
-        RestRequest CreateGetIssueSummaryRequest(string key);
-        RestRequest CreateGetIssueTimetrackingRequest(string key);
-        RestRequest CreatePostWorklogRequest(string key, DateTimeOffset started, TimeSpan time, string comment, EstimateUpdateMethods adjustmentMethod, string adjustmentValue);
-        RestRequest CreatePostCommentRequest(string key, string comment);
-        RestRequest CreateGetAvailableTransitions(string key);
-        RestRequest CreateDoTransition(string key, int transitionId);
-        RestRequest CreateGetConfigurationRequest();
+        /// <summary>
+        /// Opens a URL in the user's browser. UseShellExecute has to be set
+        /// explicitly: unlike on .NET Framework, it defaults to false, and
+        /// Process.Start would then look for an executable by that name.
+        /// </summary>
+        public static void OpenUrl(string url)
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
     }
-
 }

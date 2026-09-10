@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -230,6 +230,41 @@ namespace StopWatchTest
 
             Assert.That(result.X, Is.EqualTo(Secondary.Left));
             Assert.That(result.Y, Is.EqualTo(Secondary.Top));
+        }
+        #endregion
+
+
+        #region a remembered width
+        [Test]
+        public void A_width_that_fits_is_left_alone()
+        {
+            Assert.That(ScreenPlacement.ClampWidth(1081, 620, Primary), Is.EqualTo(1081));
+        }
+
+
+        [Test]
+        public void A_width_wider_than_the_screen_shrinks_to_it()
+        {
+            Assert.That(ScreenPlacement.ClampWidth(Primary.Width + 400, 620, Primary), Is.EqualTo(Primary.Width));
+        }
+
+
+        [Test]
+        public void A_width_below_the_minimum_grows_to_it()
+        {
+            Assert.That(ScreenPlacement.ClampWidth(120, 620, Primary), Is.EqualTo(620));
+        }
+
+
+        [Test]
+        public void The_minimum_wins_over_a_screen_narrower_than_it()
+        {
+            // Nothing can be done for a screen this narrow, and a window with
+            // no room for the key and the time would be worse than one that
+            // overflows.
+            var tiny = new Rectangle(0, 0, 400, 800);
+
+            Assert.That(ScreenPlacement.ClampWidth(1081, 620, tiny), Is.EqualTo(620));
         }
         #endregion
     }

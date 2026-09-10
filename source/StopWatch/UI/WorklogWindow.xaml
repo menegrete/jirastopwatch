@@ -1,0 +1,134 @@
+<Window x:Class="StopWatch.WorklogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        x:ClassModifier="internal"
+        Title="Submit worklog"
+        Background="{DynamicResource Background}"
+        SizeToContent="Height"
+        Width="420"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI"
+        FontSize="12">
+
+    <StackPanel Margin="16">
+
+        <TextBlock Text="Add a Comment to your work log (optional)" FontWeight="SemiBold" />
+
+        <TextBox x:Name="tbComment"
+                 Margin="0,6,0,0"
+                 Height="90"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 VerticalContentAlignment="Top"
+                 KeyDown="tbComment_KeyDown" />
+
+        <TextBlock Text="Press CTRL-Enter to submit"
+                   Margin="0,4,0,0"
+                   Style="{StaticResource MutedText}" />
+
+        <!-- ==================== start time ==================== -->
+
+        <TextBlock Text="Start Time" Style="{StaticResource SectionHeader}" />
+
+        <StackPanel Orientation="Horizontal">
+            <DatePicker x:Name="dpStartDate"
+                        Width="140"
+                        ToolTip="Start date of the worklog" />
+
+            <!--
+                MaterialDesignThemes' TimePicker: the one MIT-licensed
+                ("non-comercial" restrictions ruled out Extended WPF
+                Toolkit) library that actually has one, since WPF has no
+                native time picker. Its resource dictionaries are merged
+                here, scoped to this one Grid, rather than at the
+                application level - MaterialDesign3.Defaults sets implicit
+                styles for ordinary control types (Button, TextBox...) that
+                would otherwise override this app's own theme everywhere
+                else in the application.
+            -->
+            <Grid Margin="8,0,0,0">
+                <Grid.Resources>
+                    <ResourceDictionary>
+                        <ResourceDictionary.MergedDictionaries>
+                            <materialDesign:BundledTheme BaseTheme="Dark" PrimaryColor="Blue" SecondaryColor="Lime" />
+                            <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                        </ResourceDictionary.MergedDictionaries>
+                    </ResourceDictionary>
+                </Grid.Resources>
+                <materialDesign:TimePicker x:Name="tpStartTime"
+                                           Width="90"
+                                           Is24Hours="True"
+                                           Foreground="{DynamicResource Text}"
+                                           ToolTip="Start time of the worklog" />
+            </Grid>
+        </StackPanel>
+
+        <!-- ==================== remaining estimate ==================== -->
+
+        <GroupBox Header="Remaining Estimate">
+            <StackPanel>
+                <RadioButton x:Name="rdEstimateAdjustAuto"
+                             Content="Adjust _Automatically"
+                             GroupName="estimate"
+                             Checked="estimateUpdateMethod_Changed" />
+
+                <RadioButton x:Name="rdEstimateAdjustLeave"
+                             Content="_Leave Unchanged"
+                             GroupName="estimate"
+                             Checked="estimateUpdateMethod_Changed" />
+
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <RadioButton Grid.Column="0"
+                                 x:Name="rdEstimateAdjustSetTo"
+                                 Content="_Set To"
+                                 GroupName="estimate"
+                                 Checked="estimateUpdateMethod_Changed" />
+                    <TextBox Grid.Column="1"
+                             x:Name="tbSetTo"
+                             IsEnabled="False"
+                             LostFocus="EstimateValue_LostFocus"
+                             TextChanged="EstimateValue_TextChanged"
+                             KeyDown="EstimateValue_KeyDown" />
+                </Grid>
+
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <RadioButton Grid.Column="0"
+                                 x:Name="rdEstimateAdjustManualDecrease"
+                                 Content="_Reduce By"
+                                 GroupName="estimate"
+                                 Checked="estimateUpdateMethod_Changed" />
+                    <TextBox Grid.Column="1"
+                             x:Name="tbReduceBy"
+                             IsEnabled="False"
+                             LostFocus="EstimateValue_LostFocus"
+                             TextChanged="EstimateValue_TextChanged"
+                             KeyDown="EstimateValue_KeyDown" />
+                </Grid>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ==================== the three ways out ==================== -->
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,12,0,0">
+            <Button Content="Su_bmit" IsDefault="True" Click="btnSubmit_Click" />
+            <Button Content="Sa_ve for later" Margin="8,0,0,0" Click="btnSaveForLater_Click" />
+            <Button Content="Cancel" Margin="8,0,0,0" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

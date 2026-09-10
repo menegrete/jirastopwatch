@@ -1,11 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Deliberately and permanently on, even though the UI is WPF: the tray
+         icon (System.Windows.Forms.NotifyIcon) and screen enumeration
+         (System.Windows.Forms.Screen, used by ScreenPlacement) have no WPF
+         equivalent. See openspec design "migrate-ui-to-wpf", Non-Goals. -->
     <UseWindowsForms>true</UseWindowsForms>
-    <!-- The mini timer view is a WPF window living in this WinForms process.
-         See openspec design "D1. La vista mini se implementa en WPF". -->
     <UseWPF>true</UseWPF>
     <RootNamespace>StopWatch</RootNamespace>
     <AssemblyName>StopWatch</AssemblyName>
@@ -19,6 +21,18 @@
 
   <ItemGroup>
     <PackageReference Include="RestSharp" />
+    <!-- MIT-licensed (unlike Extended WPF Toolkit, which is Xceed's
+         non-commercial-only Community License) - brought in solely for its
+         TimePicker, since WPF has no built-in one. Its resource dictionaries
+         are merged locally around just that control (see WorklogWindow.xaml)
+         rather than app-wide, so they don't override this app's own theme. -->
+    <PackageReference Include="MaterialDesignThemes" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Also the ApplicationIcon above, but the windows need it as a resource
+         so that XAML can reference it by pack URI. -->
+    <Resource Include="stopwatchicon.ico" />
   </ItemGroup>
 
 </Project>

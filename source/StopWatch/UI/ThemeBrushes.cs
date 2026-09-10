@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -46,6 +46,21 @@ namespace StopWatch
         public static void Apply(ResourceDictionary target)
         {
             Apply(target, Theme.Current);
+        }
+
+
+        /// <summary>
+        /// Repaints the whole application with the active theme.
+        ///
+        /// The brushes live in the application's own dictionary rather than in
+        /// each window's, so one call reaches every window there is - including
+        /// dialogs that are not open yet. This is what replaces walking each
+        /// form's control tree.
+        /// </summary>
+        public static void ApplyToApplication()
+        {
+            if (Application.Current != null)
+                Apply(Application.Current.Resources);
         }
 
 

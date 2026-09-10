@@ -26,8 +26,17 @@ namespace StopWatch
 {
     class StringHelpers
     {
+        /// <summary>
+        /// Some Jira responses (an empty body, a connection error RestSharp
+        /// still turns into a response object) carry a null Content - logging
+        /// one of those used to crash here instead of just logging it as
+        /// empty.
+        /// </summary>
         public static string Truncate(string str, int length)
         {
+            if (str == null)
+                return "";
+
             return str.Substring(0, Math.Min(str.Length, length));
         }
 

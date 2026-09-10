@@ -41,20 +41,6 @@ namespace StopWatch
         }
 
 
-        public RestRequest CreateGetFavoriteFiltersRequest()
-        {
-            var request = restRequestFactory.Create("/rest/api/2/filter/favourite", Method.Get);
-            return request;
-        }
-        
-
-        public RestRequest CreateGetIssuesByJQLRequest(string jql)
-        {
-            var request = restRequestFactory.Create(String.Format("/rest/api/2/search?jql={0}&maxResults=200", jql), Method.Get);
-            return request;
-        }
-
-
         public RestRequest CreateGetIssueSummaryRequest(string key)
         {
             var request = restRequestFactory.Create(String.Format("/rest/api/2/issue/{0}", key.Trim()), Method.Get);
