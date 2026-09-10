@@ -53,7 +53,21 @@ namespace StopWatch
         public string IssueKey
         {
             get { return issueKey; }
-            set { Set(ref issueKey, value ?? "", "IssueKey"); }
+            set
+            {
+                string newValue = value ?? "";
+                if (issueKey == newValue)
+                    return;
+
+                issueKey = newValue;
+                Raise("IssueKey");
+
+                // The old summary belonged to the old key - drop it so CanOpen
+                // reflects the new key's unresolved state immediately, rather
+                // than staying enabled against a summary that no longer
+                // matches what's in the box.
+                Summary = "";
+            }
         }
 
 
@@ -65,7 +79,16 @@ namespace StopWatch
         public string Summary
         {
             get { return summary; }
-            set { Set(ref summary, value ?? "", "Summary"); }
+            set
+            {
+                string newValue = value ?? "";
+                if (summary == newValue)
+                    return;
+
+                summary = newValue;
+                Raise("Summary");
+                Raise("CanOpen");
+            }
         }
 
 
@@ -171,10 +194,14 @@ namespace StopWatch
         }
 
 
-        /// <summary>Whether the issue can be opened in a browser.</summary>
+        /// <summary>
+        /// Whether the issue can be opened in a browser. Requires a resolved
+        /// summary, not just a non-empty key - that's Jira's confirmation
+        /// that the key is valid and the issue exists.
+        /// </summary>
         public bool CanOpen
         {
-            get { return !string.IsNullOrEmpty(issueKey.Trim()); }
+            get { return !string.IsNullOrEmpty(summary); }
         }
         #endregion
 

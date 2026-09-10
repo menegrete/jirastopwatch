@@ -126,15 +126,53 @@ namespace StopWatchTest
 
 
         [Test]
-        public void CanOpen_IsFalseWhileThereIsNoKey()
+        public void CanOpen_IsFalseUntilTheSummaryResolves()
         {
             Assert.That(model.CanOpen, Is.False);
 
-            model.IssueKey = "   ";
-            Assert.That(model.CanOpen, Is.False);
-
             model.IssueKey = "TST-1";
+            Assert.That(model.CanOpen, Is.False, "a key alone isn't Jira's confirmation the issue exists");
+
+            model.Summary = "Do the thing";
             Assert.That(model.CanOpen, Is.True);
+        }
+
+
+        [Test]
+        public void CanOpen_IsAnnouncedWhenTheSummaryResolves()
+        {
+            model.IssueKey = "TST-1";
+            changed.Clear();
+
+            model.Summary = "Do the thing";
+
+            Assert.That(changed, Contains.Item("CanOpen"));
+        }
+
+
+        [Test]
+        public void CanOpen_DropsWhenTheKeyChangesToSomethingElse()
+        {
+            model.IssueKey = "TST-1";
+            model.Summary = "Do the thing";
+
+            model.IssueKey = "TST-2";
+
+            Assert.That(model.Summary, Is.EqualTo(""), "the old summary belonged to the old key");
+            Assert.That(model.CanOpen, Is.False);
+        }
+
+
+        [Test]
+        public void CanOpen_IsAnnouncedWhenTheKeyChangeDropsTheSummary()
+        {
+            model.IssueKey = "TST-1";
+            model.Summary = "Do the thing";
+            changed.Clear();
+
+            model.IssueKey = "TST-2";
+
+            Assert.That(changed, Contains.Item("CanOpen"));
         }
         #endregion
 
