@@ -28,6 +28,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 using Screen = System.Windows.Forms.Screen;
 
 namespace StopWatch
@@ -551,12 +553,15 @@ namespace StopWatch
 
         private async Task UpdateSummaryAsync(IssueViewModel issue)
         {
-            string summary = await jiraService.GetSummaryAsync(issue.IssueKey);
+            IssueSummaryResult result = await jiraService.GetSummaryAsync(issue.IssueKey);
 
             // null means Jira refused the request - leave the summary the row
             // already has.
-            if (summary != null)
-                issue.Summary = summary;
+            if (result != null)
+            {
+                issue.Summary = result.Summary;
+                issue.ParentKey = result.ParentKey;
+            }
         }
 
 
@@ -660,6 +665,48 @@ namespace StopWatch
         }
 
 
+        private void btnCopyKey_Click(object sender, RoutedEventArgs e)
+        {
+            IssueViewModel issue = RowOf(sender);
+            issues.SetCurrent(issue);
+            CopyKey(issue);
+            FlashCopyConfirmation((Button)sender);
+        }
+
+
+        private void btnCopyParentKey_Click(object sender, RoutedEventArgs e)
+        {
+            IssueViewModel issue = RowOf(sender);
+            issues.SetCurrent(issue);
+            CopyParentKey(issue);
+            FlashCopyConfirmation((Button)sender);
+        }
+
+
+        /// <summary>
+        /// Swaps a copy icon's glyph for a check mark for a moment, then
+        /// restores it. Purely visual - nothing here is persisted, so a row
+        /// refresh mid-flash simply leaves the timer to restore the glyph.
+        /// </summary>
+        private void FlashCopyConfirmation(Button button)
+        {
+            Path glyph = button.Content as Path;
+            if (glyph == null)
+                return;
+
+            Geometry original = glyph.Data;
+            glyph.Data = (Geometry)FindResource("GlyphCheck");
+
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                glyph.Data = original;
+            };
+            timer.Start();
+        }
+
+
         private void btnStartStop_Click(object sender, RoutedEventArgs e)
         {
             IssueViewModel issue = RowOf(sender);
@@ -725,6 +772,26 @@ namespace StopWatch
 
             issue.IssueKey = field.Text;
             UpdateSummary(issue);
+            e.Handled = true;
+        }
+
+
+        /// <summary>
+        /// Backs the key field's own Paste command, which its right-click
+        /// context menu invokes directly - unlike Ctrl+V, that never reaches
+        /// MainWindow_PreviewKeyDown, so without this the context menu would
+        /// paste the raw clipboard text instead of parsing a URL to a key.
+        /// </summary>
+        private void tbIssueKey_PasteCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Clipboard.ContainsText();
+            e.Handled = true;
+        }
+
+
+        private void tbIssueKey_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            PasteKey(RowOf(sender));
             e.Handled = true;
         }
         #endregion
@@ -869,6 +936,15 @@ namespace StopWatch
                 return;
 
             Clipboard.SetText(issue.IssueKey);
+        }
+
+
+        private void CopyParentKey(IssueViewModel issue)
+        {
+            if (issue == null || !issue.HasParent)
+                return;
+
+            Clipboard.SetText(issue.ParentKey);
         }
 
 

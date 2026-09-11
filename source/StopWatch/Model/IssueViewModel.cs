@@ -62,11 +62,12 @@ namespace StopWatch
                 issueKey = newValue;
                 Raise("IssueKey");
 
-                // The old summary belonged to the old key - drop it so CanOpen
-                // reflects the new key's unresolved state immediately, rather
-                // than staying enabled against a summary that no longer
-                // matches what's in the box.
+                // The old summary and parent belonged to the old key - drop
+                // them so CanOpen reflects the new key's unresolved state
+                // immediately, rather than staying enabled against a summary
+                // that no longer matches what's in the box.
                 Summary = "";
+                ParentKey = "";
             }
         }
 
@@ -89,6 +90,34 @@ namespace StopWatch
                 Raise("Summary");
                 Raise("CanOpen");
             }
+        }
+
+
+        /// <summary>
+        /// The parent issue's key, when this issue is a subtask and Jira
+        /// returned one. Empty otherwise - never null, same as
+        /// <see cref="IssueKey"/> and <see cref="Summary"/>.
+        /// </summary>
+        public string ParentKey
+        {
+            get { return parentKey; }
+            set
+            {
+                string newValue = value ?? "";
+                if (parentKey == newValue)
+                    return;
+
+                parentKey = newValue;
+                Raise("ParentKey");
+                Raise("HasParent");
+            }
+        }
+
+
+        /// <summary>Whether there is a parent key available to copy.</summary>
+        public bool HasParent
+        {
+            get { return !string.IsNullOrEmpty(parentKey); }
         }
 
 
@@ -362,6 +391,7 @@ namespace StopWatch
         #region private members
         private string issueKey = "";
         private string summary = "";
+        private string parentKey = "";
         private string comment;
         private EstimateUpdateMethods estimateUpdateMethod = EstimateUpdateMethods.Auto;
         private string estimateUpdateValue;

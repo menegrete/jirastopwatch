@@ -43,7 +43,8 @@
 
         <!-- Compact: what the WinForms window looked like. -->
         <DataTemplate x:Key="IssueRowCompact">
-            <local:ThemeAnimatedBorder IsActive="{Binding IsCurrent}"
+            <local:ThemeAnimatedBorder x:Name="row"
+                                       IsActive="{Binding IsCurrent}"
                                        ActiveColor="SurfaceActive"
                                        InactiveColor="Surface"
                                        Padding="8,2"
@@ -76,7 +77,51 @@
                              Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
                              LostFocus="tbIssueKey_LostFocus"
                              KeyDown="tbIssueKey_KeyDown"
-                             GotFocus="Row_Selected" />
+                             GotFocus="Row_Selected">
+                        <!-- Overrides the TextBox's own built-in Paste, which
+                             the right-click context menu invokes directly as
+                             a command - Ctrl+V never reaches it (see
+                             MainWindow_PreviewKeyDown), but the context menu
+                             bypasses that and would otherwise paste the raw
+                             clipboard text instead of parsing a URL to a key. -->
+                        <TextBox.CommandBindings>
+                            <CommandBinding Command="ApplicationCommands.Paste"
+                                             CanExecute="tbIssueKey_PasteCanExecute"
+                                             Executed="tbIssueKey_PasteExecuted" />
+                        </TextBox.CommandBindings>
+                    </TextBox>
+
+                    <!-- Copy the parent's key. Overlaid on the key field,
+                         to the left of the issue key's own copy icon below.
+                         Only ever shown for a subtask with a parent key -
+                         see the parent-issue-summary spec, "Sin interacción
+                         sobre el parent más allá de copiar su key". -->
+                    <Button x:Name="btnCopyParentKey"
+                            Grid.Column="1"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,22,0"
+                            Visibility="Collapsed"
+                            ToolTip="Copy parent issue key"
+                            Click="btnCopyParentKey_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <!-- Copy the issue key. Overlaid on the key field itself,
+                         rather than a column of its own, so it costs no width
+                         and only shows up while it might be wanted. -->
+                    <Button x:Name="btnCopyKey"
+                            Grid.Column="1"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            Visibility="Collapsed"
+                            ToolTip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphCopy}" />
+                    </Button>
 
                     <Button Grid.Column="2"
                             Style="{StaticResource GlyphButton}"
@@ -172,11 +217,26 @@
                     </Button>
                 </Grid>
             </local:ThemeAnimatedBorder>
+
+            <DataTemplate.Triggers>
+                <!-- Order matters: the HasParent=False trigger is listed last
+                     so it always wins over the hover trigger below, keeping
+                     the parent-copy icon hidden when there is nothing to
+                     copy regardless of hover state. -->
+                <Trigger SourceName="row" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <DataTrigger Binding="{Binding HasParent}" Value="False">
+                    <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
         <!-- Spacious: the same row, given room to breathe. -->
         <DataTemplate x:Key="IssueRowSpacious">
-            <local:ThemeAnimatedBorder IsActive="{Binding IsCurrent}"
+            <local:ThemeAnimatedBorder x:Name="row"
+                                       IsActive="{Binding IsCurrent}"
                                        ActiveColor="SurfaceActive"
                                        InactiveColor="Surface"
                                        Padding="8,6"
@@ -209,7 +269,51 @@
                              Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
                              LostFocus="tbIssueKey_LostFocus"
                              KeyDown="tbIssueKey_KeyDown"
-                             GotFocus="Row_Selected" />
+                             GotFocus="Row_Selected">
+                        <!-- Overrides the TextBox's own built-in Paste, which
+                             the right-click context menu invokes directly as
+                             a command - Ctrl+V never reaches it (see
+                             MainWindow_PreviewKeyDown), but the context menu
+                             bypasses that and would otherwise paste the raw
+                             clipboard text instead of parsing a URL to a key. -->
+                        <TextBox.CommandBindings>
+                            <CommandBinding Command="ApplicationCommands.Paste"
+                                             CanExecute="tbIssueKey_PasteCanExecute"
+                                             Executed="tbIssueKey_PasteExecuted" />
+                        </TextBox.CommandBindings>
+                    </TextBox>
+
+                    <!-- Copy the parent's key. Overlaid on the key field,
+                         to the left of the issue key's own copy icon below.
+                         Only ever shown for a subtask with a parent key -
+                         see the parent-issue-summary spec, "Sin interacción
+                         sobre el parent más allá de copiar su key". -->
+                    <Button x:Name="btnCopyParentKey"
+                            Grid.Column="1"
+                            Style="{StaticResource GlyphButton}"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,24,0"
+                            Visibility="Collapsed"
+                            ToolTip="Copy parent issue key"
+                            Click="btnCopyParentKey_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <!-- Copy the issue key. Overlaid on the key field itself,
+                         rather than a column of its own, so it costs no width
+                         and only shows up while it might be wanted. -->
+                    <Button x:Name="btnCopyKey"
+                            Grid.Column="1"
+                            Style="{StaticResource GlyphButton}"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            Visibility="Collapsed"
+                            ToolTip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphCopy}" />
+                    </Button>
 
                     <Button Grid.Column="2"
                             Style="{StaticResource GlyphButton}"
@@ -305,6 +409,20 @@
                     </Button>
                 </Grid>
             </local:ThemeAnimatedBorder>
+
+            <DataTemplate.Triggers>
+                <!-- Order matters: the HasParent=False trigger is listed last
+                     so it always wins over the hover trigger below, keeping
+                     the parent-copy icon hidden when there is nothing to
+                     copy regardless of hover state. -->
+                <Trigger SourceName="row" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <DataTrigger Binding="{Binding HasParent}" Value="False">
+                    <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
     </Window.Resources>
