@@ -42,6 +42,21 @@ namespace StopWatch
     }
 
 
+    /// <summary>
+    /// An issue's summary as resolved from Jira, together with its parent
+    /// key when the issue is a subtask - kept separate from the composed
+    /// summary text so that the parent key can be copied on its own.
+    /// </summary>
+    internal class IssueSummaryResult
+    {
+        /// <summary>The composed summary text - project prefix and parent summary included.</summary>
+        public string Summary { get; set; } = "";
+
+        /// <summary>The parent issue's key, or empty when there is none.</summary>
+        public string ParentKey { get; set; } = "";
+    }
+
+
     /// <summary>The remaining estimate of an issue, as Jira reports it.</summary>
     internal class RemainingEstimate
     {
@@ -126,17 +141,18 @@ namespace StopWatch
 
 
         /// <summary>
-        /// Resolves an issue's summary, already carrying whatever the client
-        /// composes - project prefix and parent summary included.
+        /// Resolves an issue's summary and parent key, already carrying
+        /// whatever the client composes - project prefix and parent summary
+        /// included in the summary text.
         ///
-        /// Returns an empty summary when there is no key or no session, and
+        /// Returns an empty result when there is no key or no session, and
         /// null when Jira refused the request, which the caller reads as "leave
         /// the summary you already have".
         /// </summary>
-        public async Task<string> GetSummaryAsync(string key)
+        public async Task<IssueSummaryResult> GetSummaryAsync(string key)
         {
             if (string.IsNullOrEmpty(key) || !jira.SessionValid)
-                return "";
+                return new IssueSummaryResult();
 
             bool addProjectName = settings.IncludeProjectName;
 

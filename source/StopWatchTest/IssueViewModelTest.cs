@@ -86,6 +86,49 @@ namespace StopWatchTest
 
 
         [Test]
+        public void ParentKey_NotifiesBothItselfAndHasParent()
+        {
+            model.ParentKey = "TST-0";
+
+            Assert.That(model.HasParent, Is.True);
+            Assert.That(changed, Contains.Item("ParentKey"));
+            Assert.That(changed, Contains.Item("HasParent"));
+        }
+
+
+        [Test]
+        public void ParentKey_EmptyDoesNotCountAsHavingOne()
+        {
+            model.ParentKey = "";
+
+            Assert.That(model.HasParent, Is.False);
+        }
+
+
+        [Test]
+        public void ParentKey_TreatsNullAsEmpty()
+        {
+            model.ParentKey = null;
+
+            Assert.That(model.ParentKey, Is.EqualTo(""));
+            Assert.That(model.HasParent, Is.False);
+        }
+
+
+        [Test]
+        public void ParentKey_DropsWhenTheKeyChangesToSomethingElse()
+        {
+            model.IssueKey = "TST-1";
+            model.ParentKey = "TST-0";
+
+            model.IssueKey = "TST-2";
+
+            Assert.That(model.ParentKey, Is.EqualTo(""), "the old parent belonged to the old key");
+            Assert.That(model.HasParent, Is.False);
+        }
+
+
+        [Test]
         public void Comment_NotifiesBothItselfAndHasComment()
         {
             model.Comment = "worked on it";

@@ -220,11 +220,22 @@ namespace StopWatchTest
         [Test]
         public async Task GetSummary_ReturnsWhatJiraSays()
         {
-            jira.Setup(j => j.GetIssueSummary("TST-1", false)).Returns("Do the thing");
+            jira.Setup(j => j.GetIssueSummary("TST-1", false)).Returns(new IssueSummaryResult { Summary = "Do the thing" });
 
-            string summary = await service.GetSummaryAsync("TST-1");
+            IssueSummaryResult result = await service.GetSummaryAsync("TST-1");
 
-            Assert.That(summary, Is.EqualTo("Do the thing"));
+            Assert.That(result.Summary, Is.EqualTo("Do the thing"));
+        }
+
+
+        [Test]
+        public async Task GetSummary_ReturnsTheParentKey()
+        {
+            jira.Setup(j => j.GetIssueSummary("TST-1", false)).Returns(new IssueSummaryResult { Summary = "Do the thing", ParentKey = "TST-0" });
+
+            IssueSummaryResult result = await service.GetSummaryAsync("TST-1");
+
+            Assert.That(result.ParentKey, Is.EqualTo("TST-0"));
         }
 
 
@@ -232,11 +243,11 @@ namespace StopWatchTest
         public async Task GetSummary_PassesTheProjectNameSetting()
         {
             settings.IncludeProjectName = true;
-            jira.Setup(j => j.GetIssueSummary("TST-1", true)).Returns("Project / Do the thing");
+            jira.Setup(j => j.GetIssueSummary("TST-1", true)).Returns(new IssueSummaryResult { Summary = "Project / Do the thing" });
 
-            string summary = await service.GetSummaryAsync("TST-1");
+            IssueSummaryResult result = await service.GetSummaryAsync("TST-1");
 
-            Assert.That(summary, Is.EqualTo("Project / Do the thing"));
+            Assert.That(result.Summary, Is.EqualTo("Project / Do the thing"));
         }
 
 
@@ -245,9 +256,9 @@ namespace StopWatchTest
         {
             jira.Setup(j => j.GetIssueSummary(It.IsAny<string>(), It.IsAny<bool>())).Throws(new RequestDeniedException());
 
-            string summary = await service.GetSummaryAsync("TST-1");
+            IssueSummaryResult result = await service.GetSummaryAsync("TST-1");
 
-            Assert.That(summary, Is.Null, "null tells the caller to keep the summary it has");
+            Assert.That(result, Is.Null, "null tells the caller to keep the summary it has");
         }
 
 
@@ -256,9 +267,10 @@ namespace StopWatchTest
         {
             jira.SetupGet(j => j.SessionValid).Returns(false);
 
-            string summary = await service.GetSummaryAsync("TST-1");
+            IssueSummaryResult result = await service.GetSummaryAsync("TST-1");
 
-            Assert.That(summary, Is.EqualTo(""));
+            Assert.That(result.Summary, Is.EqualTo(""));
+            Assert.That(result.ParentKey, Is.EqualTo(""));
             jira.Verify(j => j.GetIssueSummary(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         }
 
@@ -266,8 +278,8 @@ namespace StopWatchTest
         [Test]
         public async Task GetSummary_ReturnsEmptyOnAnEmptyKey()
         {
-            Assert.That(await service.GetSummaryAsync(""), Is.EqualTo(""));
-            Assert.That(await service.GetSummaryAsync(null), Is.EqualTo(""));
+            Assert.That((await service.GetSummaryAsync("")).Summary, Is.EqualTo(""));
+            Assert.That((await service.GetSummaryAsync(null)).Summary, Is.EqualTo(""));
 
             jira.Verify(j => j.GetIssueSummary(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         }

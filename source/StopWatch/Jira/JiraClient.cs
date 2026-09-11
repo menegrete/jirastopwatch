@@ -76,27 +76,34 @@ namespace StopWatch
 
 
 
-        public string GetIssueSummary(string key, bool addProjectName)
+        public IssueSummaryResult GetIssueSummary(string key, bool addProjectName)
         {
             var request = jiraApiRequestFactory.CreateGetIssueSummaryRequest(key);
             try
             {
                 var issue = jiraApiRequester.DoAuthenticatedRequest<Issue>(request).Fields;
 
-                string summary = issue.Summary;
+                bool isSubtask = issue.IssueType?.Subtask == true;
                 string parentSummary = issue.Parent?.Fields?.Summary;
-                if (issue.IssueType?.Subtask == true && !string.IsNullOrEmpty(parentSummary))
+                string parentKey = isSubtask ? issue.Parent?.Key : null;
+
+                string summary = issue.Summary;
+                if (isSubtask && !string.IsNullOrEmpty(parentSummary))
                     summary = parentSummary + " / " + summary;
 
-                return addProjectName ? issue.Project.Name + ": " + summary : summary;
+                return new IssueSummaryResult
+                {
+                    Summary = addProjectName ? issue.Project.Name + ": " + summary : summary,
+                    ParentKey = parentKey ?? ""
+                };
             }
             catch (RequestDeniedException)
             {
-                return string.Empty;
+                return new IssueSummaryResult();
             }
             catch (UsernameAndApiTokenNotSetException)
             {
-                return string.Empty;
+                return new IssueSummaryResult();
             }
         }
 

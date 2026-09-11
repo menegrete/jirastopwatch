@@ -100,19 +100,23 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false).Summary, Is.EqualTo(returnData.Fields.Summary));
         }
 
 
-        [Test, Description("GetIssueSummary: On failure it returns empty string")]
-        public void GetIssueSummary_OnFailure_It_Returns_Empty_String()
+        [Test, Description("GetIssueSummary: On failure it returns an empty result")]
+        public void GetIssueSummary_OnFailure_It_Returns_Empty_Result()
         {
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Throws<RequestDeniedException>();
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(""));
+
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.Summary, Is.EqualTo(""));
+            Assert.That(result.ParentKey, Is.EqualTo(""));
         }
 
 
-        [Test, Description("GetIssueSummary: When issue is a subtask with a parent summary, it prefixes the parent summary")]
+        [Test, Description("GetIssueSummary: When issue is a subtask with a parent summary, it prefixes the parent summary and returns the parent key")]
         public void GetIssueSummary_WithParent_It_Returns_Parent_And_Issue_Summary()
         {
             Issue returnData = new Issue
@@ -131,11 +135,14 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo("Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.Summary, Is.EqualTo("Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+            Assert.That(result.ParentKey, Is.EqualTo("DG-1"));
         }
 
 
-        [Test, Description("GetIssueSummary: When issue is not a subtask but has a parent (e.g. an Epic link), it returns only the issue summary")]
+        [Test, Description("GetIssueSummary: When issue is not a subtask but has a parent (e.g. an Epic link), it returns only the issue summary and no parent key")]
         public void GetIssueSummary_WithParentButNotSubtask_It_Returns_Issue_Summary_Only()
         {
             Issue returnData = new Issue
@@ -154,11 +161,14 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.Summary, Is.EqualTo(returnData.Fields.Summary));
+            Assert.That(result.ParentKey, Is.EqualTo(""), "the parent here is an Epic, not something to offer copying");
         }
 
 
-        [Test, Description("GetIssueSummary: When issue has no parent, it returns only the issue summary")]
+        [Test, Description("GetIssueSummary: When issue has no parent, it returns only the issue summary and no parent key")]
         public void GetIssueSummary_WithoutParent_It_Returns_Issue_Summary_Only()
         {
             Issue returnData = new Issue
@@ -172,7 +182,29 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.Summary, Is.EqualTo(returnData.Fields.Summary));
+            Assert.That(result.ParentKey, Is.EqualTo(""));
+        }
+
+
+        [Test, Description("GetIssueSummary: When a subtask's parent has no key, it returns no parent key")]
+        public void GetIssueSummary_SubtaskWithoutParent_It_Returns_No_ParentKey()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    IssueType = new IssueTypeFields { Subtask = true },
+                    Parent = null
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false).ParentKey, Is.EqualTo(""));
         }
 
 
@@ -194,7 +226,7 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", false), Is.EqualTo(returnData.Fields.Summary));
+            Assert.That(jiraClient.GetIssueSummary("DG-42", false).Summary, Is.EqualTo(returnData.Fields.Summary));
         }
 
 
@@ -218,7 +250,10 @@ namespace StopWatchTest
 
             jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
 
-            Assert.That(jiraClient.GetIssueSummary("DG-42", true), Is.EqualTo("Dirk Gently: Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", true);
+
+            Assert.That(result.Summary, Is.EqualTo("Dirk Gently: Dirk Gently's Holistic Detective Agency / The long dark tea-time of the soul"));
+            Assert.That(result.ParentKey, Is.EqualTo("DG-1"));
         }
 
         [Test, Description("GetIssueTimetracking: On success it returns a timetracking object")]

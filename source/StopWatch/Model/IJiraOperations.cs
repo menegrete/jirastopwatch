@@ -35,7 +35,7 @@ namespace StopWatch
     {
         bool SessionValid { get; }
 
-        string GetIssueSummary(string key, bool addProjectName);
+        IssueSummaryResult GetIssueSummary(string key, bool addProjectName);
 
         TimetrackingFields GetIssueTimetracking(string key);
 
