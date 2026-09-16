@@ -224,14 +224,20 @@
             </local:ThemeAnimatedBorder>
 
             <DataTemplate.Triggers>
-                <!-- Order matters: the HasParent=False trigger is listed last
-                     so it always wins over the hover trigger below, keeping
-                     the parent-copy icon hidden when there is nothing to
-                     copy regardless of hover state. -->
+                <!-- Order matters: the CanOpen=False and HasParent=False
+                     triggers are listed last so they always win over the
+                     hover trigger above, keeping a copy icon hidden when
+                     there is nothing resolved yet to copy, regardless of
+                     hover state - same "requires a resolved issue" rule
+                     issue-open-action already applies to opening in the
+                     browser. -->
                 <Trigger SourceName="row" Property="IsMouseOver" Value="True">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
                 </Trigger>
+                <DataTrigger Binding="{Binding CanOpen}" Value="False">
+                    <Setter TargetName="btnCopyKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding HasParent}" Value="False">
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
@@ -421,14 +427,20 @@
             </local:ThemeAnimatedBorder>
 
             <DataTemplate.Triggers>
-                <!-- Order matters: the HasParent=False trigger is listed last
-                     so it always wins over the hover trigger below, keeping
-                     the parent-copy icon hidden when there is nothing to
-                     copy regardless of hover state. -->
+                <!-- Order matters: the CanOpen=False and HasParent=False
+                     triggers are listed last so they always win over the
+                     hover trigger above, keeping a copy icon hidden when
+                     there is nothing resolved yet to copy, regardless of
+                     hover state - same "requires a resolved issue" rule
+                     issue-open-action already applies to opening in the
+                     browser. -->
                 <Trigger SourceName="row" Property="IsMouseOver" Value="True">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
                 </Trigger>
+                <DataTrigger Binding="{Binding CanOpen}" Value="False">
+                    <Setter TargetName="btnCopyKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding HasParent}" Value="False">
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>

@@ -6,8 +6,10 @@ seleccionar texto a mano.
 ## Requirements
 ### Requirement: Copiar el key propio del issue
 
-Cada fila de issue SHALL ofrecer una acción para copiar el key de ese issue
-al portapapeles del sistema.
+Cada fila de issue de la ventana principal SHALL ofrecer una acción para
+copiar el key de ese issue al portapapeles del sistema, únicamente cuando
+esa fila tenga un summary resuelto desde Jira - la misma condición que
+`issue-open-action` exige para habilitar "abrir en el navegador".
 
 #### Scenario: Usuario copia el key propio
 
@@ -19,6 +21,13 @@ al portapapeles del sistema.
 
 - **WHEN** el mouse no está sobre la fila del issue
 - **THEN** el ícono de copiar el key propio no es visible
+
+#### Scenario: Issue sin resolver todavía
+
+- **WHEN** el usuario tipeó o pegó una issue key en una fila de la ventana
+  principal y todavía no se resolvió ningún summary para ella, y pasa el
+  mouse sobre esa fila
+- **THEN** el ícono de copiar el key propio no es visible en esa fila
 
 ### Requirement: Copiar el key del parent en subtareas
 

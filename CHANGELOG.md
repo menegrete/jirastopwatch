@@ -28,6 +28,7 @@ reconstructed here — see `git log` and the archived proposals under
 ### Fixed
 
 - Returning from the mini view to the full window no longer leaves it off-screen when the monitor it was on got disconnected while the mini view was up — it now falls back to a visible position on the main screen, the same protection the mini view's own position already had.
+- In the main window, hovering a row no longer shows the copy-key icon when that row's issue hasn't resolved against Jira yet (an empty row, or a key just typed/pasted) — it now follows the same "resolved issue required" rule as opening in the browser.
 
 ## [2.4.0](https://github.com/menegrete/jirastopwatch/compare/v2.3.1...v2.4.0) (2026-09-17)
 
