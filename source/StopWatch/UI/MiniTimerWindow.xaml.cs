@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using DrawingPoint = System.Drawing.Point;
@@ -197,7 +198,7 @@ namespace StopWatch
 
         private void RowToggle_Click(object sender, RoutedEventArgs e)
         {
-            MiniTimerRowViewModel row = (sender as FrameworkElement)?.DataContext as MiniTimerRowViewModel;
+            MiniTimerRowViewModel row = RowOf(sender);
             if (row == null)
                 return;
 
@@ -211,10 +212,102 @@ namespace StopWatch
         {
             RaiseRestoreRequested();
         }
+
+
+        private void btnCopyKey_Click(object sender, RoutedEventArgs e)
+        {
+            MiniTimerRowViewModel row = RowOf(sender);
+            if (row == null || string.IsNullOrEmpty(row.IssueKey))
+                return;
+
+            Clipboard.SetText(row.IssueKey);
+            GlyphButtonHelpers.FlashCopyConfirmation((Button)sender);
+        }
+
+
+        private void btnOpen_Click(object sender, RoutedEventArgs e)
+        {
+            MiniTimerRowViewModel row = RowOf(sender);
+            if (row == null || string.IsNullOrEmpty(row.Summary))
+                return;
+
+            string url = JiraKeyHelpers.BuildIssueUrl(settings.JiraBaseUrl, row.IssueKey);
+            if (url == null)
+                return;
+
+            AppInfo.OpenUrl(url);
+        }
+
+
+        /// <summary>
+        /// Shows a row's copy/open buttons and cancels any pending hide from a
+        /// previous, still-grace-period MouseLeave.
+        /// </summary>
+        private void keyArea_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Grid keyArea = (Grid)sender;
+            CancelPendingHide(keyArea);
+            SetActionButtonsVisible(keyArea, visible: true);
+        }
+
+
+        /// <summary>
+        /// Hides a row's copy/open buttons after a short delay instead of
+        /// immediately - moving from the key text to a button crosses a gap
+        /// that is briefly outside keyArea (or can be skipped over entirely by
+        /// a single coalesced fast mouse move), which would otherwise hide the
+        /// buttons out from under the cursor before a click ever lands.
+        /// </summary>
+        private void keyArea_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Grid keyArea = (Grid)sender;
+            CancelPendingHide(keyArea);
+
+            var hideTimer = new DispatcherTimer { Interval = HoverGracePeriod };
+            hideTimer.Tick += (s, args) =>
+            {
+                hideTimer.Stop();
+                keyArea.Tag = null;
+                SetActionButtonsVisible(keyArea, visible: false);
+            };
+            keyArea.Tag = hideTimer;
+            hideTimer.Start();
+        }
+
+
+        private static void CancelPendingHide(Grid keyArea)
+        {
+            var pending = keyArea.Tag as DispatcherTimer;
+            if (pending == null)
+                return;
+
+            pending.Stop();
+            keyArea.Tag = null;
+        }
+
+
+        private static void SetActionButtonsVisible(Grid keyArea, bool visible)
+        {
+            Visibility visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+            foreach (UIElement child in keyArea.Children)
+            {
+                Button button = child as Button;
+                if (button != null)
+                    button.Visibility = visibility;
+            }
+        }
         #endregion
 
 
         #region private methods
+        /// <summary>The row a control inside the row template belongs to.</summary>
+        private static MiniTimerRowViewModel RowOf(object sender)
+        {
+            FrameworkElement element = sender as FrameworkElement;
+            return element == null ? null : element.DataContext as MiniTimerRowViewModel;
+        }
+
+
         private void RaiseRestoreRequested()
         {
             EventHandler handler = RestoreRequested;
@@ -426,6 +519,14 @@ namespace StopWatch
 
         /// <summary>How close to an edge counts as "dropped on it", in pixels.</summary>
         private const int SnapThreshold = 20;
+
+        /// <summary>
+        /// How long a row's copy/open buttons stay visible after the mouse
+        /// leaves its key area before hiding, so crossing the gap between the
+        /// key and a button - or a fast mouse move that skips it in one event
+        /// - doesn't hide them before a click lands.
+        /// </summary>
+        private static readonly TimeSpan HoverGracePeriod = TimeSpan.FromMilliseconds(300);
 
         private readonly ActiveTimerViewModel viewModel;
         private readonly Settings settings;

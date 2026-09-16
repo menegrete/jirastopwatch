@@ -52,11 +52,64 @@
                     </Border.Style>
                 </Border>
 
-                <TextBlock Grid.Column="1"
-                           Text="{Binding IssueKey}"
-                           Foreground="{DynamicResource Text}"
-                           FontWeight="SemiBold"
-                           VerticalAlignment="Center" />
+                <!-- Key plus its two row actions, grouped so hovering the key
+                     specifically - not the row, and not the summary/time/pause
+                     beside it - is what reveals them. They start collapsed and
+                     take no space; the Auto column they live in only grows
+                     once they show, which is what shrinks the summary column
+                     next to it.
+
+                     Background="Transparent" makes the whole Grid hit-test
+                     visible, not just the key text - a Panel with no
+                     Background at all only hit-tests its children, so the gap
+                     between the key and where a button appears would count as
+                     "left the area" and hide them again before the mouse ever
+                     reaches one. Visibility is still toggled from code-behind
+                     (MouseEnter/MouseLeave below) rather than a Trigger, so
+                     leaving briefly through that gap - or a coalesced
+                     fast-mouse jump that skips it in one event - has a grace
+                     period instead of hiding instantly out from under the
+                     cursor. -->
+                <Grid x:Name="keyArea"
+                      Grid.Column="1"
+                      Background="Transparent"
+                      MouseEnter="keyArea_MouseEnter"
+                      MouseLeave="keyArea_MouseLeave">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding IssueKey}"
+                               Foreground="{DynamicResource Text}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+
+                    <Button x:Name="btnCopyKey"
+                            Grid.Column="1"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            Margin="4,0,0,0"
+                            Visibility="Collapsed"
+                            ToolTip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <Button x:Name="btnOpen"
+                            Grid.Column="2"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            Margin="2,0,0,0"
+                            Visibility="Collapsed"
+                            IsEnabled="{Binding Summary, Converter={StaticResource NotEmpty}}"
+                            ToolTip="Open issue in browser"
+                            Click="btnOpen_Click">
+                        <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+                </Grid>
 
                 <!-- The pill is narrow by design, so the full text lives in the
                      tooltip; only the key and the clock are guaranteed room. -->
