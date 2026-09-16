@@ -149,8 +149,13 @@
                     <Button Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
-                            ToolTip="Start/stop timer (CTRL-P)"
                             Click="btnStartStop_Click">
+                        <Button.ToolTip>
+                            <MultiBinding Converter="{StaticResource StartStopTooltip}">
+                                <Binding Path="IsRunning" />
+                                <Binding Path="DataContext.AtConcurrencyLimit" RelativeSource="{RelativeSource AncestorType=Window}" />
+                            </MultiBinding>
+                        </Button.ToolTip>
                         <Grid>
                             <!-- Running or not, said with a shape as well as
                                  with the colour of the field beside it. -->
@@ -341,8 +346,13 @@
                     <Button Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"
-                            ToolTip="Start/stop timer (CTRL-P)"
                             Click="btnStartStop_Click">
+                        <Button.ToolTip>
+                            <MultiBinding Converter="{StaticResource StartStopTooltip}">
+                                <Binding Path="IsRunning" />
+                                <Binding Path="DataContext.AtConcurrencyLimit" RelativeSource="{RelativeSource AncestorType=Window}" />
+                            </MultiBinding>
+                        </Button.ToolTip>
                         <Grid>
                             <!-- Running or not, said with a shape as well as
                                  with the colour of the field beside it. -->

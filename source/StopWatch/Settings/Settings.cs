@@ -72,6 +72,13 @@ namespace StopWatch
         public bool MinimizeToTray { get; set; }
         public int IssueCount { get; set; }
         public bool AllowMultipleTimers { get; set; }
+
+        /// <summary>
+        /// The most timers that may run at once when <see cref="AllowMultipleTimers"/>
+        /// is on. Ignored when it is off, since at most one timer runs then anyway.
+        /// </summary>
+        public int MaxConcurrentTimers { get; set; }
+
         public bool IncludeProjectName { get; set; }
 
         public SaveTimerSetting SaveTimerState { get; set; }
@@ -170,6 +177,7 @@ namespace StopWatch
             this.PersistedIssues = ReadIssues(Properties.Settings.Default.PersistedIssues);
 
             this.AllowMultipleTimers = Properties.Settings.Default.AllowMultipleTimers;
+            this.MaxConcurrentTimers = Properties.Settings.Default.MaxConcurrentTimers;
 
             this.StartTransitions = Properties.Settings.Default.StartTransitions;
 
@@ -211,6 +219,7 @@ namespace StopWatch
                 Properties.Settings.Default.PersistedIssues = WriteIssues(this.PersistedIssues);
 
                 Properties.Settings.Default.AllowMultipleTimers = this.AllowMultipleTimers;
+                Properties.Settings.Default.MaxConcurrentTimers = this.MaxConcurrentTimers;
 
                 Properties.Settings.Default.StartTransitions = this.StartTransitions;
 

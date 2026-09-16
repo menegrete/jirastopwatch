@@ -17,6 +17,7 @@
 
     <local:BoolToVisibilityConverter x:Key="WhenTrue" />
     <local:NotBoolToVisibilityConverter x:Key="WhenFalse" />
+    <local:StartStopTooltipConverter x:Key="StartStopTooltip" />
 
     <!-- ==================== text ==================== -->
 

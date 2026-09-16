@@ -102,6 +102,20 @@ namespace StopWatch
         }
 
 
+        /// <summary>
+        /// Whether starting one more timer would exceed the configured
+        /// concurrent-timer limit. Used to explain, on a paused row's
+        /// start/stop button, why starting it will not do anything - the same
+        /// "stay enabled, tooltip is the explanation" approach as <see cref="CanAdd"/>.
+        /// Always false when multiple timers are not allowed, since the
+        /// single-timer rule (not this limit) governs that case.
+        /// </summary>
+        public bool AtConcurrencyLimit
+        {
+            get { return settings.AllowMultipleTimers && Running.Count() >= settings.MaxConcurrentTimers; }
+        }
+
+
         /// <summary>How much room each row takes. Persisted; see the issue-list spec.</summary>
         public ListDensity Density
         {
@@ -293,12 +307,14 @@ namespace StopWatch
             foreach (IssueViewModel issue in Issues)
                 sum += issue.TimeElapsed;
 
-            if (sum == totalTime)
-                return;
+            if (sum != totalTime)
+            {
+                totalTime = sum;
+                Raise("TotalTime");
+                Raise("TotalTimeText");
+            }
 
-            totalTime = sum;
-            Raise("TotalTime");
-            Raise("TotalTimeText");
+            Raise("AtConcurrencyLimit");
         }
 
 
@@ -318,6 +334,21 @@ namespace StopWatch
         public IEnumerable<IssueViewModel> Running
         {
             get { return Issues.Where(i => i.WatchTimer.Running); }
+        }
+
+
+        /// <summary>
+        /// Tells the list that the running set may have changed (a row
+        /// started or paused), so that anything bound to
+        /// <see cref="AtConcurrencyLimit"/> re-reads it. Explicit rather than
+        /// automatic because starting is the only row transition this class
+        /// hears about directly - pausing is called straight on the row from
+        /// the window, mirroring how <see cref="CanAdd"/> is refreshed at its
+        /// own call sites instead of on every possible mutation.
+        /// </summary>
+        public void NotifyRunningSetMayHaveChanged()
+        {
+            Raise("AtConcurrencyLimit");
         }
         #endregion
 
