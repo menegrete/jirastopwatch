@@ -30,6 +30,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using DrawingPoint = System.Drawing.Point;
+using DrawingSize = System.Drawing.Size;
 using Screen = System.Windows.Forms.Screen;
 
 namespace StopWatch
@@ -435,11 +437,58 @@ namespace StopWatch
                 ? WindowState.Normal
                 : restoreWindowState;
 
-            Left = restoreLeft;
-            Top = restoreTop;
-            Width = restoreWidth;
+            RestorePosition();
 
             Activate();
+        }
+
+
+        /// <summary>
+        /// Applies the remembered position and width, after checking the
+        /// position still falls on a connected screen - the screen this
+        /// window was on may have been disconnected while the mini view was
+        /// up. Same mechanism <c>MiniTimerWindow.ShowAt()</c> already uses for
+        /// its own remembered position.
+        /// </summary>
+        private void RestorePosition()
+        {
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            DrawingSize size = new DrawingSize(
+                (int)Math.Ceiling(restoreWidth * scaleX),
+                (int)Math.Ceiling(ActualHeight * scaleY));
+
+            DrawingPoint desired = new DrawingPoint(
+                (int)Math.Round(restoreLeft * scaleX),
+                (int)Math.Round(restoreTop * scaleY));
+
+            DrawingPoint onScreen = ScreenPlacement.EnsureOnScreen(desired, size);
+
+            Left = onScreen.X / scaleX;
+            Top = onScreen.Y / scaleY;
+            Width = restoreWidth;
+        }
+
+
+        /// <summary>Device pixels per device-independent unit, for the screen this window is currently on.</summary>
+        private void GetScale(out double scaleX, out double scaleY)
+        {
+            scaleX = 1.0;
+            scaleY = 1.0;
+
+            PresentationSource source = PresentationSource.FromVisual(this);
+            if (source != null && source.CompositionTarget != null)
+            {
+                scaleX = source.CompositionTarget.TransformToDevice.M11;
+                scaleY = source.CompositionTarget.TransformToDevice.M22;
+
+                if (scaleX <= 0)
+                    scaleX = 1.0;
+                if (scaleY <= 0)
+                    scaleY = 1.0;
+            }
         }
 
 
@@ -882,6 +931,7 @@ namespace StopWatch
 
             issue.StartStop();
             activeTimer.Refresh();
+            issues.NotifyRunningSetMayHaveChanged();
         }
 
 
@@ -1004,6 +1054,8 @@ namespace StopWatch
             if (settings.MaxIssues != maxIssuesBefore)
                 UpdateAddIssueTooltip();
 
+            issues.NotifyRunningSetMayHaveChanged();
+
             // The dialog wrote the new density straight to Settings, bypassing
             // IssueListViewModel.Density's own change notification, so the
             // list has to be told explicitly or it keeps the old row template
@@ -1111,9 +1163,23 @@ namespace StopWatch
             ChangeIssueState(issue.IssueKey);
 
             if (!settings.AllowMultipleTimers)
+            {
                 issues.PauseAllBut(issue);
+            }
+            else if (issues.Running.Count() > settings.MaxConcurrentTimers)
+            {
+                // Reached the configured cap: undo the start rather than let
+                // one more timer run, the same after-the-fact pattern as the
+                // single-timer rule above. The issue was never really
+                // "started" from the rest of the app's point of view, so
+                // activeTimer does not need to hear about it.
+                issue.Pause();
+                issues.NotifyRunningSetMayHaveChanged();
+                return;
+            }
 
             activeTimer.NotifyTimerStarted(issue);
+            issues.NotifyRunningSetMayHaveChanged();
         }
 
 

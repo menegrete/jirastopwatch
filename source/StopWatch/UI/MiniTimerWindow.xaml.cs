@@ -21,6 +21,9 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -78,6 +81,7 @@ namespace StopWatch
             InitializeComponent();
 
             DataContext = viewModel;
+            rowsList.ItemsSource = rows;
 
             ticker = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
             ticker.Interval = TimeSpan.FromSeconds(1);
@@ -102,6 +106,12 @@ namespace StopWatch
             // which the DPI scale of the screen it lands on is unknown.
             Show();
 
+            // No previous on-screen position to anchor against yet, so build
+            // the row list without the anchor-aware repositioning below - the
+            // placement logic right after already accounts for however many
+            // rows that leaves the pill.
+            SyncRows(adjustPositionForRowCountChange: false);
+
             DrawingSize pill = PillSize;
 
             DrawingPoint desired;
@@ -120,6 +130,7 @@ namespace StopWatch
             if (IsVisible)
             {
                 viewModel.Refresh();
+                SyncRows(adjustPositionForRowCountChange: false);
                 ticker.Start();
             }
             else
@@ -132,11 +143,21 @@ namespace StopWatch
         private void ticker_Tick(object sender, EventArgs e)
         {
             viewModel.Refresh();
+            SyncRows(adjustPositionForRowCountChange: true);
         }
 
 
         private void MiniTimerWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // A double click anywhere on the background goes back to the full
+            // window, the same as the restore button - checked first so the
+            // second click of the pair never starts a (zero-distance) drag.
+            if (e.ClickCount == 2)
+            {
+                RaiseRestoreRequested();
+                return;
+            }
+
             // Only reached when no button handled the click first, so pressing
             // pause or restore never drags the window.
             if (e.ButtonState != MouseButtonState.Pressed)
@@ -174,22 +195,137 @@ namespace StopWatch
         }
 
 
-        private void btnToggle_Click(object sender, RoutedEventArgs e)
+        private void RowToggle_Click(object sender, RoutedEventArgs e)
         {
-            viewModel.ToggleActive();
+            MiniTimerRowViewModel row = (sender as FrameworkElement)?.DataContext as MiniTimerRowViewModel;
+            if (row == null)
+                return;
+
+            row.ToggleActive();
+            viewModel.Refresh();
+            SyncRows(adjustPositionForRowCountChange: true);
         }
 
 
         private void btnRestore_Click(object sender, RoutedEventArgs e)
         {
-            EventHandler handler = RestoreRequested;
-            if (handler != null)
-                handler(this, EventArgs.Empty);
+            RaiseRestoreRequested();
         }
         #endregion
 
 
         #region private methods
+        private void RaiseRestoreRequested()
+        {
+            EventHandler handler = RestoreRequested;
+            if (handler != null)
+                handler(this, EventArgs.Empty);
+        }
+
+
+        /// <summary>
+        /// Every source the mini view should list right now: every running
+        /// timer, or - if none are running - the single issue
+        /// <see cref="ActiveTimerViewModel"/> resolves, same as before this
+        /// window could show more than one row.
+        /// </summary>
+        private List<ITimerSource> ResolveSources()
+        {
+            List<ITimerSource> running = viewModel.RunningSources.ToList();
+            if (running.Count > 0)
+                return running;
+
+            return viewModel.ActiveSource != null
+                ? new List<ITimerSource> { viewModel.ActiveSource }
+                : new List<ITimerSource>();
+        }
+
+
+        /// <summary>
+        /// Brings <see cref="rows"/> in line with the current sources
+        /// (added/removed/reordered rows are matched by their underlying
+        /// source, so an unchanged row is not rebuilt) and refreshes what
+        /// each one shows.
+        ///
+        /// When the row count changes, the window's height changes with it
+        /// (SizeToContent="Height" in the XAML). <paramref name="adjustPositionForRowCountChange"/>
+        /// controls whether this method also repositions the window so it
+        /// grows away from whichever screen edge it is anchored to, rather
+        /// than always growing downward - pass false when there is no
+        /// meaningful "before" position yet (the window is not visible, or is
+        /// only just becoming visible).
+        /// </summary>
+        private void SyncRows(bool adjustPositionForRowCountChange)
+        {
+            List<ITimerSource> sources = ResolveSources();
+            bool countChanged = rows.Count != sources.Count;
+
+            bool adjust = countChanged && adjustPositionForRowCountChange && IsVisible;
+            AnchorEdge anchor = adjust ? DetermineAnchor() : AnchorEdge.None;
+            int bottomBefore = anchor == AnchorEdge.Bottom ? PillLocation.Y + PillSize.Height : 0;
+
+            for (int i = rows.Count - 1; i >= 0; i--)
+                if (!sources.Contains(rows[i].Source))
+                    rows.RemoveAt(i);
+
+            for (int i = 0; i < sources.Count; i++)
+            {
+                int existingIndex = IndexOfSource(sources[i]);
+                if (existingIndex == -1)
+                    rows.Insert(Math.Min(i, rows.Count), new MiniTimerRowViewModel(sources[i]));
+                else if (existingIndex != i)
+                    rows.Move(existingIndex, i);
+            }
+
+            foreach (MiniTimerRowViewModel row in rows)
+                row.Refresh();
+
+            if (!adjust)
+                return;
+
+            // Force layout now so Height (and therefore PillSize) already
+            // reflects the new row count before it is used below.
+            UpdateLayout();
+
+            DrawingPoint newLocation = anchor == AnchorEdge.Bottom
+                ? new DrawingPoint(PillLocation.X, bottomBefore - PillSize.Height)
+                : PillLocation;
+
+            MovePillTo(ScreenPlacement.EnsureOnScreen(newLocation, PillSize));
+            RememberLocation();
+        }
+
+
+        private int IndexOfSource(ITimerSource source)
+        {
+            for (int i = 0; i < rows.Count; i++)
+                if (ReferenceEquals(rows[i].Source, source))
+                    return i;
+
+            return -1;
+        }
+
+
+        /// <summary>
+        /// Which edge of its screen's working area the pill is currently
+        /// pegged to, by the same closeness threshold <see cref="SnapToEdges"/>
+        /// uses to decide it snapped there in the first place.
+        /// </summary>
+        private AnchorEdge DetermineAnchor()
+        {
+            DrawingPoint location = PillLocation;
+            DrawingSize size = PillSize;
+            DrawingRectangle workingArea = Screen.FromPoint(location).WorkingArea;
+
+            if (Math.Abs(workingArea.Bottom - (location.Y + size.Height)) <= SnapThreshold)
+                return AnchorEdge.Bottom;
+            if (Math.Abs(location.Y - workingArea.Top) <= SnapThreshold)
+                return AnchorEdge.Top;
+
+            return AnchorEdge.None;
+        }
+
+
         /// <summary>
         /// Device pixels per device-independent unit, for the screen this
         /// window is currently on. Falls back to 1:1 before the window has a
@@ -294,6 +430,18 @@ namespace StopWatch
         private readonly ActiveTimerViewModel viewModel;
         private readonly Settings settings;
         private readonly DispatcherTimer ticker;
+        private readonly ObservableCollection<MiniTimerRowViewModel> rows = new ObservableCollection<MiniTimerRowViewModel>();
+        #endregion
+
+
+        #region private types
+        /// <summary>Which edge of the screen, if any, the pill is currently pegged to. See <see cref="DetermineAnchor"/>.</summary>
+        private enum AnchorEdge
+        {
+            None,
+            Top,
+            Bottom
+        }
         #endregion
     }
 }

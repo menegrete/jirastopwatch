@@ -1,11 +1,31 @@
-## Purpose
+## REMOVED Requirements
 
-Define una vista reducida de la aplicación, pensada para dejar corriendo
-mientras el usuario trabaja en otra cosa: esconde la ventana principal y deja
-únicamente el issue activo y su tiempo a la vista, siempre encima del resto de
-las ventanas y pegada a un borde de la pantalla.
+### Requirement: La vista mini avisa cuando hay más de un timer corriendo
 
-## Requirements
+**Reason**: Se reemplaza por una lista que muestra cada timer corriendo con su
+propio key, summary y tiempo, en lugar de mostrar uno solo y solo indicar que
+hay otros.
+
+**Migration**: Ver el requirement modificado "La vista mini muestra el issue
+activo y su tiempo" en este mismo capability.
+
+Cuando la opción de permitir múltiples timers está activada y hay más de un
+timer corriendo, la vista mini SHALL indicar que existen otros timers activos
+además del que muestra, para que el tiempo en pantalla no se lea como el total
+que se está registrando.
+
+#### Scenario: Dos timers corriendo simultáneamente
+
+- **WHEN** hay dos timers corriendo y el usuario activa la vista mini
+- **THEN** la vista mini muestra el issue que arrancó último
+- **AND** presenta una indicación de que hay otro timer corriendo
+
+#### Scenario: Se pausa el segundo timer desde la ventana principal
+
+- **WHEN** queda un único timer corriendo
+- **THEN** la indicación de timers adicionales desaparece
+
+## MODIFIED Requirements
 
 ### Requirement: La vista mini muestra el issue activo y su tiempo
 
@@ -48,21 +68,33 @@ Con una sola fila, la vista mini SHALL verse igual que antes de este cambio
   ventana principal y tiempo en cero
 - **AND** el tiempo se presenta con la indicación de estado "pausado"
 
-### Requirement: El tiempo en la vista mini avanza cada segundo
+### Requirement: El usuario pausa y reanuda desde la vista mini
 
-Mientras la vista mini está visible, el tiempo mostrado SHALL actualizarse al
-menos una vez por segundo, independientemente de la frecuencia con la que la
-aplicación consulta a Jira.
+La vista mini SHALL permitir pausar y reanudar, desde el control de cada fila,
+el timer del issue que esa fila muestra, con el mismo efecto que hacerlo desde
+la ventana principal.
 
-#### Scenario: El usuario observa la vista mini con un timer corriendo
+La vista mini SHALL NO ofrecer ninguna acción que abra un diálogo: postear
+worklog, editar el tiempo, cambiar de issue y modificar la configuración
+quedan disponibles únicamente en la ventana completa.
 
-- **WHEN** la vista mini está visible y el timer corre
-- **THEN** el tiempo mostrado cambia visiblemente segundo a segundo
+#### Scenario: El usuario pausa desde la vista mini
 
-#### Scenario: El timer está pausado
+- **WHEN** el usuario acciona el control de pausa de una fila con el timer
+  corriendo
+- **THEN** el timer de esa fila se pausa
+- **AND** esa fila pasa a la indicación de estado "pausado"
+- **AND** al volver a la ventana principal, ese issue aparece pausado con el
+  mismo tiempo acumulado
 
-- **WHEN** la vista mini está visible y el timer está pausado
-- **THEN** el tiempo mostrado no cambia
+#### Scenario: El usuario reanuda desde la vista mini
+
+- **WHEN** el usuario acciona el control de reanudar en una fila con el timer
+  pausado
+- **THEN** el timer de esa fila arranca
+- **AND** si la opción de permitir múltiples timers está desactivada, cualquier
+  otro timer corriendo se pausa, igual que al arrancar desde la ventana
+  principal
 
 ### Requirement: El usuario entra y sale de la vista mini a voluntad
 
@@ -117,96 +149,7 @@ Entrar o salir de la vista mini SHALL NO alterar el estado de ningún timer.
 - **THEN** se presenta la ventana principal, nunca la vista mini, sin importar
   en qué vista estaba al cerrarla
 
-### Requirement: El usuario pausa y reanuda desde la vista mini
-
-La vista mini SHALL permitir pausar y reanudar, desde el control de cada fila,
-el timer del issue que esa fila muestra, con el mismo efecto que hacerlo desde
-la ventana principal.
-
-La vista mini SHALL NO ofrecer ninguna acción que abra un diálogo: postear
-worklog, editar el tiempo, cambiar de issue y modificar la configuración
-quedan disponibles únicamente en la ventana completa.
-
-#### Scenario: El usuario pausa desde la vista mini
-
-- **WHEN** el usuario acciona el control de pausa de una fila con el timer
-  corriendo
-- **THEN** el timer de esa fila se pausa
-- **AND** esa fila pasa a la indicación de estado "pausado"
-- **AND** al volver a la ventana principal, ese issue aparece pausado con el
-  mismo tiempo acumulado
-
-#### Scenario: El usuario reanuda desde la vista mini
-
-- **WHEN** el usuario acciona el control de reanudar en una fila con el timer
-  pausado
-- **THEN** el timer de esa fila arranca
-- **AND** si la opción de permitir múltiples timers está desactivada, cualquier
-  otro timer corriendo se pausa, igual que al arrancar desde la ventana
-  principal
-
-### Requirement: La vista mini permanece encima de las demás ventanas
-
-Mientras está visible, la vista mini SHALL mostrarse por encima de las ventanas
-de otras aplicaciones, incluso cuando el foco está en otra aplicación. SHALL NO
-aparecer como una entrada propia en la barra de tareas.
-
-#### Scenario: El usuario trabaja en otra aplicación
-
-- **WHEN** la vista mini está visible y el usuario pasa el foco a otra
-  aplicación y la maximiza
-- **THEN** la vista mini sigue visible por encima de esa aplicación
-
-#### Scenario: El usuario recorre las ventanas abiertas
-
-- **WHEN** la vista mini está visible y el usuario recorre las ventanas abiertas
-  del sistema
-- **THEN** la vista mini no figura como una ventana más entre ellas
-
-### Requirement: El usuario ubica la vista mini y esta se pega a los bordes
-
-La vista mini SHALL poder arrastrarse con el mouse desde cualquier punto de su
-superficie que no sea un control. Al soltarla dentro de una distancia corta de
-un borde del área de trabajo de la pantalla, SHALL alinearse a ese borde.
-
-#### Scenario: El usuario arrastra la vista mini al medio de la pantalla
-
-- **WHEN** el usuario arrastra la vista mini y la suelta lejos de todos los
-  bordes
-- **THEN** la vista mini queda exactamente donde la soltó
-
-#### Scenario: El usuario suelta la vista mini cerca de un borde
-
-- **WHEN** el usuario suelta la vista mini a poca distancia del borde superior
-  derecho del área de trabajo
-- **THEN** la vista mini se alinea contra ese borde
-- **AND** no queda tapada por la barra de tareas ni por otras barras del sistema
-
-#### Scenario: El usuario arrastra desde un control
-
-- **WHEN** el usuario arrastra empezando sobre el control de pausa
-- **THEN** la vista mini no se mueve
-- **AND** no se pausa ni se reanuda ningún timer
-
-### Requirement: La posición de la vista mini persiste y siempre es alcanzable
-
-La posición de la vista mini SHALL conservarse entre ejecuciones de la
-aplicación. Antes de presentarla, la aplicación SHALL verificar que esa
-posición caiga dentro de alguna de las pantallas disponibles; si no, SHALL
-ubicarla en una posición visible de la pantalla principal.
-
-#### Scenario: El usuario reabre la aplicación
-
-- **WHEN** el usuario ubicó la vista mini contra un borde, cerró la aplicación y
-  la vuelve a abrir y a activar la vista mini
-- **THEN** la vista mini aparece en esa misma posición
-
-#### Scenario: La pantalla donde estaba ya no existe
-
-- **WHEN** la posición guardada corresponde a una pantalla que ya no está
-  conectada o a una resolución que ya no se usa
-- **THEN** la vista mini aparece en una posición visible de la pantalla
-  principal
+## ADDED Requirements
 
 ### Requirement: La lista de timers se expande alejándose del borde de anclaje
 

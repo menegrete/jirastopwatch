@@ -116,7 +116,31 @@
 
                 <TextBlock Text="General options" Style="{StaticResource SectionHeader}" />
 
-                <CheckBox x:Name="cbAllowMultipleTimers" Content="Allow running multiple timers simultaneously" />
+                <CheckBox x:Name="cbAllowMultipleTimers" Content="Allow running multiple timers simultaneously" Checked="cbAllowMultipleTimers_Toggled" Unchecked="cbAllowMultipleTimers_Toggled" />
+
+                <Grid x:Name="gridMaxConcurrentTimers" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Max. simultaneous timers" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                        <TextBox x:Name="tbMaxConcurrentTimers"
+                                 Width="40"
+                                 TextAlignment="Right"
+                                 PreviewTextInput="Digits_PreviewTextInput"
+                                 TextChanged="tbMaxConcurrentTimers_TextChanged"
+                                 ToolTip="Between 2 and 20" />
+                        <StackPanel Orientation="Vertical" Margin="2,0,0,0" VerticalAlignment="Center">
+                            <RepeatButton Style="{StaticResource StepperButton}" Click="MaxConcurrentTimersUp_Click">
+                                <Path Style="{StaticResource GlyphFill}" Width="8" Height="4" Data="{StaticResource GlyphTriangleUp}" />
+                            </RepeatButton>
+                            <RepeatButton Style="{StaticResource StepperButton}" Click="MaxConcurrentTimersDown_Click">
+                                <Path Style="{StaticResource GlyphFill}" Width="8" Height="4" Data="{StaticResource GlyphTriangleDown}" />
+                            </RepeatButton>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
 
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>

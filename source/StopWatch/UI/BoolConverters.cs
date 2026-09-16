@@ -68,4 +68,31 @@ namespace StopWatch
             return value is bool && (bool)value;
         }
     }
+
+
+    /// <summary>
+    /// The start/stop button's tooltip: the normal shortcut hint, unless the
+    /// row is paused and starting it would exceed the configured
+    /// concurrent-timer limit, in which case it explains why the click will
+    /// not do anything - same "stay enabled, tooltip is the explanation"
+    /// approach as the add-issue button's tooltip.
+    /// </summary>
+    internal class StartStopTooltipConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool isRunning = values.Length > 0 && BoolConverterHelpers.IsTrue(values[0]);
+            bool atLimit = values.Length > 1 && BoolConverterHelpers.IsTrue(values[1]);
+
+            if (!isRunning && atLimit)
+                return "Reached the max number of simultaneous timers - pause another one first";
+
+            return "Start/stop timer (CTRL-P)";
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
 }

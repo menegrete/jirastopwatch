@@ -69,6 +69,8 @@ namespace StopWatch
             cbAlwaysOnTop.IsChecked = settings.AlwaysOnTop;
             cbMinimizeToTray.IsChecked = settings.MinimizeToTray;
             cbAllowMultipleTimers.IsChecked = settings.AllowMultipleTimers;
+            tbMaxConcurrentTimers.Text = settings.MaxConcurrentTimers.ToString();
+            gridMaxConcurrentTimers.IsEnabled = settings.AllowMultipleTimers;
             cbIncludeProjectName.IsChecked = settings.IncludeProjectName;
             cbLoggingEnabled.IsChecked = settings.LoggingEnabled;
 
@@ -114,6 +116,7 @@ namespace StopWatch
             settings.AlwaysOnTop = cbAlwaysOnTop.IsChecked == true;
             settings.MinimizeToTray = cbMinimizeToTray.IsChecked == true;
             settings.AllowMultipleTimers = cbAllowMultipleTimers.IsChecked == true;
+            settings.MaxConcurrentTimers = ParsedMaxConcurrentTimers;
             settings.IncludeProjectName = cbIncludeProjectName.IsChecked == true;
             settings.LoggingEnabled = cbLoggingEnabled.IsChecked == true;
 
@@ -201,6 +204,38 @@ namespace StopWatch
         {
             StepMaxIssues(-1);
         }
+
+
+        private void cbAllowMultipleTimers_Toggled(object sender, RoutedEventArgs e)
+        {
+            gridMaxConcurrentTimers.IsEnabled = cbAllowMultipleTimers.IsChecked == true;
+        }
+
+
+        private void tbMaxConcurrentTimers_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            int parsed;
+            bool valid = int.TryParse(tbMaxConcurrentTimers.Text, out parsed)
+                && parsed >= MinConcurrentTimers
+                && parsed <= MaxConcurrentTimersLimit;
+
+            if (valid)
+                tbMaxConcurrentTimers.ClearValue(StyleProperty);
+            else
+                tbMaxConcurrentTimers.Style = (Style)FindResource("InvalidInput");
+        }
+
+
+        private void MaxConcurrentTimersUp_Click(object sender, RoutedEventArgs e)
+        {
+            StepMaxConcurrentTimers(1);
+        }
+
+
+        private void MaxConcurrentTimersDown_Click(object sender, RoutedEventArgs e)
+        {
+            StepMaxConcurrentTimers(-1);
+        }
         #endregion
 
 
@@ -235,6 +270,30 @@ namespace StopWatch
                 current = settings.MaxIssues;
 
             tbMaxIssues.Text = Math.Max(MinIssues, Math.Min(MaxIssues, current + delta)).ToString();
+        }
+
+
+        /// <summary>Same idea as <see cref="ParsedMaxIssues"/>, for the concurrent-timer cap.</summary>
+        private int ParsedMaxConcurrentTimers
+        {
+            get
+            {
+                int parsed;
+                if (!int.TryParse(tbMaxConcurrentTimers.Text, out parsed))
+                    return settings.MaxConcurrentTimers;
+
+                return Math.Max(MinConcurrentTimers, Math.Min(MaxConcurrentTimersLimit, parsed));
+            }
+        }
+
+
+        private void StepMaxConcurrentTimers(int delta)
+        {
+            int current;
+            if (!int.TryParse(tbMaxConcurrentTimers.Text, out current))
+                current = settings.MaxConcurrentTimers;
+
+            tbMaxConcurrentTimers.Text = Math.Max(MinConcurrentTimers, Math.Min(MaxConcurrentTimersLimit, current + delta)).ToString();
         }
 
 
@@ -285,6 +344,9 @@ namespace StopWatch
 
         private const int MinIssues = 1;
         private const int MaxIssues = 40;
+
+        private const int MinConcurrentTimers = 2;
+        private const int MaxConcurrentTimersLimit = 20;
         #endregion
     }
 }
