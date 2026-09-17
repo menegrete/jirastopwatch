@@ -3,6 +3,7 @@
 - [x] 1.1 Enable "Read and write permissions" for GITHUB_TOKEN under Settings → Actions → General → Workflow permissions
 - [x] 1.2 Check branch protection rules on `main`; if direct pushes/tag creation are blocked, add the release bot identity to the bypass list or provision a PAT secret instead — confirmed: no branch protection rules defined on `main`, default `GITHUB_TOKEN` can push directly, no PAT needed
 - [x] 1.3 Confirm the .NET 10 Desktop Runtime version story for the framework-dependent artifact matches what's documented so the release notes/README can point users at the right prerequisite — confirmed via README.md: exact version `10.0.x`, link already present (`dotnet-10-runtime` reference, line 54), Windows shows its own install prompt if missing (line 20); no changes needed, just keep this text in sync when task 5.2 updates the publish command description
+- [x] 1.4 (found during verification) The repo had no git tags, so `semantic-release` would compute the first version from the entire commit history instead of continuing from the hand-maintained `2.3.1` — tagged the pre-automation commit (`c9bd7fa`, last `main` commit before this change merged) as `v2.3.1` and pushed it, so the next release is computed relative to it
 
 ## 2. semantic-release setup
 
