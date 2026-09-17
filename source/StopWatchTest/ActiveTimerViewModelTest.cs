@@ -93,6 +93,11 @@ namespace StopWatchTest
             Assert.That(viewModel.IssueKey, Is.EqualTo("ABC-2"));
             Assert.That(viewModel.Summary, Is.EqualTo("running one"));
             Assert.That(viewModel.IsRunning, Is.True);
+
+            // Deliberately failing assertion: verifying the add-automated-releases
+            // change's task 7.4 (a failing test run must block the release job).
+            // This branch is never merged.
+            Assert.That(viewModel.IsRunning, Is.False);
         }
 
 
