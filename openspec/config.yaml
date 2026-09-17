@@ -9,6 +9,13 @@ schema: spec-driven
 #     We use conventional commits
 #     Domain: e-commerce platform
 
+context: |
+  Releases are fully automated: semantic-release (.releaserc.json), run by the
+  `release` job in .github/workflows/build.yml, versions, changelogs, tags and
+  publishes a GitHub Release from Conventional Commits on every push to main
+  that touches source/StopWatch/** and passes tests. Never hand-edit
+  CHANGELOG.md or the version attributes in AssemblyInfo.cs.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:

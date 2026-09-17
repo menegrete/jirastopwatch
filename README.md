@@ -17,11 +17,15 @@ Feature requests, [contributions], and/or [questions and feedback] are more than
 
 ## Building and releasing
 
-Jira StopWatch targets `net10.0-windows` and is distributed as a single framework-dependent executable - no installer. Running it requires the [.NET 10 Desktop Runtime][dotnet-10-runtime] to already be installed on the machine; if it's missing, Windows shows its own prompt to install it.
+Jira StopWatch targets `net10.0-windows`. Releases are fully automated: every push to `main` that changes `source/StopWatch/**` and passes tests is versioned, changelogged and published as a GitHub Release by CI, with no manual steps. Each release attaches two artifacts:
 
-To produce a release build:
+- a self-contained single-file executable - no separate runtime install needed
+- a zip of the framework-dependent single-file build - requires the [.NET 10 Desktop Runtime][dotnet-10-runtime] to already be installed on the machine; if it's missing, Windows shows its own prompt to install it
+
+To reproduce either build locally:
 
 ```
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
 

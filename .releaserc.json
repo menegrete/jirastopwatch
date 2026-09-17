@@ -1,0 +1,57 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Added" },
+            { "type": "fix", "section": "Fixed" },
+            { "type": "perf", "section": "Changed" },
+            { "type": "revert", "section": "Removed" },
+            { "type": "refactor", "hidden": true },
+            { "type": "docs", "hidden": true },
+            { "type": "style", "hidden": true },
+            { "type": "test", "hidden": true },
+            { "type": "build", "hidden": true },
+            { "type": "ci", "hidden": true },
+            { "type": "chore", "hidden": true }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# Changelog\n\nAll notable changes to this project are documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),\nand this project's version numbers are the ones in\n`source/StopWatch/Properties/AssemblyInfo.cs`\n(`AssemblyVersion`/`AssemblyFileVersion`/`AssemblyInformationalVersion`).\n\nEntries for versions released before this file existed are not\nreconstructed here — see `git log` and the archived proposals under\n`openspec/changes/archive/` for that history."
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node scripts/set-assembly-version.js ${nextRelease.version}",
+        "publishCmd": "node scripts/publish-release-artifacts.js ${nextRelease.version}"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "source/StopWatch/Properties/AssemblyInfo.cs"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "release-artifacts/JiraStopWatch-v*-self-contained.exe", "label": "JiraStopWatch-v${nextRelease.version}-self-contained.exe" },
+          { "path": "release-artifacts/JiraStopWatch-v*-framework-dependent.zip", "label": "JiraStopWatch-v${nextRelease.version}-framework-dependent.zip" }
+        ]
+      }
+    ]
+  ]
+}

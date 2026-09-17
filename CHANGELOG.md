@@ -19,6 +19,8 @@ reconstructed here — see `git log` and the archived proposals under
 - The mini view now grows away from whichever screen edge it is anchored to when it needs more rows, instead of always growing downward.
 - Double-clicking the mini view's background now also returns to the full window, in addition to the existing button.
 - New setting, "Max. simultaneous timers", enabled when "Allow running multiple timers simultaneously" is on (default 3). Once that many timers are running, starting another one has no effect until one of them is paused — from either the main window or the mini view.
+- The main window's title bar now shows the app's version next to its name (e.g. "Jira StopWatch v2.4.0").
+- Releases are now fully automated: pushing an app change to `main` versions, changelogs, tags and publishes a GitHub Release with two build artifacts, with no manual steps.
 
 ### Changed
 
