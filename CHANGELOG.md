@@ -11,6 +11,29 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [2.4.0](https://github.com/menegrete/jirastopwatch/compare/v2.3.1...v2.4.0) (2026-09-17)
+
+### Added
+
+* automate versioning, changelog and GitHub Releases via semantic-release ([d6dde74](https://github.com/menegrete/jirastopwatch/commit/d6dde74d4effaf432bd905b8478d565b6d1e6570))
+
+### Fixed
+
+* add package-lock.json so the release job's npm ci succeeds ([df100ca](https://github.com/menegrete/jirastopwatch/commit/df100ca1ad5bd119b5b1ac3e31739f0c4500ecd3)), closes [#12](https://github.com/menegrete/jirastopwatch/issues/12)
+
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project's version numbers are the ones in
+`source/StopWatch/Properties/AssemblyInfo.cs`
+(`AssemblyVersion`/`AssemblyFileVersion`/`AssemblyInformationalVersion`).
+
+Entries for versions released before this file existed are not
+reconstructed here — see `git log` and the archived proposals under
+`openspec/changes/archive/` for that history.
+
 ## [Unreleased]
 
 ### Added
