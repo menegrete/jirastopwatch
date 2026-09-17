@@ -27,7 +27,10 @@ jobs:
   build:
     name: "Build"
     runs-on: windows-latest
-    continue-on-error: true
+    # Debug failures never block anything downstream; Release failures must
+    # fail this job so the release job's `needs: [build]` actually gates on
+    # tests passing, instead of continue-on-error masking a red Release run.
+    continue-on-error: ${{ matrix.configuration == 'Debug' }}
 
     strategy:
       fail-fast: false
@@ -103,3 +106,55 @@ jobs:
           action_fail: true
           time_unit: milliseconds
           files: "test-results/**/*.trx"
+
+  release:
+    name: "Release"
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - id: checkout
+        name: "Checkout"
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: changed-files
+        name: "Check for App Source Changes"
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'source/StopWatch/**'
+
+      - if: steps.changed-files.outputs.app == 'true'
+        id: setup-dotnet
+        name: "Setup Dotnet"
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - if: steps.changed-files.outputs.app == 'true'
+        id: setup-node
+        name: "Setup Node"
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+
+      - if: steps.changed-files.outputs.app == 'true'
+        id: npm-install
+        name: "Install Release Tooling"
+        run: npm ci
+
+      - if: steps.changed-files.outputs.app == 'true'
+        id: semantic-release
+        name: "Release"
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

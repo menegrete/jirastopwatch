@@ -17,11 +17,14 @@ Run a single test (NUnit, by fully-qualified name or a filter):
 dotnet test StopWatch.sln --filter "FullyQualifiedName~ScreenPlacementTest.EnsureOnScreen"
 ```
 
-Produce a release build (framework-dependent single file, requires the .NET 10 Desktop Runtime on the target machine):
+Releases are automated (see Changelog and Versioning below) and produce two artifacts; to reproduce either locally:
 
 ```
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
+
+The first is a self-contained executable (no runtime install needed); the second is the framework-dependent build, which requires the .NET 10 Desktop Runtime on the target machine and is what CI zips up for the framework-dependent release asset.
 
 `TreatWarningsAsErrors` is on for `StopWatch.csproj` — a warning fails the build, not just `Release`.
 
@@ -47,6 +50,8 @@ Two UI frameworks in one process: `UseWindowsForms` and `UseWPF` are both `true`
 
 This repo uses OpenSpec (`openspec/`) for planning non-trivial changes: `openspec/specs/` holds the current behavior contract per capability, `openspec/changes/` holds in-flight change proposals (proposal/specs-delta/design/tasks), and `openspec/changes/archive/` holds completed ones. When a past design decision or its rationale isn't obvious from the code, check the relevant archived change there before re-deriving it.
 
-## Changelog
+## Changelog and versioning
 
-`CHANGELOG.md` (Keep a Changelog format, keyed by the version in `source/StopWatch/Properties/AssemblyInfo.cs`) must stay current with the code. Whenever you make a code change with user-visible effect (a feature, a fix, a behavior change — not a pure refactor, test-only change, or internal cleanup), add or update its entry under `## [Unreleased]` in the same turn, in the appropriate Keep a Changelog category (`Added`, `Changed`, `Fixed`, `Removed`, etc.). Do this without waiting to be asked. When `AssemblyInfo.cs`'s version is bumped for a release, rename `[Unreleased]` to that version (with the date) and start a fresh empty `[Unreleased]` above it.
+Both are automated by `semantic-release` (`.releaserc.json`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.
+
+What this means for making changes: write commit messages as Conventional Commits (`feat:`, `fix:`, `BREAKING CHANGE:` footer, etc.) — that's the sole input `semantic-release` uses to decide whether a release happens, what the next version is, and what the generated `CHANGELOG.md` entry (in Keep a Changelog categories, via `.releaserc.json`'s `release-notes-generator` config) says. `chore:`/`docs:`/`refactor:`/etc. commits don't trigger a release. See the `automated-releases` capability spec (`openspec/changes/add-automated-releases/specs/` until archived, then `openspec/specs/`) for the full design.

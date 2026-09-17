@@ -81,6 +81,8 @@ namespace StopWatch
 
             InitializeComponent();
 
+            Title = $"Jira StopWatch v{AppInfo.Version}";
+
             DataContext = issues;
 
             RegisterCommands();

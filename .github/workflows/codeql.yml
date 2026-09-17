@@ -78,21 +78,6 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-  dependency-scan:
-    name: Dependency Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout repository"
-        uses: actions/checkout@v7
-
-      - name: "Scan for dependencies"
-        uses: github/dependabot-action@v3
-        with:
-          sub-directory: "/"
-          open-pull-requests-limit: 5
-          package-ecosystem: "github-actions"
-          directory: "/"
-
   #secret-scan:
   #  name: "Secret Scan"
   #  runs-on: ubuntu-latest

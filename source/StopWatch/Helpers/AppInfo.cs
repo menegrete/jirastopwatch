@@ -21,6 +21,7 @@
  */
 
 using System.Diagnostics;
+using System.Reflection;
 
 namespace StopWatch
 {
@@ -30,6 +31,15 @@ namespace StopWatch
     /// </summary>
     internal static class AppInfo
     {
+        /// <summary>
+        /// The running assembly's version, as set by the release process in
+        /// AssemblyInfo.cs (AssemblyInformationalVersion).
+        /// </summary>
+        public static string Version { get; } =
+            Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+            ?? "0.0.0";
+
         /// <summary>
         /// Opens a URL in the user's browser. UseShellExecute has to be set
         /// explicitly: unlike on .NET Framework, it defaults to false, and
