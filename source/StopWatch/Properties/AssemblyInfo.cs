@@ -51,16 +51,9 @@ using System.Runtime.Versioning;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("dffb7978-c4a7-4888-9a6b-46dbda53b3c2")]
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
+// Version numbers below are machine-written by the release process
+// (semantic-release, via scripts/set-assembly-version.js) - see CLAUDE.md's
+// "Changelog and versioning" section. Do not hand-edit them.
 [assembly: AssemblyVersion("2.3.1")]
 [assembly: AssemblyFileVersion("2.3.1")]
 [assembly: AssemblyInformationalVersion("2.3.1")]
