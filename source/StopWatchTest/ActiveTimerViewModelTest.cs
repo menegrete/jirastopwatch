@@ -94,10 +94,13 @@ namespace StopWatchTest
             Assert.That(viewModel.Summary, Is.EqualTo("running one"));
             Assert.That(viewModel.IsRunning, Is.True);
 
-            // Deliberately failing assertion: verifying the add-automated-releases
-            // change's task 7.4 (a failing test run must block the release job).
+            // Deliberately failing assertion, Debug-only: verifying the
+            // add-automated-releases change's task 3.2/7.4 (a Debug-only
+            // failure must NOT block the release job; only Release matters).
             // This branch is never merged.
+#if DEBUG
             Assert.That(viewModel.IsRunning, Is.False);
+#endif
         }
 
 
