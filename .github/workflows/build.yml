@@ -79,6 +79,14 @@ jobs:
           path: '**/*.trx'
           if-no-files-found: error
 
+  debug-needs-result:
+    name: "DEBUG: print needs.build.result (throwaway, do not merge)"
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo "needs.build.result = ${{ needs.build.result }}"
+
   publish-test-results:
     if: always() && !contains(fromJSON('["cancelled", "skipped"]'), needs.build.result)
     name: "Publish Tests Results"
