@@ -11,6 +11,18 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [2.5.0](https://github.com/menegrete/jirastopwatch/compare/v2.4.0...v2.5.0) (2026-09-18)
+
+### Added
+
+* copy issue key and open-in-browser buttons in the mini view ([18532f6](https://github.com/menegrete/jirastopwatch/commit/18532f6dbb282b1206e193b3e1b2509d378910b6))
+
+### Fixed
+
+* hide the main window's copy-key icon until the issue resolves ([7876a61](https://github.com/menegrete/jirastopwatch/commit/7876a61de9128a688353ca1135be6f6de107205e))
+* refresh mini view row's Summary so the open button reacts once resolved ([9b2c18d](https://github.com/menegrete/jirastopwatch/commit/9b2c18dcaf57dba5f0c5243e138229b09dba4932))
+* repair the release-duplicated CHANGELOG.md and pin its line endings ([5aa2f84](https://github.com/menegrete/jirastopwatch/commit/5aa2f849fb584194060c41688839d66c1e659ffb))
+
 ## [Unreleased]
 
 ### Added
