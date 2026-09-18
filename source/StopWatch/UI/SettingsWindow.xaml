@@ -64,8 +64,16 @@
                 <TextBlock Text="Display options" Style="{StaticResource SectionHeader}" />
 
                 <CheckBox x:Name="cbAlwaysOnTop" Content="Always keep window on top" />
-                <CheckBox x:Name="cbMinimizeToTray" Content="Minimize to tray" />
                 <CheckBox x:Name="cbIncludeProjectName" Content="Include project name in issue summary" />
+
+                <Grid x:Name="gridMinimizeBehavior" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Minimize to" />
+                    <ComboBox Grid.Column="1" x:Name="cbMinimizeBehavior" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                </Grid>
 
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>

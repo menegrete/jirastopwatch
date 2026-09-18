@@ -16,6 +16,13 @@ context: |
   that touches source/StopWatch/** and passes tests. Never hand-edit
   CHANGELOG.md or the version attributes in AssemblyInfo.cs.
 
+  Before starting a new change (`openspec new change ...`), check the current
+  branch first. If it isn't main, ask the user whether to stay on that branch
+  or switch to main. Either way, pull the resulting branch before starting
+  any work. If the resulting branch is main, create a new branch from it and
+  switch to it before scaffolding the change — a new change must never be
+  scaffolded directly on main.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:

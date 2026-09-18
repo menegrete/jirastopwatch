@@ -50,6 +50,8 @@ Two UI frameworks in one process: `UseWindowsForms` and `UseWPF` are both `true`
 
 This repo uses OpenSpec (`openspec/`) for planning non-trivial changes: `openspec/specs/` holds the current behavior contract per capability, `openspec/changes/` holds in-flight change proposals (proposal/specs-delta/design/tasks), and `openspec/changes/archive/` holds completed ones. When a past design decision or its rationale isn't obvious from the code, check the relevant archived change there before re-deriving it.
 
+Before starting a new change (`openspec new change ...`), check the current branch first. If it isn't `main`, ask the user whether to stay on that branch or switch to `main`. Either way, `pull` the resulting branch before starting any work. If the resulting branch is `main`, create a new branch from it and switch to it before scaffolding the change — a new change must never be scaffolded directly on `main`.
+
 ## Changelog and versioning
 
 Both are automated by `semantic-release` (`.releaserc.json`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.

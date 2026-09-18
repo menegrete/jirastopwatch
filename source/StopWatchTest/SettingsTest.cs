@@ -120,5 +120,19 @@ namespace StopWatchTest
 
             Assert.That(issues, Is.Empty);
         }
+
+
+        [Test]
+        public void MigrateMinimizeBehavior_MapsTrayWhenMinimizeToTrayWasOn()
+        {
+            Assert.That(Settings.MigrateMinimizeBehavior(true), Is.EqualTo(MinimizeBehavior.Tray));
+        }
+
+
+        [Test]
+        public void MigrateMinimizeBehavior_MapsMiniViewWhenMinimizeToTrayWasOff()
+        {
+            Assert.That(Settings.MigrateMinimizeBehavior(false), Is.EqualTo(MinimizeBehavior.MiniView));
+        }
     }
 }
