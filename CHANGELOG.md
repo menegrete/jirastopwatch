@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.1.1](https://github.com/menegrete/jirastopwatch/compare/v3.1.0...v3.1.1) (2026-09-18)
+
+### Fixed
+
+* retry the auto-update swap when the new file is briefly locked ([#21](https://github.com/menegrete/jirastopwatch/issues/21)) ([ed77e39](https://github.com/menegrete/jirastopwatch/commit/ed77e393e2c8dc56c258453227712df674ab5e99))
+
 ## [3.1.0](https://github.com/menegrete/jirastopwatch/compare/v3.0.0...v3.1.0) (2026-09-18)
 
 ### Added
