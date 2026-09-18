@@ -89,6 +89,14 @@ namespace StopWatch
         {
             Raise("IsRunning");
             Raise("ElapsedText");
+
+            // Summary starts empty until Jira resolves it, and this row keeps
+            // wrapping the same source across ticks (and across hiding and
+            // showing the mini view again) rather than being recreated - so
+            // without this, a row built before the summary resolved would
+            // never notice it arrive, leaving the open-in-browser button
+            // permanently disabled.
+            Raise("Summary");
         }
         #endregion
 

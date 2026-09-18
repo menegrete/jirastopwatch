@@ -28,8 +28,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 using DrawingPoint = System.Drawing.Point;
 using DrawingSize = System.Drawing.Size;
 using Screen = System.Windows.Forms.Screen;
@@ -721,7 +719,7 @@ namespace StopWatch
             IssueViewModel issue = RowOf(sender);
             issues.SetCurrent(issue);
             CopyKey(issue);
-            FlashCopyConfirmation((Button)sender);
+            GlyphButtonHelpers.FlashCopyConfirmation((Button)sender);
         }
 
 
@@ -730,31 +728,7 @@ namespace StopWatch
             IssueViewModel issue = RowOf(sender);
             issues.SetCurrent(issue);
             CopyParentKey(issue);
-            FlashCopyConfirmation((Button)sender);
-        }
-
-
-        /// <summary>
-        /// Swaps a copy icon's glyph for a check mark for a moment, then
-        /// restores it. Purely visual - nothing here is persisted, so a row
-        /// refresh mid-flash simply leaves the timer to restore the glyph.
-        /// </summary>
-        private void FlashCopyConfirmation(Button button)
-        {
-            Path glyph = button.Content as Path;
-            if (glyph == null)
-                return;
-
-            Geometry original = glyph.Data;
-            glyph.Data = (Geometry)FindResource("GlyphCheck");
-
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            timer.Tick += (s, e) =>
-            {
-                timer.Stop();
-                glyph.Data = original;
-            };
-            timer.Start();
+            GlyphButtonHelpers.FlashCopyConfirmation((Button)sender);
         }
 
 
@@ -1015,13 +989,9 @@ namespace StopWatch
             if (issue == null || !issue.CanOpen)
                 return;
 
-            if (string.IsNullOrEmpty(settings.JiraBaseUrl))
+            string url = JiraKeyHelpers.BuildIssueUrl(settings.JiraBaseUrl, issue.IssueKey);
+            if (url == null)
                 return;
-
-            string url = settings.JiraBaseUrl;
-            if (!url.EndsWith("/"))
-                url += "/";
-            url += "browse/" + issue.IssueKey.Trim();
 
             AppInfo.OpenUrl(url);
         }

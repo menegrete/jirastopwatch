@@ -71,6 +71,25 @@ namespace StopWatch
 
 
     /// <summary>
+    /// True when the bound string is non-empty - used to enable an action
+    /// only once a value (e.g. a summary resolved from Jira) is available,
+    /// without needing a dedicated bool property on the view model.
+    /// </summary>
+    internal class NotEmptyToBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return !string.IsNullOrEmpty(value as string);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+
+    /// <summary>
     /// The start/stop button's tooltip: the normal shortcut hint, unless the
     /// row is paused and starting it would exceed the configured
     /// concurrent-timer limit, in which case it explains why the click will

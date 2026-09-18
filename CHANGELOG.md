@@ -19,6 +19,7 @@ reconstructed here — see `git log` and the archived proposals under
 - The mini view now grows away from whichever screen edge it is anchored to when it needs more rows, instead of always growing downward.
 - Double-clicking the mini view's background now also returns to the full window, in addition to the existing button.
 - New setting, "Max. simultaneous timers", enabled when "Allow running multiple timers simultaneously" is on (default 3). Once that many timers are running, starting another one has no effect until one of them is paused — from either the main window or the mini view.
+- Hovering over a row's key in the mini view now reveals a button to copy that key and a button to open the issue in the browser, matching what the main window already offers for its own rows.
 
 ### Changed
 
@@ -27,6 +28,7 @@ reconstructed here — see `git log` and the archived proposals under
 ### Fixed
 
 - Returning from the mini view to the full window no longer leaves it off-screen when the monitor it was on got disconnected while the mini view was up — it now falls back to a visible position on the main screen, the same protection the mini view's own position already had.
+- In the main window, hovering a row no longer shows the copy-key icon when that row's issue hasn't resolved against Jira yet (an empty row, or a key just typed/pasted) — it now follows the same "resolved issue required" rule as opening in the browser.
 
 ## [2.4.0](https://github.com/menegrete/jirastopwatch/compare/v2.3.1...v2.4.0) (2026-09-17)
 

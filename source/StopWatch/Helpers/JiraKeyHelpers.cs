@@ -37,6 +37,23 @@ namespace StopWatch
             // otherwise return original text
             return text;
         }
+
+
+        /// <summary>
+        /// The URL to browse to the given issue key, or null when no Jira base
+        /// URL is configured yet.
+        /// </summary>
+        public static string BuildIssueUrl(string jiraBaseUrl, string issueKey)
+        {
+            if (string.IsNullOrEmpty(jiraBaseUrl))
+                return null;
+
+            string url = jiraBaseUrl;
+            if (!url.EndsWith("/"))
+                url += "/";
+
+            return url + "browse/" + issueKey.Trim();
+        }
     }
 }
 
