@@ -545,6 +545,16 @@
                            Margin="8,0,0,0"
                            MouseLeftButtonUp="lblConnectionStatus_Click" />
 
+                <!-- Shown once an auto-update has been downloaded and
+                     verified; stays hidden otherwise. See MainWindow's
+                     CheckForUpdatesAsync. -->
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblUpdateReady"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           Visibility="Collapsed"
+                           Style="{StaticResource MutedText}" />
+
                 <!--
                     Unlabelled spacer, docked first so it claims the
                     rightmost strip: the width of the row's post/reset/remove

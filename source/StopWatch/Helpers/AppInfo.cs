@@ -41,6 +41,22 @@ namespace StopWatch
             ?? "0.0.0";
 
         /// <summary>
+        /// Whether this build is the self-contained release asset (bundles its
+        /// own .NET runtime) rather than the framework-dependent one. Set by
+        /// the STOPWATCH_SELF_CONTAINED compile-time constant, which
+        /// scripts/publish-release-artifacts.js only defines for the
+        /// self-contained publish - the two variants are otherwise
+        /// indistinguishable at runtime. Auto-update uses this to pick the
+        /// matching release asset.
+        /// </summary>
+        public static bool IsSelfContained =
+#if STOPWATCH_SELF_CONTAINED
+            true;
+#else
+            false;
+#endif
+
+        /// <summary>
         /// Opens a URL in the user's browser. UseShellExecute has to be set
         /// explicitly: unlike on .NET Framework, it defaults to false, and
         /// Process.Start would then look for an executable by that name.

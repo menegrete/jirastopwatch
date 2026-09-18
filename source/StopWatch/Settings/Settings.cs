@@ -134,6 +134,14 @@ namespace StopWatch
         /// saved on may be smaller now.
         /// </summary>
         public int MainWindowWidth { get; set; }
+
+        /// <summary>
+        /// Whether the app checks for, downloads and stages newer releases on
+        /// its own. On by default; turning it off skips the startup check
+        /// entirely. See the auto-update spec, "El usuario puede desactivar
+        /// el chequeo de actualizaciones".
+        /// </summary>
+        public bool CheckForUpdates { get; set; }
         #endregion
 
 
@@ -219,6 +227,8 @@ namespace StopWatch
             this.ListDensity = (ListDensity)Properties.Settings.Default.ListDensity;
 
             this.MainWindowWidth = Properties.Settings.Default.MainWindowWidth;
+
+            this.CheckForUpdates = Properties.Settings.Default.CheckForUpdates;
         }
 
 
@@ -262,6 +272,8 @@ namespace StopWatch
                 Properties.Settings.Default.ListDensity = (int)this.ListDensity;
 
                 Properties.Settings.Default.MainWindowWidth = this.MainWindowWidth;
+
+                Properties.Settings.Default.CheckForUpdates = this.CheckForUpdates;
 
                 Properties.Settings.Default.Save();
             }
