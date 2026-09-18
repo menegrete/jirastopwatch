@@ -146,6 +146,30 @@ namespace StopWatch.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int MinimizeBehavior {
+            get {
+                return ((int)(this["MinimizeBehavior"]));
+            }
+            set {
+                this["MinimizeBehavior"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool MinimizeBehaviorMigrated {
+            get {
+                return ((bool)(this["MinimizeBehaviorMigrated"]));
+            }
+            set {
+                this["MinimizeBehaviorMigrated"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public int PauseOnSessionLock {
             get {
                 return ((int)(this["PauseOnSessionLock"]));

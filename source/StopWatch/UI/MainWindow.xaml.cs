@@ -312,10 +312,9 @@ namespace StopWatch
 
         #region the tray icon
         /// <summary>
-        /// The tray icon behaves exactly as it did, only its trigger changed:
         /// WPF has no equivalent of MainForm_Resize, so the window's own state
-        /// drives it. The five rules recorded in the change's inventory.md are
-        /// all here.
+        /// drives what minimizing does: routes to the tray icon or to
+        /// EnterMiniView() depending on settings.MinimizeBehavior.
         /// </summary>
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
@@ -328,13 +327,17 @@ namespace StopWatch
             if (inMiniView)
                 return;
 
-            if (!settings.MinimizeToTray)
-                return;
-
             if (WindowState == WindowState.Minimized)
             {
-                ShowTrayIcon();
-                Hide();
+                if (settings.MinimizeBehavior == MinimizeBehavior.MiniView)
+                {
+                    EnterMiniView();
+                }
+                else
+                {
+                    ShowTrayIcon();
+                    Hide();
+                }
             }
             else if (WindowState == WindowState.Normal)
             {

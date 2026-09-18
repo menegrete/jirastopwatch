@@ -57,8 +57,9 @@ namespace StopWatch
             SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
 
             // Mono for MacOSX and Linux do not implement the notify icon, so
-            // the feature is hidden where it does not exist.
-            cbMinimizeToTray.Visibility = CrossPlatformHelpers.IsWindowsEnvironment()
+            // the feature (and Mini View entry via minimize, which shares
+            // this control) is hidden where it does not exist.
+            gridMinimizeBehavior.Visibility = CrossPlatformHelpers.IsWindowsEnvironment()
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
@@ -67,7 +68,6 @@ namespace StopWatch
             tbApiToken.Password = settings.ApiToken;
 
             cbAlwaysOnTop.IsChecked = settings.AlwaysOnTop;
-            cbMinimizeToTray.IsChecked = settings.MinimizeToTray;
             cbAllowMultipleTimers.IsChecked = settings.AllowMultipleTimers;
             tbMaxConcurrentTimers.Text = settings.MaxConcurrentTimers.ToString();
             gridMaxConcurrentTimers.IsEnabled = settings.AllowMultipleTimers;
@@ -99,6 +99,10 @@ namespace StopWatch
                 new Choice<ListDensity>("Compact", ListDensity.Compact),
                 new Choice<ListDensity>("Spacious", ListDensity.Spacious));
 
+            Fill(cbMinimizeBehavior, settings.MinimizeBehavior,
+                new Choice<MinimizeBehavior>("Mini View", MinimizeBehavior.MiniView),
+                new Choice<MinimizeBehavior>("Tray", MinimizeBehavior.Tray));
+
             tbStartTransitions.Text = settings.StartTransitions;
 
             tbMaxIssues.Text = settings.MaxIssues.ToString();
@@ -114,7 +118,6 @@ namespace StopWatch
             settings.ApiToken = tbApiToken.Password;
 
             settings.AlwaysOnTop = cbAlwaysOnTop.IsChecked == true;
-            settings.MinimizeToTray = cbMinimizeToTray.IsChecked == true;
             settings.AllowMultipleTimers = cbAllowMultipleTimers.IsChecked == true;
             settings.MaxConcurrentTimers = ParsedMaxConcurrentTimers;
             settings.IncludeProjectName = cbIncludeProjectName.IsChecked == true;
@@ -125,6 +128,7 @@ namespace StopWatch
             settings.PostWorklogComment = Selected<WorklogCommentSetting>(cbPostWorklogComment);
             settings.Theme = Selected<ThemeMode>(cbTheme);
             settings.ListDensity = Selected<ListDensity>(cbListDensity);
+            settings.MinimizeBehavior = Selected<MinimizeBehavior>(cbMinimizeBehavior);
 
             settings.StartTransitions = tbStartTransitions.Text;
 

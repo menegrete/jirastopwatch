@@ -64,13 +64,16 @@ aplicación consulta a Jira.
 
 ### Requirement: El usuario entra y sale de la vista mini a voluntad
 
-La ventana principal SHALL ofrecer un control explícito para activar la vista
-mini. Al activarla, la ventana principal SHALL esconderse y la vista mini
-SHALL aparecer. La vista mini SHALL ofrecer un único control para volver,
-flotante y superpuesto sobre el conjunto de filas, que no se repite por fila y
-permanece en el mismo lugar sin importar cuántos timers se estén mostrando.
-Un doble click sobre el fondo de la vista mini (fuera de cualquier control)
-SHALL tener el mismo efecto que ese control.
+La ventana principal SHALL ofrecer un control explícito para activar la
+vista mini. Minimizar la ventana principal con el control nativo de Windows
+SHALL tener el mismo efecto que ese control cuando el setting de minimizado
+(capability `minimize-behavior`) está en `Mini View`. Al activarla, la
+ventana principal SHALL esconderse y la vista mini SHALL aparecer. La vista
+mini SHALL ofrecer un único control para volver, flotante y superpuesto
+sobre el conjunto de filas, que no se repite por fila y permanece en el
+mismo lugar sin importar cuántos timers se estén mostrando. Un doble click
+sobre el fondo de la vista mini (fuera de cualquier control) SHALL tener el
+mismo efecto que ese control.
 
 Volver a la ventana completa SHALL esconder la vista mini y restaurar la
 ventana principal con el tamaño que tenía antes de activarse la vista mini, en
@@ -86,6 +89,13 @@ Entrar o salir de la vista mini SHALL NO alterar el estado de ningún timer.
 - **THEN** la ventana principal deja de estar visible
 - **AND** aparece la vista mini
 - **AND** los timers que estaban corriendo siguen corriendo
+
+#### Scenario: El usuario minimiza la ventana principal con Mini View seleccionado
+
+- **WHEN** el setting de minimizado está en `Mini View` y el usuario
+  minimiza la ventana principal con el control nativo de Windows
+- **THEN** ocurre lo mismo que si hubiera accionado el control de vista mini
+  de la toolbar
 
 #### Scenario: El usuario vuelve a la vista completa
 

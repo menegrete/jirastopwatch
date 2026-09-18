@@ -62,6 +62,17 @@ namespace StopWatch
         Spacious = 1
     }
 
+    /// <summary>
+    /// Where minimizing the main window with the native Windows control sends
+    /// it. See the minimize-behavior spec, "El usuario elige adónde va la
+    /// ventana principal al minimizarla".
+    /// </summary>
+    public enum MinimizeBehavior
+    {
+        MiniView = 0,
+        Tray = 1
+    }
+
     internal sealed class Settings
     {
         public static readonly Settings Instance = new Settings();
@@ -70,6 +81,13 @@ namespace StopWatch
         public string JiraBaseUrl { get; set; }
         public bool AlwaysOnTop { get; set; }
         public bool MinimizeToTray { get; set; }
+
+        /// <summary>
+        /// Where minimizing the main window sends it. Replaces
+        /// <see cref="MinimizeToTray"/>, which stays only as a one-time
+        /// migration source - see <see cref="ReadSettings"/>.
+        /// </summary>
+        public MinimizeBehavior MinimizeBehavior { get; set; }
         public int IssueCount { get; set; }
         public bool AllowMultipleTimers { get; set; }
 
@@ -162,6 +180,17 @@ namespace StopWatch
             this.AlwaysOnTop = Properties.Settings.Default.AlwaysOnTop;
             this.IncludeProjectName = Properties.Settings.Default.IncludeProjectName;
             this.MinimizeToTray = Properties.Settings.Default.MinimizeToTray;
+            if (!Properties.Settings.Default.MinimizeBehaviorMigrated)
+            {
+                this.MinimizeBehavior = MigrateMinimizeBehavior(this.MinimizeToTray);
+                Properties.Settings.Default.MinimizeBehavior = (int)this.MinimizeBehavior;
+                Properties.Settings.Default.MinimizeBehaviorMigrated = true;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                this.MinimizeBehavior = (MinimizeBehavior)Properties.Settings.Default.MinimizeBehavior;
+            }
             this.IssueCount = Properties.Settings.Default.IssueCount;
             this.Username = Properties.Settings.Default.Username;
             if (Properties.Settings.Default.ApiToken != "")
@@ -201,6 +230,7 @@ namespace StopWatch
 
                 Properties.Settings.Default.AlwaysOnTop = this.AlwaysOnTop;
                 Properties.Settings.Default.MinimizeToTray = this.MinimizeToTray;
+                Properties.Settings.Default.MinimizeBehavior = (int)this.MinimizeBehavior;
                 Properties.Settings.Default.IssueCount = this.IssueCount;
                 Properties.Settings.Default.IncludeProjectName = this.IncludeProjectName;
 
@@ -270,6 +300,17 @@ namespace StopWatch
         public string WriteIssues(List<PersistedIssue> issues)
         {
             return JsonSerializer.Serialize(issues);
+        }
+
+
+        /// <summary>
+        /// One-time mapping from the retired <see cref="MinimizeToTray"/> bool
+        /// to the new setting. Internal (not private) so it's directly
+        /// testable without going through <see cref="Properties.Settings.Default"/>.
+        /// </summary>
+        internal static MinimizeBehavior MigrateMinimizeBehavior(bool minimizeToTray)
+        {
+            return minimizeToTray ? MinimizeBehavior.Tray : MinimizeBehavior.MiniView;
         }
         #endregion
 
