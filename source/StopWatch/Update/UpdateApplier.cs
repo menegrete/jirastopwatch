@@ -50,6 +50,14 @@ namespace StopWatch.Update
             if (update == null)
                 return;
 
+            // AppContext.BaseDirectory (what callers pass here) always ends
+            // in a trailing separator. Left in, a quoted "...\" argument in
+            // the generated .cmd has its closing quote escaped by that
+            // trailing backslash instead of closed - corrupting the rest of
+            // the line (silently, since command-line parsing failures don't
+            // surface as an error the caller can see).
+            installDir = TrimTrailingSeparator(installDir);
+
             try
             {
                 if (!IsWritable(installDir))
@@ -90,6 +98,15 @@ namespace StopWatch.Update
         /// </summary>
         internal static string BuildApplyScript(int processId, string stagedPath, bool isSelfContained, string installDir, string installExePath)
         {
+            // A trailing separator survives into a quoted "...\" argument as
+            // an escaped closing quote, not a closed one, corrupting
+            // everything after it on that line - trimmed here too (not just
+            // at the ApplyOnExit call site) so this holds regardless of what
+            // any caller passes in.
+            stagedPath = TrimTrailingSeparator(stagedPath);
+            installDir = TrimTrailingSeparator(installDir);
+            installExePath = TrimTrailingSeparator(installExePath);
+
             // Windows (commonly Defender's on-access scan of the just-written
             // .exe) can hold a brief lock on the staged or installed file
             // right after the process that wrote/ran it is gone - a single
@@ -134,6 +151,15 @@ namespace StopWatch.Update
                 "",
                 ":giveup",
                 "(goto) 2>nul & del \"%~f0\"");
+        }
+
+
+        /// <summary>
+        /// Internal rather than private so it's directly testable.
+        /// </summary>
+        internal static string TrimTrailingSeparator(string path)
+        {
+            return path?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
 
