@@ -54,9 +54,9 @@ using System.Runtime.Versioning;
 // Version numbers below are machine-written by the release process
 // (semantic-release, via scripts/set-assembly-version.js) - see CLAUDE.md's
 // "Changelog and versioning" section. Do not hand-edit them.
-[assembly: AssemblyVersion("2.4.0")]
-[assembly: AssemblyFileVersion("2.4.0")]
-[assembly: AssemblyInformationalVersion("2.4.0")]
+[assembly: AssemblyVersion("2.5.0")]
+[assembly: AssemblyFileVersion("2.5.0")]
+[assembly: AssemblyInformationalVersion("2.5.0")]
 
 [assembly: InternalsVisibleTo("StopWatchTest")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
