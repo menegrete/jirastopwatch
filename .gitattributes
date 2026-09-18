@@ -2,3 +2,12 @@
 .runsettings linguist-language=XML
 **/.runsettings linguist-language=XML
 **/*.runsettings linguist-language=XML
+
+# @semantic-release/changelog compares CHANGELOG.md's start against a fixed
+# string byte-for-byte; without this, a Windows CI runner's autocrlf can
+# check it out as CRLF, break that match, and duplicate the file's preamble
+# on every release.
+CHANGELOG.md text eol=lf
+package.json text eol=lf
+package-lock.json text eol=lf
+.releaserc.json text eol=lf
