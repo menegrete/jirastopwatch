@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.1.0](https://github.com/menegrete/jirastopwatch/compare/v3.0.0...v3.1.0) (2026-09-18)
+
+### Added
+
+* check for, download and install app updates automatically ([#20](https://github.com/menegrete/jirastopwatch/issues/20)) ([df7c9a6](https://github.com/menegrete/jirastopwatch/commit/df7c9a6dda16fd395cc94e235187c8055976176b))
+
 ## [3.0.0](https://github.com/menegrete/jirastopwatch/compare/v2.5.0...v3.0.0) (2026-09-18)
 
 ### ⚠ BREAKING CHANGES
