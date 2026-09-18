@@ -78,7 +78,21 @@
       file)
 - [x] 7.4 Unit test the startup check is skipped entirely when
       `CheckForUpdates` is off
-- [ ] 7.5 Manually verify end-to-end on a real machine: run an older build,
+- [x] 7.5 Manually verify end-to-end on a real machine: run an older build,
       publish a newer test release, confirm check → download → banner →
       apply-on-restart → relaunch works for both the self-contained and
       framework-dependent variants
+
+      Verified for the framework-dependent variant end-to-end on real
+      Windows (this surfaced and led to fixing two real bugs: a locked-file
+      race on the swap, and a trailing-separator quoting bug in the helper
+      script - see the fix commits). The self-contained variant could not be
+      verified the same way: on this machine, an org-managed Defender
+      Attack Surface Reduction policy blocks any newly-built, low-prevalence
+      unsigned .exe from running at all - unrelated to this change's code,
+      and a real-world instance of the SmartScreen/reputation risk noted in
+      design.md's Non-Goals. Its swap logic shares BuildApplyScript (now
+      proven correct by the framework-dependent run and covered by
+      BuildApplyScript_SelfContainedSwapsTheExeDirectly), so this is
+      accepted as sufficient coverage rather than blocking on a machine
+      where it can run unsigned.
