@@ -90,12 +90,30 @@ namespace StopWatch.Update
         /// </summary>
         internal static string BuildApplyScript(int processId, string stagedPath, bool isSelfContained, string installDir, string installExePath)
         {
+            // Windows (commonly Defender's on-access scan of the just-written
+            // .exe) can hold a brief lock on the staged or installed file
+            // right after the process that wrote/ran it is gone - a single
+            // move/robocopy attempt can lose that race. Both retry rather
+            // than fail outright, so a transient lock doesn't silently leave
+            // the old build in place and relaunch it unchanged.
             string swap = isSelfContained
-                ? $"move /y \"{stagedPath}\" \"{installExePath}\""
+                ? string.Join(Environment.NewLine,
+                    "set \"SWAPTRIES=0\"",
+                    ":swaploop",
+                    $"move /y \"{stagedPath}\" \"{installExePath}\" >nul 2>&1",
+                    "if not errorlevel 1 goto :swapdone",
+                    "set /a SWAPTRIES+=1",
+                    $"if %SWAPTRIES% GEQ {MaxSwapRetries} goto :swapdone",
+                    "timeout /t 1 /nobreak >nul",
+                    "goto :swaploop",
+                    ":swapdone")
                 // /MIR mirrors the extracted build into the install
                 // directory: added/changed files are copied, anything the
                 // new build no longer has is removed - matching it exactly.
-                : $"robocopy \"{stagedPath}\" \"{installDir}\" /MIR /NFL /NDL /NJH /NJS";
+                // /R and /W bound robocopy's own retrying (its defaults
+                // amount to retrying for hours), covering the same
+                // transient-lock case as the self-contained move above.
+                : $"robocopy \"{stagedPath}\" \"{installDir}\" /MIR /NFL /NDL /NJH /NJS /R:{MaxSwapRetries} /W:1";
 
             return string.Join(Environment.NewLine,
                 "@echo off",
@@ -141,5 +159,12 @@ namespace StopWatch.Update
         /// spec, "La app se cierra sin que la actualización se aplique".
         /// </summary>
         private const int MaxWaitSeconds = 30;
+
+        /// <summary>
+        /// How many times the swap step retries a locked file (e.g. Defender
+        /// scanning the just-downloaded .exe) before giving up, one second
+        /// apart.
+        /// </summary>
+        private const int MaxSwapRetries = 10;
     }
 }
