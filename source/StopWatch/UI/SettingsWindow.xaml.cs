@@ -73,6 +73,7 @@ namespace StopWatch
             gridMaxConcurrentTimers.IsEnabled = settings.AllowMultipleTimers;
             cbIncludeProjectName.IsChecked = settings.IncludeProjectName;
             cbLoggingEnabled.IsChecked = settings.LoggingEnabled;
+            cbCheckForUpdates.IsChecked = settings.CheckForUpdates;
 
             Fill(cbSaveTimerState, settings.SaveTimerState,
                 new Choice<SaveTimerSetting>("Reset all timers on exit", SaveTimerSetting.NoSave),
@@ -122,6 +123,7 @@ namespace StopWatch
             settings.MaxConcurrentTimers = ParsedMaxConcurrentTimers;
             settings.IncludeProjectName = cbIncludeProjectName.IsChecked == true;
             settings.LoggingEnabled = cbLoggingEnabled.IsChecked == true;
+            settings.CheckForUpdates = cbCheckForUpdates.IsChecked == true;
 
             settings.SaveTimerState = Selected<SaveTimerSetting>(cbSaveTimerState);
             settings.PauseOnSessionLock = Selected<PauseAndResumeSetting>(cbPauseOnSessionLock);

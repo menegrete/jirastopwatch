@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -28,6 +29,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using StopWatch.Update;
 using DrawingPoint = System.Drawing.Point;
 using DrawingSize = System.Drawing.Size;
 using Screen = System.Windows.Forms.Screen;
@@ -76,6 +78,8 @@ namespace StopWatch
             issues.TimerStarted += issues_TimerStarted;
 
             activeTimer = new ActiveTimerViewModel(() => issues.Issues.Cast<ITimerSource>());
+
+            updateService = new AutoUpdateService(new GitHubReleaseSource());
 
             InitializeComponent();
 
@@ -238,6 +242,8 @@ namespace StopWatch
             }
 
             ticker.Start();
+
+            CheckForUpdatesAsync().FireAndForget();
         }
 
 
@@ -255,6 +261,34 @@ namespace StopWatch
 
             DisposeTrayIcon();
             SaveSettingsAndIssueStates();
+
+            // Applying an update only ever happens on this, a normal exit -
+            // never while the app is running, never by force-closing it. See
+            // the auto-update spec, "La actualización se aplica sin
+            // interrumpir una sesión en curso".
+            if (pendingUpdate != null)
+                UpdateApplier.ApplyOnExit(pendingUpdate, AppContext.BaseDirectory);
+        }
+
+
+        /// <summary>
+        /// Checks for, downloads and stages a newer release in the
+        /// background. A no-op, logged rather than surfaced, on any failure -
+        /// see the auto-update spec, "El chequeo falla".
+        /// </summary>
+        private async Task CheckForUpdatesAsync()
+        {
+            string stagingBaseDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "StopWatch", "updates");
+
+            PendingUpdate update = await updateService.CheckAndStageAsync(settings.CheckForUpdates, AppInfo.Version, AppInfo.IsSelfContained, stagingBaseDir);
+            if (update == null)
+                return;
+
+            pendingUpdate = update;
+            lblUpdateReady.Text = $"v{update.Version} ready — restart to apply";
+            lblUpdateReady.Visibility = Visibility.Visible;
         }
 
 
@@ -1251,6 +1285,9 @@ namespace StopWatch
 
         private readonly IssueListViewModel issues;
         private readonly ActiveTimerViewModel activeTimer;
+
+        private readonly AutoUpdateService updateService;
+        private PendingUpdate pendingUpdate;
 
         private readonly System.Windows.Threading.DispatcherTimer ticker;
 

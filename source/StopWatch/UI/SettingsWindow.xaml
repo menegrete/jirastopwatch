@@ -190,6 +190,12 @@
 
                 <Border Style="{StaticResource Divider}" />
 
+                <!-- ==================== updates ==================== -->
+
+                <CheckBox x:Name="cbCheckForUpdates" Content="Automatically check for and install updates" />
+
+                <Border Style="{StaticResource Divider}" />
+
                 <!-- ==================== diagnostics ==================== -->
 
                 <CheckBox x:Name="cbLoggingEnabled" Content="Enable debug logging" />
