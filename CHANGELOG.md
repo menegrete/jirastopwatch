@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.1.2](https://github.com/menegrete/jirastopwatch/compare/v3.1.1...v3.1.2) (2026-09-18)
+
+### Fixed
+
+* trim the trailing separator that broke the apply helper's quoting ([#22](https://github.com/menegrete/jirastopwatch/issues/22)) ([de9f138](https://github.com/menegrete/jirastopwatch/commit/de9f1381b2dbe4738079622093ef5c5f49cdc80d))
+
 ## [3.1.1](https://github.com/menegrete/jirastopwatch/compare/v3.1.0...v3.1.1) (2026-09-18)
 
 ### Fixed
