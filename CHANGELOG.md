@@ -11,6 +11,20 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.0.0](https://github.com/menegrete/jirastopwatch/compare/v2.5.0...v3.0.0) (2026-09-18)
+
+### ⚠ BREAKING CHANGES
+
+* minimizing the main window no longer falls back to a
+plain taskbar minimize. It now goes to the mini view by default, or to
+the tray if that combo option is selected in Settings.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+### Added
+
+* minimize main window to the mini view by default ([211f252](https://github.com/menegrete/jirastopwatch/commit/211f252a54aeaa4fba4bc9fdc8b98cd2424a9f4a)), closes [#15](https://github.com/menegrete/jirastopwatch/issues/15)
+
 ## [2.5.0](https://github.com/menegrete/jirastopwatch/compare/v2.4.0...v2.5.0) (2026-09-18)
 
 ### Added
