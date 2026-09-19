@@ -22,6 +22,7 @@
 
 using StopWatch.Logging;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -102,7 +103,11 @@ namespace StopWatch
 
             Fill(cbMinimizeBehavior, settings.MinimizeBehavior,
                 new Choice<MinimizeBehavior>("Mini View", MinimizeBehavior.MiniView),
-                new Choice<MinimizeBehavior>("Tray", MinimizeBehavior.Tray));
+                new Choice<MinimizeBehavior>("Tray", MinimizeBehavior.Tray),
+                new Choice<MinimizeBehavior>("Taskbar Widget", MinimizeBehavior.TaskbarWidget));
+
+            PopulateTaskbarWidgetMonitors();
+            ApplyMinimizeBehaviorGating();
 
             tbStartTransitions.Text = settings.StartTransitions;
 
@@ -131,6 +136,11 @@ namespace StopWatch
             settings.Theme = Selected<ThemeMode>(cbTheme);
             settings.ListDensity = Selected<ListDensity>(cbListDensity);
             settings.MinimizeBehavior = Selected<MinimizeBehavior>(cbMinimizeBehavior);
+
+            RadioButton selectedMonitor = panelTaskbarWidgetMonitors.Children
+                .OfType<RadioButton>()
+                .FirstOrDefault(r => r.IsChecked == true);
+            settings.TaskbarWidgetMonitor = selectedMonitor != null ? (int)selectedMonitor.Tag : 0;
 
             settings.StartTransitions = tbStartTransitions.Text;
 
@@ -218,6 +228,12 @@ namespace StopWatch
         }
 
 
+        private void cbMinimizeBehavior_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyMinimizeBehaviorGating();
+        }
+
+
         private void tbMaxConcurrentTimers_TextChanged(object sender, TextChangedEventArgs e)
         {
             int parsed;
@@ -300,6 +316,67 @@ namespace StopWatch
                 current = settings.MaxConcurrentTimers;
 
             tbMaxConcurrentTimers.Text = Math.Max(MinConcurrentTimers, Math.Min(MaxConcurrentTimersLimit, current + delta)).ToString();
+        }
+
+
+        /// <summary>
+        /// One radio button per connected monitor (primary first, then
+        /// secondaries ordered left-to-right/top-to-bottom - the same order
+        /// <see cref="TaskbarInterop.GetSecondaryTrays"/> resolves monitor
+        /// indices in): the widget shows on exactly one monitor, never
+        /// several at once.
+        /// </summary>
+        private void PopulateTaskbarWidgetMonitors()
+        {
+            panelTaskbarWidgetMonitors.Children.Clear();
+
+            AddMonitorRadioButton(0, "Primary monitor");
+
+            List<Screen> secondaries = Screen.AllScreens
+                .Where(s => !s.Primary)
+                .OrderBy(s => s.Bounds.Left)
+                .ThenBy(s => s.Bounds.Top)
+                .ToList();
+
+            for (int i = 0; i < secondaries.Count; i++)
+                AddMonitorRadioButton(i + 1, string.Format("Monitor {0}", i + 2));
+        }
+
+
+        private void AddMonitorRadioButton(int index, string label)
+        {
+            panelTaskbarWidgetMonitors.Children.Add(new RadioButton
+            {
+                Content = label,
+                GroupName = "TaskbarWidgetMonitor",
+                Tag = index,
+                IsChecked = settings.TaskbarWidgetMonitor == index,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+        }
+
+
+        /// <summary>
+        /// The taskbar widget only ever shows a single active timer, so it is
+        /// mutually exclusive with allowing multiple timers at once: see the
+        /// minimize-behavior spec, "Taskbar Widget es excluyente con permitir
+        /// múltiples timers".
+        /// </summary>
+        private void ApplyMinimizeBehaviorGating()
+        {
+            bool taskbarWidgetSelected = Selected<MinimizeBehavior>(cbMinimizeBehavior) == MinimizeBehavior.TaskbarWidget;
+
+            gridTaskbarWidgetMonitors.Visibility = taskbarWidgetSelected ? Visibility.Visible : Visibility.Collapsed;
+
+            // Disabling the checkbox alone leaves whatever it was already
+            // checked to - and OK reads IsChecked regardless of IsEnabled -
+            // so switching to Taskbar Widget has to clear it, not just grey
+            // it out, or the two end up saved together.
+            if (taskbarWidgetSelected)
+                cbAllowMultipleTimers.IsChecked = false;
+
+            cbAllowMultipleTimers.IsEnabled = !taskbarWidgetSelected;
+            gridMaxConcurrentTimers.IsEnabled = !taskbarWidgetSelected && cbAllowMultipleTimers.IsChecked == true;
         }
 
 

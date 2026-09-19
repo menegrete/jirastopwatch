@@ -72,7 +72,19 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Minimize to" />
-                    <ComboBox Grid.Column="1" x:Name="cbMinimizeBehavior" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                    <ComboBox Grid.Column="1" x:Name="cbMinimizeBehavior" ItemTemplate="{StaticResource ChoiceTemplate}" SelectionChanged="cbMinimizeBehavior_SelectionChanged" />
+                </Grid>
+
+                <!-- Only shown with Taskbar Widget selected above; populated
+                     in code-behind, one radio button per connected monitor
+                     (single choice - the widget shows on one monitor only). -->
+                <Grid x:Name="gridTaskbarWidgetMonitors" Margin="0,6,0,0" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Taskbar widget monitor" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="1" x:Name="panelTaskbarWidgetMonitors" Orientation="Vertical" />
                 </Grid>
 
                 <Grid Margin="0,6,0,0">

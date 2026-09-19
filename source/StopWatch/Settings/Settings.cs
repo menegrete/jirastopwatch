@@ -70,7 +70,8 @@ namespace StopWatch
     public enum MinimizeBehavior
     {
         MiniView = 0,
-        Tray = 1
+        Tray = 1,
+        TaskbarWidget = 2
     }
 
     internal sealed class Settings
@@ -142,6 +143,17 @@ namespace StopWatch
         /// el chequeo de actualizaciones".
         /// </summary>
         public bool CheckForUpdates { get; set; }
+
+        /// <summary>
+        /// Which single monitor (0 = primary, 1+ = secondary, in the same
+        /// order <see cref="System.Windows.Forms.Screen.AllScreens"/> would
+        /// once sorted by position) shows the taskbar widget when
+        /// <see cref="MinimizeBehavior"/> is <see cref="MinimizeBehavior.TaskbarWidget"/>.
+        /// Falls back to the primary monitor (0) if that monitor is not
+        /// currently connected. See the taskbar-widget-view spec, "El
+        /// usuario elige en qué monitor aparece el widget".
+        /// </summary>
+        public int TaskbarWidgetMonitor { get; set; }
         #endregion
 
 
@@ -229,6 +241,8 @@ namespace StopWatch
             this.MainWindowWidth = Properties.Settings.Default.MainWindowWidth;
 
             this.CheckForUpdates = Properties.Settings.Default.CheckForUpdates;
+
+            this.TaskbarWidgetMonitor = Properties.Settings.Default.TaskbarWidgetMonitor;
         }
 
 
@@ -274,6 +288,8 @@ namespace StopWatch
                 Properties.Settings.Default.MainWindowWidth = this.MainWindowWidth;
 
                 Properties.Settings.Default.CheckForUpdates = this.CheckForUpdates;
+
+                Properties.Settings.Default.TaskbarWidgetMonitor = this.TaskbarWidgetMonitor;
 
                 Properties.Settings.Default.Save();
             }
