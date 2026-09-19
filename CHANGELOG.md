@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.2.0](https://github.com/menegrete/jirastopwatch/compare/v3.1.2...v3.2.0) (2026-09-19)
+
+### Added
+
+* add taskbar widget as a minimize destination ([3dc4fe0](https://github.com/menegrete/jirastopwatch/commit/3dc4fe041a5f840d698c2edc4a2ce973b41250a7)), closes [#14](https://github.com/menegrete/jirastopwatch/issues/14)
+
 ## [3.1.2](https://github.com/menegrete/jirastopwatch/compare/v3.1.1...v3.1.2) (2026-09-18)
 
 ### Fixed
