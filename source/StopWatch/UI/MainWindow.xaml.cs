@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -129,11 +130,18 @@ namespace StopWatch
         /// </summary>
         public void ShowOnTop()
         {
-            // Launching the app again while the mini view is up means the user
-            // wants the full window, not a second stand-in next to it.
+            // Launching the app again while the mini view (or the taskbar
+            // widget) is up means the user wants the full window, not a
+            // second stand-in next to it.
             if (inMiniView)
             {
                 ExitMiniView();
+                return;
+            }
+
+            if (inTaskbarWidget)
+            {
+                ExitTaskbarWidget();
                 return;
             }
 
@@ -259,6 +267,13 @@ namespace StopWatch
                 miniView = null;
             }
 
+            if (taskbarWidget != null)
+            {
+                taskbarWidget.ClosedByApp = true;
+                taskbarWidget.Close();
+                taskbarWidget = null;
+            }
+
             DisposeTrayIcon();
             SaveSettingsAndIssueStates();
 
@@ -355,10 +370,10 @@ namespace StopWatch
             if (!CrossPlatformHelpers.IsWindowsEnvironment())
                 return;
 
-            // While the mini view is up this window is hidden on purpose. The
-            // tray icon must not appear as well: two stand-ins for one hidden
-            // window is one too many.
-            if (inMiniView)
+            // While the mini view or the taskbar widget is up this window is
+            // hidden on purpose. The tray icon must not appear as well: two
+            // stand-ins for one hidden window is one too many.
+            if (inMiniView || inTaskbarWidget)
                 return;
 
             if (WindowState == WindowState.Minimized)
@@ -366,6 +381,10 @@ namespace StopWatch
                 if (settings.MinimizeBehavior == MinimizeBehavior.MiniView)
                 {
                     EnterMiniView();
+                }
+                else if (settings.MinimizeBehavior == MinimizeBehavior.TaskbarWidget)
+                {
+                    EnterTaskbarWidget();
                 }
                 else
                 {
@@ -532,6 +551,124 @@ namespace StopWatch
         private void miniView_RestoreRequested(object sender, EventArgs e)
         {
             ExitMiniView();
+        }
+        #endregion
+
+
+        #region the taskbar widget
+        /// <summary>
+        /// Hides this window and shows the taskbar widget in its place, on
+        /// the single monitor <see cref="Settings.TaskbarWidgetMonitor"/>
+        /// names - or the primary monitor if that one is not currently
+        /// connected. See the taskbar-widget-view spec.
+        /// </summary>
+        private void EnterTaskbarWidget()
+        {
+            if (inTaskbarWidget)
+                return;
+
+            restoreLeft = Left;
+            restoreTop = Top;
+            restoreWidth = ActualWidth;
+            restoreWindowState = WindowState;
+
+            inTaskbarWidget = true;
+
+            // The tray icon belongs to the minimize-to-tray feature, not here.
+            HideTrayIcon();
+
+            EnsureTaskbarWidget();
+            taskbarWidget.ShowAt();
+
+            Hide();
+        }
+
+
+        /// <summary>Takes the taskbar widget down and brings this window back as it was.</summary>
+        private void ExitTaskbarWidget()
+        {
+            if (!inTaskbarWidget)
+                return;
+
+            inTaskbarWidget = false;
+
+            if (taskbarWidget != null)
+                taskbarWidget.StopAndHide();
+
+            Show();
+
+            WindowState = restoreWindowState == WindowState.Minimized
+                ? WindowState.Normal
+                : restoreWindowState;
+
+            RestorePosition();
+
+            Activate();
+        }
+
+
+        /// <summary>Creates the widget window on first use.</summary>
+        private void EnsureTaskbarWidget()
+        {
+            if (taskbarWidget != null)
+                return;
+
+            taskbarWidget = new TaskbarWidgetWindow(activeTimer, settings, ResolveTargetTray);
+            taskbarWidget.RestoreRequested += TaskbarWidget_RestoreRequested;
+            taskbarWidget.ExitRequested += TaskbarWidget_ExitRequested;
+            taskbarWidget.Died += TaskbarWidget_Died;
+        }
+
+
+        /// <summary>
+        /// The taskbar to anchor to, re-resolved fresh on every call (the
+        /// widget polls this): the user's chosen monitor if it currently
+        /// resolves to a connected taskbar, otherwise the primary monitor's.
+        /// Re-resolving from scratch each time is what makes a disconnected
+        /// monitor recover on its own, without any change-notification
+        /// plumbing - the very next poll just starts resolving to the
+        /// primary taskbar instead.
+        /// </summary>
+        private IntPtr ResolveTargetTray()
+        {
+            int configured = settings.TaskbarWidgetMonitor;
+            if (configured > 0)
+            {
+                List<IntPtr> secondaries = TaskbarInterop.GetSecondaryTrays();
+                if (configured - 1 < secondaries.Count)
+                    return secondaries[configured - 1];
+            }
+
+            return TaskbarInterop.GetPrimaryTray();
+        }
+
+
+        private void TaskbarWidget_RestoreRequested(object sender, EventArgs e)
+        {
+            ExitTaskbarWidget();
+        }
+
+
+        private void TaskbarWidget_ExitRequested(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+
+        /// <summary>
+        /// The widget window's HWND was destroyed along with its owning
+        /// taskbar (an Explorer restart) rather than by the app - recreate it
+        /// so the feature survives that transient.
+        /// </summary>
+        private void TaskbarWidget_Died(object sender, EventArgs e)
+        {
+            taskbarWidget = null;
+
+            if (inTaskbarWidget)
+            {
+                EnsureTaskbarWidget();
+                taskbarWidget.ShowAt();
+            }
         }
         #endregion
 
@@ -1295,6 +1432,10 @@ namespace StopWatch
 
         private MiniTimerWindow miniView;
         private bool inMiniView;
+
+        private TaskbarWidgetWindow taskbarWidget;
+        private bool inTaskbarWidget;
+
         private double restoreLeft;
         private double restoreTop;
         private double restoreWidth;

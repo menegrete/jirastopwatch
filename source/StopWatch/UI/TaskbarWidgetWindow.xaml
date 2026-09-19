@@ -1,0 +1,109 @@
+<Window x:Class="StopWatch.TaskbarWidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        SizeToContent="WidthAndHeight"
+        Height="28"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ShowActivated="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <!-- The Monitor submenu's items are rebuilt in code-behind each time
+             it opens, from the currently connected monitors and settings -
+             same idea as the reference project's own MonitorMenu. -->
+        <ContextMenu x:Key="WidgetMenu" Opened="WidgetMenu_Opened" Closed="WidgetMenu_Closed">
+            <MenuItem Header="Monitor" SubmenuOpened="MonitorSubmenu_Opened" />
+            <Separator />
+            <MenuItem Header="Restore" Click="MenuRestore_Click" />
+            <MenuItem Header="Exit" Click="MenuExit_Click" />
+        </ContextMenu>
+    </Window.Resources>
+
+    <!-- One row: the active issue's key, summary (hidden first when space is
+         tight - see TrySetContentWidth), elapsed time and a pause/resume
+         control. Same visual language as the mini view's row. -->
+    <Border x:Name="pill"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Border}"
+            BorderThickness="1"
+            CornerRadius="6"
+            ContextMenu="{StaticResource WidgetMenu}"
+            MouseLeftButtonDown="Pill_MouseLeftButtonDown">
+        <Grid Height="26">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <!-- stripe -->
+                <ColumnDefinition Width="Auto" />
+                <!-- key -->
+                <ColumnDefinition x:Name="colSummary" Width="Auto" />
+                <!-- summary -->
+                <ColumnDefinition Width="Auto" />
+                <!-- time -->
+                <ColumnDefinition Width="Auto" />
+                <!-- pause / resume -->
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Width="4"
+                    Margin="4,3,6,3"
+                    CornerRadius="2">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource TimerRunning}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding IssueKey}"
+                       Foreground="{DynamicResource Text}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+
+            <TextBlock x:Name="txtSummary"
+                       Grid.Column="2"
+                       Text="{Binding Summary}"
+                       ToolTip="{Binding Summary}"
+                       Foreground="{DynamicResource TextMuted}"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="8,0,8,0"
+                       VerticalAlignment="Center" />
+
+            <TextBlock Grid.Column="3"
+                       Text="{Binding ElapsedText}"
+                       Foreground="{DynamicResource Text}"
+                       FontFamily="Consolas, Courier New, monospace"
+                       FontWeight="Bold"
+                       Margin="0,0,4,0"
+                       VerticalAlignment="Center" />
+
+            <Button Grid.Column="4"
+                    Style="{StaticResource GlyphButton}"
+                    Margin="0,0,4,0"
+                    Click="PauseResume_Click">
+                <Grid>
+                    <!-- pause: two bars -->
+                    <Path Visibility="{Binding IsRunning, Converter={StaticResource WhenTrue}}"
+                          Fill="{DynamicResource Text}"
+                          Data="M 0,0 H 3.5 V 11 H 0 Z M 6,0 H 9.5 V 11 H 6 Z" />
+                    <!-- play: triangle -->
+                    <Path Visibility="{Binding IsRunning, Converter={StaticResource WhenFalse}}"
+                          Fill="{DynamicResource Text}"
+                          Data="M 0,0 L 10,5.5 L 0,11 Z" />
+                </Grid>
+            </Button>
+        </Grid>
+    </Border>
+</Window>

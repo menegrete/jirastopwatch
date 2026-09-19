@@ -322,5 +322,17 @@ namespace StopWatch.Properties {
                 this["CheckForUpdates"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int TaskbarWidgetMonitor {
+            get {
+                return ((int)(this["TaskbarWidgetMonitor"]));
+            }
+            set {
+                this["TaskbarWidgetMonitor"] = value;
+            }
+        }
     }
 }

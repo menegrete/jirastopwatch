@@ -523,6 +523,136 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <!-- ==================== context menu ==================== -->
+
+    <!--
+        Templated by hand like the rest: the OS ContextMenu ignores the
+        theme, and popped up from a window with AllowsTransparency="True"
+        (the taskbar widget) its default chrome rendered with no opaque
+        background at all, leaving the text illegible against whatever was
+        behind it.
+    -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="2" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Direction="270" Opacity="0.4" Color="Black" />
+                        </Border.Effect>
+                        <StackPanel Margin="{TemplateBinding Padding}" IsItemsHost="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Covers both a plain item and one with a submenu (Items.Count > 0):
+        the arrow only shows when there is something to expand into, and the
+        Popup below reuses the same ContextMenu chrome/theme for the submenu
+        itself.
+    -->
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="chrome"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="3">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Path x:Name="check"
+                                  Grid.Column="0"
+                                  Visibility="Collapsed"
+                                  Style="{StaticResource GlyphPath}"
+                                  Width="10" Height="10"
+                                  Data="{StaticResource GlyphCheck}" />
+
+                            <ContentPresenter Grid.Column="1"
+                                               Margin="{TemplateBinding Padding}"
+                                               ContentSource="Header"
+                                               RecognizesAccessKey="True" />
+
+                            <Path x:Name="arrow"
+                                  Grid.Column="2"
+                                  Visibility="Collapsed"
+                                  Style="{StaticResource GlyphFill}"
+                                  Width="4" Height="8"
+                                  Margin="6,0,8,0"
+                                  Data="M 0,0 L 4,4 L 0,8 Z" />
+
+                            <Popup x:Name="submenuPopup"
+                                   Grid.Column="1"
+                                   Placement="Right"
+                                   IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade">
+                                <Border Background="{DynamicResource Surface}"
+                                        BorderBrush="{DynamicResource Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="1" Direction="270" Opacity="0.4" Color="Black" />
+                                    </Border.Effect>
+                                    <StackPanel Margin="2" IsItemsHost="True" />
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="chrome" Property="Background" Value="{DynamicResource SurfaceActive}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+                        </Trigger>
+                        <Trigger Property="IsCheckable" Value="True">
+                            <Setter TargetName="check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="check" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Separator">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Border}" />
+        <Setter Property="Margin" Value="4,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}" Height="{TemplateBinding Height}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
     <!-- ==================== date picker ==================== -->
 
     <!--
