@@ -34,7 +34,7 @@ namespace StopWatch
     /// same gesture and drives the same action as the entry it came from.
     /// Alt+Down (open the key completion list) was later removed along with
     /// the completion list itself, once the Filter feature that fed it was
-    /// gone.
+    /// gone. MoveUp/MoveDown were added later still, for reordering rows.
     /// </summary>
     internal static class StopWatchCommands
     {
