@@ -634,7 +634,7 @@
                            VerticalAlignment="Center"
                            Margin="8,0,0,0"
                            Visibility="Collapsed"
-                           Style="{StaticResource MutedText}" />
+                           Style="{StaticResource DangerBoldText}" />
 
                 <!--
                     Unlabelled spacer, docked first so it claims the
