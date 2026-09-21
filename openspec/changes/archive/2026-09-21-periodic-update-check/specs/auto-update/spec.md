@@ -1,10 +1,4 @@
-## Purpose
-
-Lets the app detect, fetch, verify and install a newer released version on
-its own, so users stop having to notice and manually re-download new
-releases.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: La app chequea si hay una versión más nueva disponible
 
@@ -40,46 +34,6 @@ hace.
   actualización se aplique (o el usuario la descarte reiniciando sin
   aplicarla)
 
-### Requirement: El usuario puede desactivar el chequeo de actualizaciones
-
-La app SHALL exponer un ajuste que, al estar desactivado, evita todo
-chequeo, descarga o aplicación automática de actualizaciones. Este ajuste
-SHALL estar activado por defecto.
-
-#### Scenario: El ajuste está activado (por defecto)
-- **WHEN** el usuario no cambió el ajuste de chequeo de actualizaciones
-- **THEN** la app chequea actualizaciones normalmente al iniciar
-
-#### Scenario: El usuario desactiva el ajuste
-- **WHEN** el usuario desactiva el chequeo de actualizaciones en la
-  configuración
-- **THEN** la app no vuelve a chequear, descargar ni aplicar
-  actualizaciones hasta que el usuario reactive el ajuste
-
-### Requirement: La descarga corresponde a la variante que está corriendo
-
-Cuando hay una versión más nueva y el chequeo de actualizaciones está
-activado, la app SHALL descargar únicamente el artifact de release que
-corresponde a la variante que está ejecutando actualmente (self-contained o
-framework-dependent), y SHALL verificar la descarga contra su checksum
-SHA256 publicado antes de darla por válida.
-
-#### Scenario: Corriendo la variante self-contained
-- **WHEN** la app en ejecución es la variante self-contained y hay una
-  versión más nueva
-- **THEN** la app descarga el artifact self-contained de esa versión
-
-#### Scenario: Corriendo la variante framework-dependent
-- **WHEN** la app en ejecución es la variante framework-dependent y hay una
-  versión más nueva
-- **THEN** la app descarga el artifact framework-dependent de esa versión
-
-#### Scenario: El checksum no coincide
-- **WHEN** el archivo descargado no coincide con su checksum SHA256
-  publicado
-- **THEN** la app descarta la descarga, no queda ninguna actualización
-  pendiente de aplicar, y la app sigue funcionando con la versión actual
-
 ### Requirement: La actualización se aplica sin interrumpir una sesión en curso
 
 La app SHALL dejar la actualización verificada lista para aplicar sin
@@ -105,16 +59,3 @@ instalarla).
   aplicación no llega a detectar (timeout esperando el cierre)
 - **THEN** la instalación actual queda intacta y sin aplicar, y la
   actualización se reintenta en un próximo cierre
-
-### Requirement: Una aplicación fallida no deja la instalación rota
-
-Si el directorio de instalación no se puede escribir, o cualquier paso de
-la descarga, verificación o aplicación falla, la app SHALL conservar la
-instalación actual funcionando exactamente como estaba, sin dejar archivos
-a medio reemplazar.
-
-#### Scenario: El directorio de instalación no es escribible
-- **WHEN** la app intenta aplicar una actualización verificada pero no
-  tiene permisos de escritura sobre su directorio de instalación
-- **THEN** la instalación actual queda intacta, y la app sigue arrancando
-  normalmente en la versión anterior

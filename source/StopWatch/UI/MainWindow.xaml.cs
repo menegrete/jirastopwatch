@@ -231,6 +231,7 @@ namespace StopWatch
             ClampHeightToWorkingArea();
 
             Topmost = settings.AlwaysOnTop;
+            UpdateMiniViewButtonVisibility();
 
             issues.Hydrate();
             UpdateAddIssueTooltip();
@@ -251,6 +252,7 @@ namespace StopWatch
 
             ticker.Start();
 
+            lastUpdateCheckUtc = DateTime.UtcNow;
             CheckForUpdatesAsync().FireAndForget();
         }
 
@@ -304,6 +306,21 @@ namespace StopWatch
             pendingUpdate = update;
             lblUpdateReady.Text = $"v{update.Version} ready — restart to apply";
             lblUpdateReady.Visibility = Visibility.Visible;
+        }
+
+
+        /// <summary>
+        /// The mini-view toolbar button only makes sense when minimizing
+        /// doesn't already go to the taskbar widget - otherwise clicking it
+        /// would show the same running timer twice at once (widget + mini
+        /// view). Called at load and whenever MinimizeBehavior changes in
+        /// Settings.
+        /// </summary>
+        private void UpdateMiniViewButtonVisibility()
+        {
+            btnMiniView.Visibility = settings.MinimizeBehavior == MinimizeBehavior.TaskbarWidget
+                ? Visibility.Collapsed
+                : Visibility.Visible;
         }
 
 
@@ -692,6 +709,15 @@ namespace StopWatch
             issues.Refresh();
             activeTimer.Refresh();
             SaveSettingsAndIssueStates();
+
+            // Re-check for a release published mid-session. Skipped once an
+            // update is already staged - no point re-checking while it just
+            // sits waiting for the next normal close.
+            if (pendingUpdate == null && DateTime.UtcNow - lastUpdateCheckUtc >= updateCheckInterval)
+            {
+                lastUpdateCheckUtc = DateTime.UtcNow;
+                CheckForUpdatesAsync().FireAndForget();
+            }
         }
         #endregion
 
@@ -1247,6 +1273,7 @@ namespace StopWatch
             }
 
             Topmost = settings.AlwaysOnTop;
+            UpdateMiniViewButtonVisibility();
 
             if (settings.MaxIssues != maxIssuesBefore)
                 UpdateAddIssueTooltip();
@@ -1476,6 +1503,7 @@ namespace StopWatch
 
         private readonly AutoUpdateService updateService;
         private PendingUpdate pendingUpdate;
+        private DateTime lastUpdateCheckUtc;
 
         private readonly System.Windows.Threading.DispatcherTimer ticker;
 
@@ -1499,6 +1527,7 @@ namespace StopWatch
         #region private consts
         private const int firstDelay = 500;
         private const int defaultDelay = 30000;
+        private static readonly TimeSpan updateCheckInterval = TimeSpan.FromHours(1);
         #endregion
     }
 }

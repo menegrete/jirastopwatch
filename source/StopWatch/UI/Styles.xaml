@@ -31,6 +31,11 @@
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
     </Style>
 
+    <Style x:Key="DangerBoldText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Foreground" Value="{DynamicResource Danger}" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
     <Style x:Key="SectionHeader" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="0,10,0,4" />
