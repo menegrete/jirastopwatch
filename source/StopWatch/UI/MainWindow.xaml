@@ -146,6 +146,41 @@
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" />
 
+                    <!-- Move up/down. Overlaid on the summary column's right
+                         edge - which has slack to spare, unlike the Auto
+                         columns either side of it - rather than a column of
+                         its own, sitting just left of start/stop. Side by
+                         side, same width/margin pattern as btnCopyParentKey/
+                         btnCopyKey above (18px icon, 22px-then-2px margin),
+                         so each is a full-size, individually clickable
+                         button rather than two cramped halves of one spot.
+                         Shown only on hover, and only when there is
+                         somewhere to move to (see the IsFirst/IsLast
+                         triggers below). -->
+                    <Button x:Name="btnMoveUp"
+                            Grid.Column="3"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,22,0"
+                            Visibility="Collapsed"
+                            ToolTip="Move issue up (CTRL-SHIFT-UP)"
+                            Click="btnMoveUp_Click">
+                        <Path Style="{StaticResource GlyphFill}" Width="9" Height="4.5" Data="{StaticResource GlyphTriangleUp}" />
+                    </Button>
+
+                    <Button x:Name="btnMoveDown"
+                            Grid.Column="3"
+                            Style="{StaticResource GlyphButton}"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            Visibility="Collapsed"
+                            ToolTip="Move issue down (CTRL-SHIFT-DOWN)"
+                            Click="btnMoveDown_Click">
+                        <Path Style="{StaticResource GlyphFill}" Width="9" Height="4.5" Data="{StaticResource GlyphTriangleDown}" />
+                    </Button>
+
                     <Button Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
@@ -234,12 +269,20 @@
                 <Trigger SourceName="row" Property="IsMouseOver" Value="True">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnMoveUp" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnMoveDown" Property="Visibility" Value="Visible" />
                 </Trigger>
                 <DataTrigger Binding="{Binding CanOpen}" Value="False">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HasParent}" Value="False">
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsFirst}" Value="True">
+                    <Setter TargetName="btnMoveUp" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsLast}" Value="True">
+                    <Setter TargetName="btnMoveDown" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -349,6 +392,36 @@
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" />
 
+                    <!-- Move up/down. See IssueRowCompact for why these
+                         overlay the summary column's right edge rather than
+                         a column of their own, and why they sit side by side
+                         (same width/margin pattern as btnCopyParentKey/
+                         btnCopyKey - 20px icon here, 24px-then-2px margin)
+                         instead of stacked. -->
+                    <Button x:Name="btnMoveUp"
+                            Grid.Column="3"
+                            Style="{StaticResource GlyphButton}"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,24,0"
+                            Visibility="Collapsed"
+                            ToolTip="Move issue up (CTRL-SHIFT-UP)"
+                            Click="btnMoveUp_Click">
+                        <Path Style="{StaticResource GlyphFill}" Width="10" Height="5" Data="{StaticResource GlyphTriangleUp}" />
+                    </Button>
+
+                    <Button x:Name="btnMoveDown"
+                            Grid.Column="3"
+                            Style="{StaticResource GlyphButton}"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            Visibility="Collapsed"
+                            ToolTip="Move issue down (CTRL-SHIFT-DOWN)"
+                            Click="btnMoveDown_Click">
+                        <Path Style="{StaticResource GlyphFill}" Width="10" Height="5" Data="{StaticResource GlyphTriangleDown}" />
+                    </Button>
+
                     <Button Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"
@@ -437,12 +510,20 @@
                 <Trigger SourceName="row" Property="IsMouseOver" Value="True">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Visible" />
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnMoveUp" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btnMoveDown" Property="Visibility" Value="Visible" />
                 </Trigger>
                 <DataTrigger Binding="{Binding CanOpen}" Value="False">
                     <Setter TargetName="btnCopyKey" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HasParent}" Value="False">
                     <Setter TargetName="btnCopyParentKey" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsFirst}" Value="True">
+                    <Setter TargetName="btnMoveUp" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsLast}" Value="True">
+                    <Setter TargetName="btnMoveDown" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>

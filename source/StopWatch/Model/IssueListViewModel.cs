@@ -247,6 +247,26 @@ namespace StopWatch
         }
 
 
+        /// <summary>Moves a row one position up the list. Does nothing if it is already first.</summary>
+        public void MoveUp(IssueViewModel issue)
+        {
+            if (issue == null || !Issues.Contains(issue))
+                return;
+
+            Move(issue, Issues.IndexOf(issue) - 1);
+        }
+
+
+        /// <summary>Moves a row one position down the list. Does nothing if it is already last.</summary>
+        public void MoveDown(IssueViewModel issue)
+        {
+            if (issue == null || !Issues.Contains(issue))
+                return;
+
+            Move(issue, Issues.IndexOf(issue) + 1);
+        }
+
+
         /// <summary>Selects the row above, or stays put at the top of the list.</summary>
         public void SelectPrevious()
         {
@@ -374,6 +394,12 @@ namespace StopWatch
         {
             Raise("CanAdd");
             Raise("CanRemove");
+
+            for (int i = 0; i < Issues.Count; i++)
+            {
+                Issues[i].IsFirst = i == 0;
+                Issues[i].IsLast = i == Issues.Count - 1;
+            }
         }
 
 

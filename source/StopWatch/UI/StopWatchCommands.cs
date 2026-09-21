@@ -46,6 +46,14 @@ namespace StopWatch
         public static readonly RoutedUICommand SelectNext =
             Make("Select next issue", "SelectNext", Key.Down, ModifierKeys.Control);
 
+        /// <summary>Ctrl+Shift+Up - move the selected row up one position.</summary>
+        public static readonly RoutedUICommand MoveUp =
+            Make("Move issue up", "MoveUp", Key.Up, ModifierKeys.Control | ModifierKeys.Shift);
+
+        /// <summary>Ctrl+Shift+Down - move the selected row down one position.</summary>
+        public static readonly RoutedUICommand MoveDown =
+            Make("Move issue down", "MoveDown", Key.Down, ModifierKeys.Control | ModifierKeys.Shift);
+
         /// <summary>Ctrl+P - start or pause the selected row's timer.</summary>
         public static readonly RoutedUICommand TogglePlay =
             Make("Start/stop timer", "TogglePlay", Key.P, ModifierKeys.Control);
