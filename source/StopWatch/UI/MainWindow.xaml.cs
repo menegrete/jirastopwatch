@@ -922,6 +922,22 @@ namespace StopWatch
         }
 
 
+        private void btnMoveUp_Click(object sender, RoutedEventArgs e)
+        {
+            IssueViewModel issue = RowOf(sender);
+            issues.SetCurrent(issue);
+            issues.MoveUp(issue);
+        }
+
+
+        private void btnMoveDown_Click(object sender, RoutedEventArgs e)
+        {
+            IssueViewModel issue = RowOf(sender);
+            issues.SetCurrent(issue);
+            issues.MoveDown(issue);
+        }
+
+
         private void btnPost_Click(object sender, RoutedEventArgs e)
         {
             IssueViewModel issue = RowOf(sender);
@@ -1001,10 +1017,13 @@ namespace StopWatch
         /// Six of the thirteen shortcuts share their gesture with a built-in
         /// TextBox editing command - Ctrl+Up/Down (move by paragraph), Ctrl+C/V
         /// (copy/paste the selection), Ctrl+Delete (delete next word) and
-        /// Ctrl+I (toggle italic). Those claim the key first whenever the
+        /// Ctrl+I (toggle italic). Ctrl+Shift+Up/Down (MoveUp/MoveDown) share
+        /// theirs too - TextBox maps that gesture to "extend selection by
+        /// paragraph". All of those claim the key first whenever the
         /// issue-key field has focus and mark it handled, even though a
-        /// single-line field has no paragraph to move by or formatting to
-        /// toggle - so the CommandBindings below never see the keystroke.
+        /// single-line field has no paragraph to move by, select by, or
+        /// formatting to toggle - so the CommandBindings below never see the
+        /// keystroke.
         ///
         /// Catching them here, at the window's Preview (tunnelling) stage,
         /// wins the race: the event reaches the window before it reaches the
@@ -1012,42 +1031,64 @@ namespace StopWatch
         /// </summary>
         private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (Keyboard.Modifiers != ModifierKeys.Control)
-                return;
-
-            switch (e.Key)
+            if (Keyboard.Modifiers == ModifierKeys.Control)
             {
-                case Key.Up:
-                    issues.SelectPrevious();
-                    BringCurrentIntoView();
-                    break;
+                switch (e.Key)
+                {
+                    case Key.Up:
+                        issues.SelectPrevious();
+                        BringCurrentIntoView();
+                        break;
 
-                case Key.Down:
-                    issues.SelectNext();
-                    BringCurrentIntoView();
-                    break;
+                    case Key.Down:
+                        issues.SelectNext();
+                        BringCurrentIntoView();
+                        break;
 
-                case Key.C:
-                    CopyKey(issues.Current);
-                    break;
+                    case Key.C:
+                        CopyKey(issues.Current);
+                        break;
 
-                case Key.V:
-                    PasteKey(issues.Current);
-                    break;
+                    case Key.V:
+                        PasteKey(issues.Current);
+                        break;
 
-                case Key.Delete:
-                    RemoveIssue(issues.Current);
-                    break;
+                    case Key.Delete:
+                        RemoveIssue(issues.Current);
+                        break;
 
-                case Key.I:
-                    FocusKey(issues.Current);
-                    break;
+                    case Key.I:
+                        FocusKey(issues.Current);
+                        break;
 
-                default:
-                    return;
+                    default:
+                        return;
+                }
+
+                e.Handled = true;
+                return;
             }
 
-            e.Handled = true;
+            if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+            {
+                switch (e.Key)
+                {
+                    case Key.Up:
+                        issues.MoveUp(issues.Current);
+                        BringCurrentIntoView();
+                        break;
+
+                    case Key.Down:
+                        issues.MoveDown(issues.Current);
+                        BringCurrentIntoView();
+                        break;
+
+                    default:
+                        return;
+                }
+
+                e.Handled = true;
+            }
         }
 
 
@@ -1055,6 +1096,8 @@ namespace StopWatch
         {
             Bind(StopWatchCommands.SelectPrevious, () => { issues.SelectPrevious(); BringCurrentIntoView(); });
             Bind(StopWatchCommands.SelectNext, () => { issues.SelectNext(); BringCurrentIntoView(); });
+            Bind(StopWatchCommands.MoveUp, () => { issues.MoveUp(issues.Current); BringCurrentIntoView(); });
+            Bind(StopWatchCommands.MoveDown, () => { issues.MoveDown(issues.Current); BringCurrentIntoView(); });
             Bind(StopWatchCommands.TogglePlay, () => TogglePlay(issues.Current));
             Bind(StopWatchCommands.PostWorklog, () => PostWorklog(issues.Current));
             Bind(StopWatchCommands.EditTime, () => EditTime(issues.Current));

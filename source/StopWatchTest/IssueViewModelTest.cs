@@ -169,6 +169,24 @@ namespace StopWatchTest
 
 
         [Test]
+        public void IsFirst_NotifiesWhenItChanges()
+        {
+            model.IsFirst = true;
+
+            Assert.That(changed, Contains.Item("IsFirst"));
+        }
+
+
+        [Test]
+        public void IsLast_NotifiesWhenItChanges()
+        {
+            model.IsLast = true;
+
+            Assert.That(changed, Contains.Item("IsLast"));
+        }
+
+
+        [Test]
         public void CanOpen_IsFalseUntilTheSummaryResolves()
         {
             Assert.That(model.CanOpen, Is.False);

@@ -92,5 +92,152 @@ namespace StopWatchTest
             Assert.Throws<System.ArgumentNullException>(() => new IssueListViewModel(null));
         }
         #endregion
+
+
+        #region move
+        [Test]
+        public void Move_ReordersIssuesAndKeepsTheMovedRowSelected()
+        {
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+            IssueViewModel c = AddIssue("C");
+
+            list.Move(a, 2);
+
+            Assert.That(list.Issues, Is.EqualTo(new[] { b, c, a }));
+            Assert.That(list.Current, Is.EqualTo(a));
+        }
+
+
+        [Test]
+        public void Move_IsANoOpPastEitherEndOfTheList()
+        {
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+            IssueViewModel c = AddIssue("C");
+
+            list.Move(a, -1);
+            list.Move(c, 3);
+
+            Assert.That(list.Issues, Is.EqualTo(new[] { a, b, c }));
+        }
+
+
+        [Test]
+        public void MoveUpMoveDown_MoveTheGivenRowRegardlessOfSelection()
+        {
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+            IssueViewModel c = AddIssue("C");
+            list.SetCurrent(a);
+
+            list.MoveDown(b);
+
+            Assert.That(list.Issues, Is.EqualTo(new[] { a, c, b }));
+        }
+
+
+        [Test]
+        public void MoveUp_OnTheFirstRowIsANoOp()
+        {
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+
+            list.MoveUp(a);
+
+            Assert.That(list.Issues, Is.EqualTo(new[] { a, b }));
+        }
+
+
+        [Test]
+        public void MoveDown_OnTheLastRowIsANoOp()
+        {
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+
+            list.MoveDown(b);
+
+            Assert.That(list.Issues, Is.EqualTo(new[] { a, b }));
+        }
+        #endregion
+
+
+        #region IsFirst / IsLast
+        [Test]
+        public void IsFirstIsLast_AreCorrectAfterHydrate()
+        {
+            settings.IssueCount = 3;
+            settings.MaxIssues = 10;
+
+            list.Hydrate();
+
+            AssertFirstAndLast(0, 2);
+        }
+
+
+        [Test]
+        public void IsFirstIsLast_AreCorrectAfterAdd()
+        {
+            settings.MaxIssues = 10;
+            AddIssue("A");
+            AddIssue("B");
+
+            IssueViewModel c = list.Add();
+
+            Assert.That(c.IsLast, Is.True);
+            AssertFirstAndLast(0, 2);
+        }
+
+
+        [Test]
+        public void IsFirstIsLast_AreCorrectAfterRemove()
+        {
+            settings.MaxIssues = 10;
+            IssueViewModel a = AddIssue("A");
+            AddIssue("B");
+            IssueViewModel c = AddIssue("C");
+
+            list.Remove(c);
+
+            AssertFirstAndLast(0, 1);
+            Assert.That(a.IsFirst, Is.True);
+        }
+
+
+        [Test]
+        public void IsFirstIsLast_AreCorrectAfterMove()
+        {
+            settings.MaxIssues = 10;
+            IssueViewModel a = AddIssue("A");
+            IssueViewModel b = AddIssue("B");
+            IssueViewModel c = AddIssue("C");
+
+            list.Move(a, 2);
+
+            Assert.That(a.IsFirst, Is.False);
+            Assert.That(a.IsLast, Is.True);
+            Assert.That(b.IsFirst, Is.True);
+            Assert.That(c.IsLast, Is.False);
+        }
+
+
+        private void AssertFirstAndLast(int firstIndex, int lastIndex)
+        {
+            for (int i = 0; i < list.Issues.Count; i++)
+            {
+                Assert.That(list.Issues[i].IsFirst, Is.EqualTo(i == firstIndex), "IsFirst at index " + i);
+                Assert.That(list.Issues[i].IsLast, Is.EqualTo(i == lastIndex), "IsLast at index " + i);
+            }
+        }
+        #endregion
+
+
+        private IssueViewModel AddIssue(string key)
+        {
+            settings.MaxIssues = System.Math.Max(settings.MaxIssues, list.Issues.Count + 1);
+            IssueViewModel issue = list.Add();
+            issue.IssueKey = key;
+            return issue;
+        }
     }
 }

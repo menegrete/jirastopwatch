@@ -169,6 +169,22 @@ namespace StopWatch
         }
 
 
+        /// <summary>Whether this is the first row in the list - moving it up does nothing.</summary>
+        public bool IsFirst
+        {
+            get { return isFirst; }
+            set { Set(ref isFirst, value, "IsFirst"); }
+        }
+
+
+        /// <summary>Whether this is the last row in the list - moving it down does nothing.</summary>
+        public bool IsLast
+        {
+            get { return isLast; }
+            set { Set(ref isLast, value, "IsLast"); }
+        }
+
+
         public WatchTimer WatchTimer { get; private set; }
 
         /// <summary>
@@ -396,6 +412,8 @@ namespace StopWatch
         private EstimateUpdateMethods estimateUpdateMethod = EstimateUpdateMethods.Auto;
         private string estimateUpdateValue;
         private bool isCurrent;
+        private bool isFirst;
+        private bool isLast;
 
         private TimeSpan timeElapsed;
         private bool isRunning;
