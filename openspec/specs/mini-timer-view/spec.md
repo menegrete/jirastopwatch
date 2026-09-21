@@ -65,9 +65,13 @@ aplicación consulta a Jira.
 ### Requirement: El usuario entra y sale de la vista mini a voluntad
 
 La ventana principal SHALL ofrecer un control explícito para activar la
-vista mini. Minimizar la ventana principal con el control nativo de Windows
-SHALL tener el mismo efecto que ese control cuando el setting de minimizado
-(capability `minimize-behavior`) está en `Mini View`. Al activarla, la
+vista mini, excepto cuando el setting de minimizado (capability
+`minimize-behavior`) está en `Taskbar Widget`, caso en el que ese control
+SHALL estar oculto — evita que el usuario termine viendo el mismo timer
+duplicado en la vista mini y en el widget de taskbar a la vez. Minimizar la
+ventana principal con el control nativo de Windows SHALL tener el mismo
+efecto que ese control cuando el setting de minimizado está en `Mini View`.
+Al activarla, la
 ventana principal SHALL esconderse y la vista mini SHALL aparecer. La vista
 mini SHALL ofrecer un único control para volver, flotante y superpuesto
 sobre el conjunto de filas, que no se repite por fila y permanece en el
@@ -124,6 +128,27 @@ Entrar o salir de la vista mini SHALL NO alterar el estado de ningún timer.
 - **WHEN** el usuario abre la aplicación
 - **THEN** se presenta la ventana principal, nunca la vista mini, sin importar
   en qué vista estaba al cerrarla
+
+#### Scenario: Taskbar Widget está seleccionado como minimize behavior
+
+- **WHEN** el setting de minimizado (capability `minimize-behavior`) está en
+  `Taskbar Widget`
+- **THEN** el control explícito de vista mini de la toolbar no está visible
+  en la ventana principal
+
+#### Scenario: El usuario cambia el minimize behavior a Taskbar Widget
+
+- **WHEN** el usuario cambia el setting de minimizado a `Taskbar Widget` en
+  Configuración y cierra la ventana de Configuración
+- **THEN** el control explícito de vista mini deja de estar visible en la
+  ventana principal, sin necesidad de reiniciar la app
+
+#### Scenario: El usuario cambia el minimize behavior desde Taskbar Widget
+
+- **WHEN** el usuario tenía `Taskbar Widget` seleccionado y lo cambia a
+  `Mini View` o `Tray` en Configuración, y cierra la ventana de Configuración
+- **THEN** el control explícito de vista mini vuelve a estar visible en la
+  ventana principal
 
 ### Requirement: El usuario pausa y reanuda desde la vista mini
 

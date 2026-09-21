@@ -8,26 +8,37 @@ releases.
 
 ### Requirement: La app chequea si hay una versión más nueva disponible
 
-Al iniciar, la app SHALL consultar si existe una versión de Jira StopWatch
-más nueva que la que está corriendo, sin bloquear la interfaz de usuario
-mientras lo hace.
+Al iniciar, y luego periódicamente cada 1 hora mientras sigue corriendo, la
+app SHALL consultar si existe una versión de Jira StopWatch más nueva que
+la que está corriendo, sin bloquear la interfaz de usuario mientras lo
+hace.
 
 #### Scenario: Hay una versión más nueva
-- **WHEN** la app inicia y la versión más reciente publicada es mayor a
+- **WHEN** la app inicia, o pasó 1 hora desde el último chequeo mientras
+  sigue corriendo, y la versión más reciente publicada es mayor a
   `AppInfo.Version`
 - **THEN** la app comienza el proceso de descarga y verificación de esa
   versión en segundo plano
 
 #### Scenario: No hay una versión más nueva
-- **WHEN** la app inicia y la versión más reciente publicada es igual o
-  anterior a `AppInfo.Version`
-- **THEN** la app no descarga nada y continúa iniciando normalmente
+- **WHEN** la app inicia, o pasó 1 hora desde el último chequeo mientras
+  sigue corriendo, y la versión más reciente publicada es igual o anterior
+  a `AppInfo.Version`
+- **THEN** la app no descarga nada y continúa funcionando normalmente
 
 #### Scenario: El chequeo falla
 - **WHEN** el chequeo de la versión más nueva falla (sin red, error del
   servicio, límite de tasa alcanzado)
-- **THEN** la app continúa iniciando normalmente, sin mostrar ningún error
-  al usuario, y vuelve a intentar el chequeo en el próximo inicio
+- **THEN** la app continúa funcionando normalmente, sin mostrar ningún
+  error al usuario, y vuelve a intentar el chequeo en el próximo chequeo
+  periódico (o, si la app se cierra antes, en el próximo inicio)
+
+#### Scenario: Ya hay una actualización lista para aplicar
+- **WHEN** pasó 1 hora desde el último chequeo mientras la app sigue
+  corriendo, pero ya existe una actualización staged pendiente de aplicar
+- **THEN** la app no vuelve a chequear ni a descargar nada hasta que esa
+  actualización se aplique (o el usuario la descarte reiniciando sin
+  aplicarla)
 
 ### Requirement: El usuario puede desactivar el chequeo de actualizaciones
 
@@ -80,7 +91,7 @@ instalarla).
 #### Scenario: Actualización lista mientras la app sigue en uso
 - **WHEN** una actualización terminó de descargarse y verificarse
 - **THEN** la app sigue funcionando con la versión actual sin interrupción,
-  y muestra un aviso no intrusivo de que hay una actualización lista para
+  y muestra en rojo y negrita que hay una actualización lista para
   aplicarse al reiniciar
 
 #### Scenario: El usuario cierra la app normalmente con una actualización lista
