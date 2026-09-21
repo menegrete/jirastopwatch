@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.4.0](https://github.com/menegrete/jirastopwatch/compare/v3.3.0...v3.4.0) (2026-09-21)
+
+### Added
+
+* recheck for releases hourly while running; hide mini view button under Taskbar Widget ([abeb713](https://github.com/menegrete/jirastopwatch/commit/abeb7136af84db933265a10def61da4911f96514))
+
 ## [3.3.0](https://github.com/menegrete/jirastopwatch/compare/v3.2.0...v3.3.0) (2026-09-21)
 
 ### Added
