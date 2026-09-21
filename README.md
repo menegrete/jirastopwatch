@@ -1,19 +1,48 @@
 ## Summary
 
-[![CodeQL](https://github.com/jirastopwatch/jirastopwatch/actions/workflows/codeql.yml/badge.svg)](https://github.com/jirastopwatch/jirastopwatch/actions/workflows/codeql.yml)
-[![Build](https://github.com/jirastopwatch/jirastopwatch/actions/workflows/build.yml/badge.svg)](https://github.com/jirastopwatch/jirastopwatch/actions/workflows/build.yml)
+[![CodeQL](https://github.com/menegrete/jirastopwatch/actions/workflows/codeql.yml/badge.svg)](https://github.com/menegrete/jirastopwatch/actions/workflows/codeql.yml)
+[![Build](https://github.com/menegrete/jirastopwatch/actions/workflows/build.yml/badge.svg)](https://github.com/menegrete/jirastopwatch/actions/workflows/build.yml)
 
 A Windows desktop tool for recording time spent on different Jira tasks.
 
-![screenshot 1]
+![main window screenshot](docs/img/main-window.png)
 
-## Features, download and installation:
+## Features
 
-Read all about features on the product [homepage].
+- Track time against several Jira issues at once, switch between them with a click or a keyboard shortcut
+- Post worklogs straight to Jira, with an optional comment and control over how the remaining estimate is updated
+- A floating always-on-top mini timer view, and a taskbar-docked widget, for keeping the active timer visible without the full window
+- Light and dark themes
+- Optional auto-update, so you're always on the latest release
 
-There is [documentation] available for [installing] Jira StopWatch and walk-throughs of both [basic setup] and [usage][basic usage], and [advanced settings] including [keyboard shortcuts].
+| Light | Dark |
+|---|---|
+| ![light theme](docs/img/main-window.png) | ![dark theme](docs/img/dark-theme.png) |
 
-Feature requests, [contributions], and/or [questions and feedback] are more than welcome :-)
+| Mini timer view |
+|---|
+| ![mini timer view](docs/img/mini-timer.png) |
+
+## Getting started
+
+- [Basic setup](docs/basic-setup.md) - connecting to Jira
+- [Basic usage](docs/usage.md) - tracking time and posting worklogs
+- [Keyboard shortcuts](docs/keyboard-shortcuts.md)
+- [Advanced settings](docs/advanced-settings.md)
+
+## Fork history
+
+Jira StopWatch was originally created by Carsten Gehling and later maintained by [Dan Tulloh](https://github.com/tulleuchen) and [Y. Meyer-Norwood](https://github.com/norwd) at [jirastopwatch/jirastopwatch](https://github.com/jirastopwatch/jirastopwatch) - see the [full list of contributors](https://jirastopwatch.com/contributors). This repository forked from that project and is now maintained independently. Since forking, it has diverged substantially:
+
+- Migrated the UI from WinForms to WPF (WinForms is kept only for the tray icon and screen enumeration, which have no WPF equivalent), targeting `.NET 10`
+- Added a dark theme alongside the original light theme
+- Added a floating, always-on-top mini timer view
+- Added a taskbar-docked widget as an alternative minimize destination
+- Added optional auto-update
+- Fully automated releases, changelog, and versioning via [semantic-release](https://semantic-release.gitbook.io/), driven by [Conventional Commits](https://www.conventionalcommits.org/)
+- A number of smaller UX additions: copying an issue's (or its parent's) key, showing parent issue info on subtasks, a configurable max-issues limit, and more
+
+See [CHANGELOG.md](CHANGELOG.md) for the detailed, version-by-version history since the fork.
 
 ## Building and releasing
 
@@ -31,9 +60,7 @@ dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-co
 
 ## Mac OSX and Linux users
 
-Jira StopWatch has been compiled and tested to work on Linux Mint 17.0 with the [Xamarin] packages.
-
-Anyone with a MacOSX available: I would love to know if everything works out of the box.
+Jira StopWatch has historically been compiled and tested to work on Linux Mint with the [Xamarin] packages, back when it targeted WinForms. This hasn't been verified since the move to WPF, and WPF itself doesn't run on Mac or Linux, so it's unlikely to work out of the box today.
 
 ## License
 
@@ -41,11 +68,11 @@ Apache License version 2.0 - please read the [license file][LICENSE].
 
 ## Feedback
 
-Bug reports, feature requests etc. are welcome. Please use Github for this.
+Bug reports, feature requests, and questions are welcome - please use [this repository's Issues][issues].
 
 ## Externals
 
-The application depend on [RestSharp] for all communication with Jira.
+The application depends on [RestSharp] for all communication with Jira.
 
 All icons on buttons were downloaded from [Icons8].
 
@@ -56,28 +83,4 @@ All icons on buttons were downloaded from [Icons8].
 [Icons8]: https://icons8.com
 [LICENSE]: LICENSE.md
 [dotnet-10-runtime]: https://dotnet.microsoft.com/download/dotnet/10.0
-
-<!-- DOCUMENTATION -->
-
-[homepage]: https://jirastopwatch.github.io
-[documentation]: https://jirastopwatch.github.io/doc
-[installing]: https://jirastopwatch.github.io/doc#installing
-[basic setup]: https://jirastopwatch.github.io/doc#basicsetup
-[basic usage]: https://jirastopwatch.github.io/doc#basicusage
-[keyboard shortcuts]: https://jirastopwatch.github.io/doc#keyboard
-[advanced settings]: https://jirastopwatch.github.io/doc#advsettings
-[questions and feedback]: https://jirastopwatch.github.io/doc#questions
-[contributions]: https://github.com/jirastopwatch/.github/blob/main/CONTRIBUTING.md
-
-<!-- IMAGES -->
-
-[jumbotron background]: https://jirastopwatch.github.io/img/jumbotronbackground.jpg
-[screenshot 1]: https://jirastopwatch.github.io/img/screen1.png
-[screenshot 2]: https://jirastopwatch.github.io/img/screen2.png
-[screenshot 3]: https://jirastopwatch.github.io/img/screen3.png
-
-<!-- PEOPLE -->
-
-[Y. Meyer-Norwood]: https://github.com/norwd
-[Dan Tulloh]: https://github.com/tulleuchen
-
+[issues]: https://github.com/menegrete/jirastopwatch/issues
