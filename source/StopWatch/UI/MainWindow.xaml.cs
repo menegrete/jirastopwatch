@@ -487,6 +487,14 @@ namespace StopWatch
             if (miniView != null)
                 miniView.Hide();
 
+            // The mini view ticks every second; this window's own ticker
+            // only every 30 (it doubles as the Jira poll). Without this, the
+            // row coming back into view can lag behind what the mini view
+            // just showed by up to that long.
+            IssueViewModel active = activeTimer.ActiveSource as IssueViewModel;
+            if (active != null)
+                active.Refresh();
+
             Show();
 
             WindowState = restoreWindowState == WindowState.Minimized
