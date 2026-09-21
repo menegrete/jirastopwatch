@@ -11,6 +11,16 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.3.0](https://github.com/menegrete/jirastopwatch/compare/v3.2.0...v3.3.0) (2026-09-21)
+
+### Added
+
+* move issues up/down in the list ([fafbf1c](https://github.com/menegrete/jirastopwatch/commit/fafbf1ce1fd1c0e1c975e6df84a335ab324916bb)), closes [#16](https://github.com/menegrete/jirastopwatch/issues/16) [#26](https://github.com/menegrete/jirastopwatch/issues/26)
+
+### Fixed
+
+* refresh the active issue's time when returning from the mini view ([01517d9](https://github.com/menegrete/jirastopwatch/commit/01517d9a1c2cae963408bbdd875d4f5c7e61d573)), closes [#26](https://github.com/menegrete/jirastopwatch/issues/26)
+
 ## [3.2.0](https://github.com/menegrete/jirastopwatch/compare/v3.1.2...v3.2.0) (2026-09-19)
 
 ### Added
