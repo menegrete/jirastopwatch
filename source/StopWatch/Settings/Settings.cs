@@ -154,6 +154,21 @@ namespace StopWatch
         /// usuario elige en qué monitor aparece el widget".
         /// </summary>
         public int TaskbarWidgetMonitor { get; set; }
+
+        /// <summary>
+        /// Where the main window was left, as "x,y" in virtual screen
+        /// coordinates. Empty until the user has moved it at least once. Run
+        /// it through <see cref="ScreenPlacement"/> before using it: the
+        /// screen it refers to may not exist any more.
+        /// </summary>
+        public string MainWindowLocation { get; set; }
+
+        /// <summary>
+        /// Whether the main window was left maximized. Minimized is never
+        /// recorded here - see the main-window-placement spec, "Minimizing
+        /// does not change the remembered state".
+        /// </summary>
+        public bool MainWindowMaximized { get; set; }
         #endregion
 
 
@@ -243,6 +258,10 @@ namespace StopWatch
             this.CheckForUpdates = Properties.Settings.Default.CheckForUpdates;
 
             this.TaskbarWidgetMonitor = Properties.Settings.Default.TaskbarWidgetMonitor;
+
+            this.MainWindowLocation = Properties.Settings.Default.MainWindowLocation ?? "";
+
+            this.MainWindowMaximized = Properties.Settings.Default.MainWindowMaximized;
         }
 
 
@@ -290,6 +309,10 @@ namespace StopWatch
                 Properties.Settings.Default.CheckForUpdates = this.CheckForUpdates;
 
                 Properties.Settings.Default.TaskbarWidgetMonitor = this.TaskbarWidgetMonitor;
+
+                Properties.Settings.Default.MainWindowLocation = this.MainWindowLocation ?? "";
+
+                Properties.Settings.Default.MainWindowMaximized = this.MainWindowMaximized;
 
                 Properties.Settings.Default.Save();
             }

@@ -1,0 +1,30 @@
+## 1. Settings plumbing
+
+- [x] 1.1 Add `MainWindowLocation` (`System.String`, default empty, `Scope="User"`) to `source/StopWatch/Properties/Settings.settings`, following the existing `MiniViewLocation` entry.
+- [x] 1.2 Add `MainWindowMaximized` (`System.Boolean`, default `false`, `Scope="User"`) to `source/StopWatch/Properties/Settings.settings`, following the existing `AlwaysOnTop` entry.
+- [x] 1.3 Add matching `MainWindowLocation`/`MainWindowMaximized` properties to `source/StopWatch/Settings/Settings.cs`, read in `ReadSettings()` and written in `Save()`, alongside the existing `MiniViewLocation`/`MainWindowWidth` properties.
+
+## 2. Restore on startup
+
+- [x] 2.1 In `MainWindow.xaml.cs`, after `RestoreWidth()` in `MainWindow_Loaded`, parse `settings.MainWindowLocation` with `ScreenPlacement.TryParseLocation`; on success, clamp it with `ScreenPlacement.EnsureOnScreen` (device-pixel size from `Width`/estimated height, same scale conversion `RestorePosition()` already uses) and assign `Left`/`Top`. On failure (empty/malformed/first run), leave the existing default placement untouched.
+- [x] 2.2 After the position restore and `ClampHeightToWorkingArea()`, apply `settings.MainWindowMaximized` by setting `WindowState = WindowState.Maximized` when true, leaving it `Normal` otherwise.
+
+## 3. Persist on change
+
+- [x] 3.1 ~~Add a `LocationChanged` handler...~~ **Superseded by 3.7** - built this way first, replaced after 3.6 turned out insufficient (see D9). Kept for the record: it wrote `settings.MainWindowLocation` from the current `Left`/`Top` (device pixels), guarded by `IsLoaded` and skipped while `inMiniView || inTaskbarWidget` (per design D4).
+- [x] 3.2 ~~Extend `MainWindow_StateChanged`...~~ **Superseded by 3.7.** Kept for the record: it wrote `settings.MainWindowMaximized` on `Normal`/`Maximized` transitions from within the same handler that persists the state itself; this part was correct and still stands (`RememberMaximized`), only the width/location side (3.1) was superseded.
+- [x] 3.3 ~~Wire the new `LocationChanged` handler in the constructor...~~ **Superseded by 3.7** - that subscription was removed.
+- [x] 3.4 Fix found during 4.2 verification: `MainWindow_StateChanged` toggles `SizeToContent` between `Manual` (entering `Maximized`) and `Height` (entering `Normal`), working around the WPF quirk where `SizeToContent` re-applies after a maximize and shrinks the window back to content size instead of filling the screen - see design.md D6.
+- [x] 3.5 Fix found during 4.1 clean-state retest (width still wrong with `MainWindowMaximized` never involved): call `RestoreWidth()` in the constructor, right after `InitializeComponent()`, not just in `MainWindow_Loaded`. With `SizeToContent="Height"` and no `Width` set yet, the window's first-ever measure pass is unconstrained on both axes and picks up the issue row template's own natural width instead of the remembered one - see design.md D7.
+- [x] 3.6 ~~Fix found during 4.2 retest...~~ **Superseded by 3.7** - the `WindowState != Normal` guard added here didn't catch a native maximize's *first* `LocationChanged`/`SizeChanged`, which fires before `WindowState` itself updates to `Maximized` (confirmed via a clean 2-step repro: drag-to-monitor-2-while-Normal saved correctly; maximizing there then saved 8px past that monitor's working-area corner, matching Windows' invisible maximized-window border). See design.md D8/D9.
+- [x] 3.7 Fix (design.md D9): removed the `LocationChanged`/`SizeChanged` handlers and their subscriptions entirely. Added `RememberNormalGeometry()`, which reads `RestoreBounds.Width`/`.Left`/`.Top` - WPF's live view of Win32's `WINDOWPLACEMENT.rcNormalPosition`, correct regardless of current `WindowState` or event-ordering - into `settings.MainWindowWidth`/`MainWindowLocation`. Called from `SaveSettingsAndIssueStates()` (ticker tick + close), the same cadence the old handlers effectively saved at.
+- [x] 3.8 Fix found immediately on retest (4.1/4.2 both regressed - reopened at a stale, unrelated position/size instead of the last one set before closing): 3.7's close-time capture ran from `MainWindow_Closed`, which fires *after* the HWND is destroyed, so `RestoreBounds` had nothing to read and silently no-opped. Added a `MainWindow_Closing` handler (window still alive then) that calls `RememberNormalGeometry()` directly - see design.md D9's follow-up note.
+- [x] 3.9 Fix found on the next 4.2 retest (window opened with Maximized chrome, on the right monitor, but at the remembered Normal-state size instead of filling the screen; clicking restore correctly returned it to that Normal geometry): `MainWindow_Loaded` now sets `SizeToContent = SizeToContent.Manual` itself immediately before assigning `WindowState = WindowState.Maximized`, instead of relying on `MainWindow_StateChanged` to react afterward - too late for a code-driven state change, since there's no native OS resize to piggyback on the way an interactive maximize has. See design.md D6's follow-up note.
+
+## 4. Verification
+
+- [x] 4.1 Manually verify: move the window, restart the app, confirm it reopens at the same position. Confirmed working after 3.8.
+- [x] 4.2 Manually verify: maximize the window, restart the app, confirm it reopens maximized; then restore to normal, restart, confirm it reopens normal at the remembered position. Confirmed working after 3.9.
+- [x] 4.3 Manually verify: with a second monitor, move the window there, disconnect that monitor (or simulate via a saved out-of-range value), restart, confirm the window appears fully on a connected screen instead of off-screen.
+- [x] 4.4 Manually verify: enter and exit the mini view and the taskbar widget; confirm neither action changes the persisted `MainWindowLocation`/`MainWindowMaximized` values, and that closing the app while minimized-to-mini-view/taskbar-widget still restores to the pre-minimize position/state on next launch.
+- [x] 4.5 Run `dotnet build StopWatch.sln` and `dotnet test StopWatch.sln --settings .runsettings` to confirm no regressions (`TreatWarningsAsErrors` is on).
