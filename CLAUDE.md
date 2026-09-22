@@ -59,3 +59,7 @@ Both are automated by `semantic-release` (`.releaserc.json`), triggered by the `
 What this means for making changes: write commit messages as Conventional Commits (`feat:`, `fix:`, `BREAKING CHANGE:` footer, etc.) — that's the sole input `semantic-release` uses to decide whether a release happens, what the next version is, and what the generated `CHANGELOG.md` entry (in Keep a Changelog categories, via `.releaserc.json`'s `release-notes-generator` config) says. `chore:`/`docs:`/`refactor:`/etc. commits don't trigger a release. See the `automated-releases` capability spec (`openspec/changes/add-automated-releases/specs/` until archived, then `openspec/specs/`) for the full design.
 
 Do not add a `Co-Authored-By: Claude ...` trailer (or similar AI-attribution line) to commit messages or PR descriptions in this repo.
+
+## Pull requests
+
+When a PR should close an issue, GitHub only auto-links and auto-closes it on merge for an exact recognized keyword immediately before the reference — `Closes #N`, `Fixes #N`, or `Resolves #N` (and their `-s`/`-d` forms). Put one of these on its own at the start of the PR body. A sentence that merely mentions the issue in passing (e.g. "closing #29" inside a paragraph) does **not** get parsed as a closing reference, even though it reads like one — verify with `gh pr view <n> --json closingIssuesReferences` if unsure.
