@@ -84,6 +84,15 @@ namespace StopWatch
 
             InitializeComponent();
 
+            // Has to happen before the window is ever shown, not just in
+            // Loaded: with SizeToContent="Height" and no Width assigned yet,
+            // WPF's first measure pass is unconstrained on both axes, so it
+            // picks up the issue row template's own natural (unconstrained)
+            // width instead of leaving Width alone for Height-only auto-size.
+            // Giving Width a real value before that first pass is what makes
+            // SizeToContent stay Height-only. See design.md D7.
+            RestoreWidth();
+
             Title = $"Jira StopWatch v{AppInfo.Version}";
 
             DataContext = issues;
@@ -96,9 +105,9 @@ namespace StopWatch
 
             SourceInitialized += MainWindow_SourceInitialized;
             Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
             Closed += MainWindow_Closed;
             StateChanged += MainWindow_StateChanged;
-            SizeChanged += MainWindow_SizeChanged;
 
             ApplyTheme();
         }
@@ -227,8 +236,37 @@ namespace StopWatch
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Re-clamps against the screen the window actually ended up on
+            // (WorkingArea only knows that once IsLoaded is true). The
+            // constructor's own call already gave Width a real value before
+            // the first SizeToContent measure pass - this just corrects it
+            // if that screen turns out narrower than the primary one assumed
+            // back then.
             RestoreWidth();
+
+            RestoreLocation();
             ClampHeightToWorkingArea();
+
+            // Applied after the position restore: a maximized window's exact
+            // pixel geometry is decided by Windows for whichever monitor it
+            // ends up on, not by the remembered Left/Top.
+            if (settings.MainWindowMaximized)
+            {
+                // Set here, not left to MainWindow_StateChanged's own
+                // SizeToContent=Manual: an interactive maximize (the taskbar
+                // button) has Windows fill the screen natively before
+                // StateChanged ever fires, so that handler's job there is
+                // only to stop the next layout pass shrinking it back down.
+                // A WindowState assigned from code has no such native resize
+                // to piggyback on - WPF computes the target size itself, in
+                // the same step, still using SizeToContent="Height" unless
+                // it is already Manual by then. Setting it first, ourselves,
+                // is what makes this startup path actually fill the screen
+                // instead of landing at the remembered Normal size with
+                // Maximized chrome.
+                SizeToContent = SizeToContent.Manual;
+                WindowState = WindowState.Maximized;
+            }
 
             Topmost = settings.AlwaysOnTop;
             UpdateMiniViewButtonVisibility();
@@ -254,6 +292,20 @@ namespace StopWatch
 
             lastUpdateCheckUtc = DateTime.UtcNow;
             CheckForUpdatesAsync().FireAndForget();
+        }
+
+
+        /// <summary>
+        /// Captures Normal-state geometry while the window (and its HWND)
+        /// still exists. <c>Closed</c> fires after the HWND is already torn
+        /// down, at which point <c>RestoreBounds</c> - a live Win32 query -
+        /// has nothing left to answer from; this is why the same capture
+        /// inside <see cref="SaveSettingsAndIssueStates"/> is not enough on
+        /// its own for the final save on exit, only for the periodic one.
+        /// </summary>
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            RememberNormalGeometry();
         }
 
 
@@ -324,13 +376,38 @@ namespace StopWatch
         }
 
 
-        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        /// <summary>
+        /// Captures the window's Normal-state width and position, right
+        /// before <see cref="Settings.Save"/> - called from
+        /// <see cref="SaveSettingsAndIssueStates"/>, i.e. every ticker tick
+        /// and on close, the same cadence width-saving already used before
+        /// this existed.
+        ///
+        /// Reads <see cref="RestoreBounds"/> rather than
+        /// <c>ActualWidth</c>/<c>Left</c>/<c>Top</c> directly: those reflect
+        /// whatever the window's CURRENT state is, which is wrong while
+        /// maximized (screen-filling size, and Windows' maximized
+        /// coordinates run a few pixels past the working area for the
+        /// invisible resize border). <c>RestoreBounds</c> is WPF's live view
+        /// of Win32's own <c>WINDOWPLACEMENT.rcNormalPosition</c> - the
+        /// "where this window would be if it were Normal" the OS itself
+        /// maintains, correct regardless of whether the window is currently
+        /// Normal, Maximized or Minimized, and not subject to a
+        /// maximize-transition's own transient geometry. See design.md D9.
+        /// </summary>
+        private void RememberNormalGeometry()
         {
-            if (!e.WidthChanged || !IsLoaded)
+            Rect normal = RestoreBounds;
+            if (normal.IsEmpty)
                 return;
 
-            // Only the width is the user's, so only the width is remembered.
-            settings.MainWindowWidth = (int)Math.Round(ActualWidth);
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            settings.MainWindowWidth = (int)Math.Round(normal.Width);
+            settings.MainWindowLocation = ScreenPlacement.FormatLocation(
+                new DrawingPoint((int)Math.Round(normal.Left * scaleX), (int)Math.Round(normal.Top * scaleY)));
         }
         #endregion
 
@@ -347,6 +424,34 @@ namespace StopWatch
                 settings.MainWindowWidth,
                 (int)MinWidth,
                 WorkingArea);
+        }
+
+
+        /// <summary>
+        /// Restores the remembered position, validated against the screen
+        /// that is actually there - same problem the width and the mini
+        /// view's position have, so the same helper answers it. Left
+        /// untouched if nothing was saved yet (empty or malformed value,
+        /// e.g. first run).
+        /// </summary>
+        private void RestoreLocation()
+        {
+            DrawingPoint desired;
+            if (!ScreenPlacement.TryParseLocation(settings.MainWindowLocation, out desired))
+                return;
+
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            DrawingSize size = new DrawingSize(
+                (int)Math.Ceiling(Width * scaleX),
+                (int)Math.Ceiling((ActualHeight > 0 ? ActualHeight : Height) * scaleY));
+
+            DrawingPoint onScreen = ScreenPlacement.EnsureOnScreen(desired, size);
+
+            Left = onScreen.X / scaleX;
+            Top = onScreen.Y / scaleY;
         }
 
 
@@ -412,7 +517,41 @@ namespace StopWatch
             else if (WindowState == WindowState.Normal)
             {
                 HideTrayIcon();
+
+                // Reinstate auto-height now that the window is done being
+                // maximized - see the Maximized branch below for why it was
+                // turned off.
+                SizeToContent = SizeToContent.Height;
+
+                RememberMaximized(false);
             }
+            else if (WindowState == WindowState.Maximized)
+            {
+                // WPF re-applies SizeToContent after a maximize, which shrinks
+                // the window straight back down to its content size instead
+                // of filling the screen - a known WPF quirk, not specific to
+                // this window. Switching to Manual before that layout pass
+                // runs is what makes Maximized actually fill the screen.
+                SizeToContent = SizeToContent.Manual;
+
+                RememberMaximized(true);
+            }
+        }
+
+
+        /// <summary>
+        /// Persists maximized/normal, guarded by <c>IsLoaded</c> so applying
+        /// the remembered state at startup doesn't immediately overwrite
+        /// itself. Minimized is never passed in here - see the
+        /// main-window-placement spec, "Minimizing does not change the
+        /// remembered state".
+        /// </summary>
+        private void RememberMaximized(bool maximized)
+        {
+            if (!IsLoaded)
+                return;
+
+            settings.MainWindowMaximized = maximized;
         }
 
 
@@ -1430,6 +1569,7 @@ namespace StopWatch
         private void SaveSettingsAndIssueStates()
         {
             issues.Persist();
+            RememberNormalGeometry();
             settings.Save();
         }
 
