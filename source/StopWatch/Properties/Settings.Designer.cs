@@ -358,5 +358,17 @@ namespace StopWatch.Properties {
                 this["MainWindowMaximized"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int TimeDisplayFormat {
+            get {
+                return ((int)(this["TimeDisplayFormat"]));
+            }
+            set {
+                this["TimeDisplayFormat"] = value;
+            }
+        }
     }
 }

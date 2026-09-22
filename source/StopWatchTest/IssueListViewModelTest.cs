@@ -22,6 +22,7 @@
 
 namespace StopWatchTest
 {
+    using System;
     using System.Collections.Generic;
     using NUnit.Framework;
     using StopWatch;
@@ -37,6 +38,7 @@ namespace StopWatchTest
         [SetUp]
         public void Setup()
         {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Jira;
             settings = new Settings();
             list = new IssueListViewModel(settings);
             changed = new List<string>();
@@ -81,6 +83,33 @@ namespace StopWatchTest
 
             Assert.That(changed, Contains.Item("Density"));
             Assert.That(list.Density, Is.EqualTo(ListDensity.Spacious));
+        }
+        #endregion
+
+
+        #region time display format
+        [Test]
+        public void TotalTimeText_FollowsTheConfiguredDisplayFormat()
+        {
+            settings.MaxIssues = 10;
+            IssueViewModel issue = list.Add();
+            issue.WatchTimer.TimeElapsed = TimeSpan.FromMinutes(90);
+            list.Refresh();
+
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+
+            Assert.That(list.TotalTimeText, Is.EqualTo("1:30"));
+        }
+
+
+        [Test]
+        public void NotifyTimeDisplayFormatChanged_AnnouncesTheTotalAndEveryRow()
+        {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+
+            list.NotifyTimeDisplayFormatChanged();
+
+            Assert.That(changed, Contains.Item("TotalTimeText"));
         }
         #endregion
 

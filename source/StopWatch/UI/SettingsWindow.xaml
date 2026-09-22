@@ -111,6 +111,15 @@
                         <ColumnDefinition Width="240" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Time display format" />
+                    <ComboBox Grid.Column="1" x:Name="cbTimeDisplayFormat" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                </Grid>
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Max. display issues" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
                         <TextBox x:Name="tbMaxIssues"

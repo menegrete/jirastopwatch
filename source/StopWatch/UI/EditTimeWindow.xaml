@@ -24,7 +24,7 @@
         <TextBlock Margin="0,6,0,0"
                    Style="{StaticResource MutedText}"
                    TextWrapping="Wrap">
-            Supported formats:<LineBreak />2h 15m and 2.25h
+            Supported formats:<LineBreak />2h 15m, 2.25h and 2:15
         </TextBlock>
 
         <StackPanel Orientation="Horizontal"

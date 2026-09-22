@@ -1396,6 +1396,7 @@ namespace StopWatch
             ThemeMode themeBefore = settings.Theme;
             int maxIssuesBefore = settings.MaxIssues;
             ListDensity densityBefore = settings.ListDensity;
+            TimeDisplayFormat timeDisplayFormatBefore = settings.TimeDisplayFormat;
 
             var dialog = new SettingsWindow(settings) { Owner = this };
             if (dialog.ShowDialog() != true)
@@ -1425,6 +1426,9 @@ namespace StopWatch
             // until the app restarts.
             if (settings.ListDensity != densityBefore)
                 issues.NotifyDensityChanged();
+
+            if (settings.TimeDisplayFormat != timeDisplayFormatBefore)
+                issues.NotifyTimeDisplayFormatChanged();
 
             ClampHeightToWorkingArea();
 

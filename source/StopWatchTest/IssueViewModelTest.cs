@@ -37,6 +37,7 @@ namespace StopWatchTest
         [SetUp]
         public void Setup()
         {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Jira;
             model = new IssueViewModel();
             changed = new List<string>();
             model.PropertyChanged += (s, e) => changed.Add(e.PropertyName);
@@ -269,6 +270,32 @@ namespace StopWatchTest
             model.Refresh();
 
             Assert.That(changed, Is.Empty);
+        }
+
+
+        [Test]
+        public void TimeElapsedText_FollowsTheConfiguredDisplayFormat()
+        {
+            model.WatchTimer.TimeElapsed = TimeSpan.FromMinutes(90);
+            model.Refresh();
+
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+
+            Assert.That(model.TimeElapsedText, Is.EqualTo("1:30"));
+        }
+
+
+        [Test]
+        public void NotifyTimeDisplayFormatChanged_AnnouncesTheTextWrittenDirectlyToTheStaticFormat()
+        {
+            // The settings dialog writes JiraTimeHelpers.TimeDisplayFormat
+            // directly, bypassing this view model entirely - exactly the case
+            // this method exists for.
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+
+            model.NotifyTimeDisplayFormatChanged();
+
+            Assert.That(changed, Contains.Item("TimeElapsedText"));
         }
 
 

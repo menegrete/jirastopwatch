@@ -35,6 +35,7 @@ namespace StopWatchTest
         public void Setup()
         {
             JiraTimeHelpers.Configuration = null;
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Jira;
         }
 
         [Test]
@@ -75,6 +76,61 @@ namespace StopWatchTest
             Assert.That(JiraTimeHelpers.TimeSpanToJiraTime(new TimeSpan(21, 4, 0, 0)), Is.EqualTo("21d 4h 0m"));
         }
 
+
+        [Test]
+        public void TimeSpanToClockHoursMinutes_AlwaysShowsHoursWithoutSeconds()
+        {
+            Assert.That(JiraTimeHelpers.TimeSpanToClockHoursMinutes(new TimeSpan(0, 45, 0)), Is.EqualTo("0:45"));
+            Assert.That(JiraTimeHelpers.TimeSpanToClockHoursMinutes(new TimeSpan(2, 15, 0)), Is.EqualTo("2:15"));
+            Assert.That(JiraTimeHelpers.TimeSpanToClockHoursMinutes(new TimeSpan(2, 15, 45)), Is.EqualTo("2:15"));
+            Assert.That(JiraTimeHelpers.TimeSpanToClockHoursMinutes(new TimeSpan(0, 0, 0)), Is.EqualTo("0:00"));
+            Assert.That(JiraTimeHelpers.TimeSpanToClockHoursMinutes(new TimeSpan(1, 2, 5, 0)), Is.EqualTo("26:05"));
+        }
+
+        [Test]
+        public void TimeSpanToDisplayTime_UsesJiraNotationByDefault()
+        {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Jira;
+
+            Assert.That(JiraTimeHelpers.TimeSpanToDisplayTime(new TimeSpan(2, 15, 0)), Is.EqualTo("2h 15m"));
+        }
+
+        [Test]
+        public void TimeSpanToDisplayTime_UsesClockNotationWhenConfigured()
+        {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+
+            Assert.That(JiraTimeHelpers.TimeSpanToDisplayTime(new TimeSpan(2, 15, 0)), Is.EqualTo("2:15"));
+            Assert.That(JiraTimeHelpers.TimeSpanToDisplayTime(new TimeSpan(0, 45, 0)), Is.EqualTo("0:45"));
+        }
+
+        [Test]
+        public void ClockHoursMinutesToTimeSpan_ParsesHoursColonMinutes()
+        {
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("2:15").Value.TotalMinutes, Is.EqualTo(135));
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("0:45").Value.TotalMinutes, Is.EqualTo(45));
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("  2:15  ").Value.TotalMinutes, Is.EqualTo(135));
+        }
+
+        [Test]
+        public void ClockHoursMinutesToTimeSpan_RejectsJiraNotationAndGarbage()
+        {
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("2h 15m"), Is.Null);
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("2:75"), Is.Null);
+            Assert.That(JiraTimeHelpers.ClockHoursMinutesToTimeSpan("garbage"), Is.Null);
+        }
+
+        [Test]
+        public void DisplayTimeToTimeSpan_TriesConfiguredFormatFirstThenFallsBack()
+        {
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Clock;
+            Assert.That(JiraTimeHelpers.DisplayTimeToTimeSpan("2:15").Value.TotalMinutes, Is.EqualTo(135));
+            Assert.That(JiraTimeHelpers.DisplayTimeToTimeSpan("1h 30m").Value.TotalMinutes, Is.EqualTo(90));
+
+            JiraTimeHelpers.TimeDisplayFormat = TimeDisplayFormat.Jira;
+            Assert.That(JiraTimeHelpers.DisplayTimeToTimeSpan("1h 30m").Value.TotalMinutes, Is.EqualTo(90));
+            Assert.That(JiraTimeHelpers.DisplayTimeToTimeSpan("2:15").Value.TotalMinutes, Is.EqualTo(135));
+        }
 
         [Test]
         public void JiraTimeToTimeSpan_InvalidMinutesFails()

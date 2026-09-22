@@ -23,6 +23,14 @@ namespace StopWatch
     {
         public static TimeTrackingConfiguration Configuration { get; set; }
 
+        /// <summary>
+        /// How <see cref="TimeSpanToDisplayTime"/> presents a duration. Kept as
+        /// a static, same as <see cref="Configuration"/>, because the row-level
+        /// view model that reads it (IssueViewModel) has no reference to
+        /// Settings of its own.
+        /// </summary>
+        public static TimeDisplayFormat TimeDisplayFormat { get; set; }
+
         public static string DateTimeToJiraDateTime(DateTimeOffset date)
         {
             string formatted = date.ToString("yyyy-MM-dd\\THH:mm:ss.fffzzzz", CultureInfo.InvariantCulture);
@@ -48,6 +56,33 @@ namespace StopWatch
                 return String.Format("{0}:{1:00}:{2:00}", totalHours, ts.Minutes, ts.Seconds);
 
             return String.Format("{0}:{1:00}", ts.Minutes, ts.Seconds);
+        }
+
+        /// <summary>
+        /// Formats a duration as hours:minutes, no seconds, always with the
+        /// hours part even at zero ("0:45", "2:15"). This is the Main Window's
+        /// "clock" display option - deliberately not the same shape as
+        /// <see cref="TimeSpanToClockTime"/>, which shows seconds for the live
+        /// Mini Timer/Taskbar Widget display.
+        /// </summary>
+        public static string TimeSpanToClockHoursMinutes(TimeSpan ts)
+        {
+            if (ts < TimeSpan.Zero)
+                ts = TimeSpan.Zero;
+
+            return String.Format("{0}:{1:00}", (int)ts.TotalHours, ts.Minutes);
+        }
+
+        /// <summary>
+        /// Formats a duration the way the Main Window is currently configured
+        /// to show it - see <see cref="TimeDisplayFormat"/>. Purely cosmetic:
+        /// nothing that posts a worklog to Jira goes through this.
+        /// </summary>
+        public static string TimeSpanToDisplayTime(TimeSpan ts)
+        {
+            return TimeDisplayFormat == TimeDisplayFormat.Clock
+                ? TimeSpanToClockHoursMinutes(ts)
+                : TimeSpanToJiraTime(ts);
         }
 
         public static string TimeSpanToJiraTime(TimeSpan ts)
@@ -83,6 +118,40 @@ namespace StopWatch
 
         }
 
+
+        /// <summary>
+        /// Parses the "H:mm" clock notation <see cref="TimeSpanToClockHoursMinutes"/>
+        /// produces (e.g. "2:15", "0:45"). Returns null for anything else,
+        /// including Jira notation - the two never overlap, since Jira
+        /// notation always ends in d/h/m and this never does.
+        /// </summary>
+        public static TimeSpan? ClockHoursMinutesToTimeSpan(string time)
+        {
+            time = time.Trim();
+
+            Match match = Regex.Match(time, @"^([0-9]+):([0-5][0-9])$");
+            if (!match.Success)
+                return null;
+
+            int hours = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+            int minutes = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
+
+            return new TimeSpan(hours, minutes, 0);
+        }
+
+        /// <summary>
+        /// Parses whatever <see cref="TimeSpanToDisplayTime"/> would have shown
+        /// for the current <see cref="TimeDisplayFormat"/>, falling back to the
+        /// other notation so a value typed in either shape is still accepted -
+        /// the two notations never overlap, so there is no ambiguity to resolve.
+        /// </summary>
+        public static TimeSpan? DisplayTimeToTimeSpan(string time)
+        {
+            if (TimeDisplayFormat == TimeDisplayFormat.Clock)
+                return ClockHoursMinutesToTimeSpan(time) ?? JiraTimeToTimeSpan(time);
+
+            return JiraTimeToTimeSpan(time) ?? ClockHoursMinutesToTimeSpan(time);
+        }
 
         public static TimeSpan? JiraTimeToTimeSpan(string time)
         {
