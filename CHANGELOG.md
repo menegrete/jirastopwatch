@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.5.0](https://github.com/menegrete/jirastopwatch/compare/v3.4.0...v3.5.0) (2026-09-22)
+
+### Added
+
+* remember main window position and maximized state between runs ([b52fb78](https://github.com/menegrete/jirastopwatch/commit/b52fb78a1ccab89f40b0679ad90b9752b98758e0)), closes [#29](https://github.com/menegrete/jirastopwatch/issues/29)
+
 ## [3.4.0](https://github.com/menegrete/jirastopwatch/compare/v3.3.0...v3.4.0) (2026-09-21)
 
 ### Added
