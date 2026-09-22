@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.6.0](https://github.com/menegrete/jirastopwatch/compare/v3.5.0...v3.6.0) (2026-09-22)
+
+### Added
+
+* allow choosing how elapsed time is displayed in the Main Window ([cedb919](https://github.com/menegrete/jirastopwatch/commit/cedb919d420b4b7322442e8297dc8a25a7ab6ac5))
+
 ## [3.5.0](https://github.com/menegrete/jirastopwatch/compare/v3.4.0...v3.5.0) (2026-09-22)
 
 ### Added
