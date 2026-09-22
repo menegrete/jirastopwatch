@@ -27,7 +27,8 @@ namespace StopWatch
 {
     /// <summary>
     /// Replaces EditTimeForm: sets a row's elapsed time to a value typed in
-    /// Jira notation, and says so when the value does not parse.
+    /// Jira notation or clock notation (whichever - both are always
+    /// accepted), and says so when the value does not parse.
     /// </summary>
     internal partial class EditTimeWindow : Window
     {
@@ -43,7 +44,7 @@ namespace StopWatch
             InitializeComponent();
 
             Time = time;
-            tbTime.Text = JiraTimeHelpers.TimeSpanToJiraTime(Time);
+            tbTime.Text = JiraTimeHelpers.TimeSpanToDisplayTime(Time);
 
             SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
             Loaded += (s, e) => { tbTime.SelectAll(); tbTime.Focus(); };
@@ -54,7 +55,7 @@ namespace StopWatch
         #region private eventhandlers
         private void btnOk_Click(object sender, RoutedEventArgs e)
         {
-            TimeSpan? parsed = JiraTimeHelpers.JiraTimeToTimeSpan(tbTime.Text);
+            TimeSpan? parsed = JiraTimeHelpers.DisplayTimeToTimeSpan(tbTime.Text);
 
             if (parsed == null)
             {

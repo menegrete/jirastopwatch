@@ -74,6 +74,18 @@ namespace StopWatch
         TaskbarWidget = 2
     }
 
+    /// <summary>
+    /// How the elapsed time of a row (and the list's total) is presented in
+    /// the Main Window. Purely cosmetic - it never affects what gets posted
+    /// to Jira as a worklog. See the issue-list spec, "El usuario elige el
+    /// formato de presentación del tiempo".
+    /// </summary>
+    public enum TimeDisplayFormat
+    {
+        Jira = 0,
+        Clock = 1
+    }
+
     internal sealed class Settings
     {
         public static readonly Settings Instance = new Settings();
@@ -127,6 +139,9 @@ namespace StopWatch
 
         /// <summary>How much room each issue row takes.</summary>
         public ListDensity ListDensity { get; set; }
+
+        /// <summary>How the elapsed time of a row and the list's total are presented.</summary>
+        public TimeDisplayFormat TimeDisplayFormat { get; set; }
 
         /// <summary>
         /// The width the user left the main window at. The height is not saved:
@@ -253,6 +268,9 @@ namespace StopWatch
 
             this.ListDensity = (ListDensity)Properties.Settings.Default.ListDensity;
 
+            this.TimeDisplayFormat = (TimeDisplayFormat)Properties.Settings.Default.TimeDisplayFormat;
+            JiraTimeHelpers.TimeDisplayFormat = this.TimeDisplayFormat;
+
             this.MainWindowWidth = Properties.Settings.Default.MainWindowWidth;
 
             this.CheckForUpdates = Properties.Settings.Default.CheckForUpdates;
@@ -303,6 +321,9 @@ namespace StopWatch
                 Properties.Settings.Default.MiniViewLocation = this.MiniViewLocation ?? "";
 
                 Properties.Settings.Default.ListDensity = (int)this.ListDensity;
+
+                Properties.Settings.Default.TimeDisplayFormat = (int)this.TimeDisplayFormat;
+                JiraTimeHelpers.TimeDisplayFormat = this.TimeDisplayFormat;
 
                 Properties.Settings.Default.MainWindowWidth = this.MainWindowWidth;
 

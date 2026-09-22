@@ -198,10 +198,10 @@ namespace StopWatch
         }
 
 
-        /// <summary>Elapsed time in the Jira notation the time field shows.</summary>
+        /// <summary>Elapsed time, formatted per the user's chosen display format.</summary>
         public string TimeElapsedText
         {
-            get { return JiraTimeHelpers.TimeSpanToJiraTime(timeElapsed); }
+            get { return JiraTimeHelpers.TimeSpanToDisplayTime(timeElapsed); }
         }
 
 
@@ -285,6 +285,19 @@ namespace StopWatch
                 Raise("CanReset");
             if (CanPost != wasPost)
                 Raise("CanPost");
+        }
+
+
+        /// <summary>
+        /// Announces that <see cref="TimeElapsedText"/> needs to be re-read.
+        /// The settings dialog writes the new format straight to
+        /// <see cref="JiraTimeHelpers.TimeDisplayFormat"/> - a static, not a
+        /// property of this view model - so nothing else would raise this on
+        /// its own. Same idea as IssueListViewModel.NotifyDensityChanged.
+        /// </summary>
+        public void NotifyTimeDisplayFormatChanged()
+        {
+            Raise("TimeElapsedText");
         }
 
 

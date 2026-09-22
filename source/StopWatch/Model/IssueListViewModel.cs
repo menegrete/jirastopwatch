@@ -78,7 +78,7 @@ namespace StopWatch
 
         public string TotalTimeText
         {
-            get { return JiraTimeHelpers.TimeSpanToJiraTime(totalTime); }
+            get { return JiraTimeHelpers.TimeSpanToDisplayTime(totalTime); }
         }
 
 
@@ -156,6 +156,21 @@ namespace StopWatch
         public void NotifyDensityChanged()
         {
             Raise("Density");
+        }
+
+
+        /// <summary>
+        /// Same idea as <see cref="NotifyDensityChanged"/>, for the time
+        /// display format: the settings dialog writes it to
+        /// <see cref="JiraTimeHelpers.TimeDisplayFormat"/> directly, so the
+        /// total and every row have to be told explicitly to re-read it.
+        /// </summary>
+        public void NotifyTimeDisplayFormatChanged()
+        {
+            Raise("TotalTimeText");
+
+            foreach (IssueViewModel issue in Issues)
+                issue.NotifyTimeDisplayFormatChanged();
         }
 
 

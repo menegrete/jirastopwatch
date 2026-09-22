@@ -101,6 +101,10 @@ namespace StopWatch
                 new Choice<ListDensity>("Compact", ListDensity.Compact),
                 new Choice<ListDensity>("Spacious", ListDensity.Spacious));
 
+            Fill(cbTimeDisplayFormat, settings.TimeDisplayFormat,
+                new Choice<TimeDisplayFormat>("Jira (2h 15m)", TimeDisplayFormat.Jira),
+                new Choice<TimeDisplayFormat>("Clock (2:15)", TimeDisplayFormat.Clock));
+
             Fill(cbMinimizeBehavior, settings.MinimizeBehavior,
                 new Choice<MinimizeBehavior>("Mini View", MinimizeBehavior.MiniView),
                 new Choice<MinimizeBehavior>("Tray", MinimizeBehavior.Tray),
@@ -135,6 +139,7 @@ namespace StopWatch
             settings.PostWorklogComment = Selected<WorklogCommentSetting>(cbPostWorklogComment);
             settings.Theme = Selected<ThemeMode>(cbTheme);
             settings.ListDensity = Selected<ListDensity>(cbListDensity);
+            settings.TimeDisplayFormat = Selected<TimeDisplayFormat>(cbTimeDisplayFormat);
             settings.MinimizeBehavior = Selected<MinimizeBehavior>(cbMinimizeBehavior);
 
             RadioButton selectedMonitor = panelTaskbarWidgetMonitors.Children
