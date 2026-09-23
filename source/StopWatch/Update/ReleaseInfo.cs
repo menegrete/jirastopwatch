@@ -29,5 +29,8 @@ namespace StopWatch.Update
     {
         public string TagName { get; set; }
         public IReadOnlyList<ReleaseAsset> Assets { get; set; }
+
+        /// <summary>The release's page on GitHub, with its notes.</summary>
+        public string HtmlUrl { get; set; }
     }
 }

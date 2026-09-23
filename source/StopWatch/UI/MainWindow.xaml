@@ -636,6 +636,15 @@
                            Visibility="Collapsed"
                            Style="{StaticResource DangerBoldText}" />
 
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblUpdateWhatsNew"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"
+                           Visibility="Collapsed">
+                    <Hyperlink x:Name="hlUpdateWhatsNew"
+                               RequestNavigate="Link_RequestNavigate">What's new</Hyperlink>
+                </TextBlock>
+
                 <!--
                     Unlabelled spacer, docked first so it claims the
                     rightmost strip: the width of the row's post/reset/remove

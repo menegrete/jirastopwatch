@@ -30,6 +30,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using StopWatch.Update;
 using DrawingPoint = System.Drawing.Point;
 using DrawingSize = System.Drawing.Size;
@@ -358,6 +359,16 @@ namespace StopWatch
             pendingUpdate = update;
             lblUpdateReady.Text = $"v{update.Version} ready — restart to apply";
             lblUpdateReady.Visibility = Visibility.Visible;
+
+            hlUpdateWhatsNew.NavigateUri = new Uri(update.ReleaseUrl);
+            lblUpdateWhatsNew.Visibility = Visibility.Visible;
+        }
+
+
+        private void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            AppInfo.OpenUrl(e.Uri.ToString());
+            e.Handled = true;
         }
 
 

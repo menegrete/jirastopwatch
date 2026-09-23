@@ -121,7 +121,7 @@ namespace StopWatch.Update
                 {
                     string stagedExePath = Path.Combine(versionDir, "StopWatch.exe");
                     File.WriteAllBytes(stagedExePath, assetBytes);
-                    return new PendingUpdate(versionText, stagedExePath, isSelfContained: true);
+                    return new PendingUpdate(versionText, stagedExePath, isSelfContained: true, release.HtmlUrl);
                 }
 
                 string zipPath = Path.Combine(versionDir, assetName);
@@ -130,7 +130,7 @@ namespace StopWatch.Update
                 string extractedDir = Path.Combine(versionDir, "extracted");
                 ZipFile.ExtractToDirectory(zipPath, extractedDir);
 
-                return new PendingUpdate(versionText, extractedDir, isSelfContained: false);
+                return new PendingUpdate(versionText, extractedDir, isSelfContained: false, release.HtmlUrl);
             }
             catch
             {

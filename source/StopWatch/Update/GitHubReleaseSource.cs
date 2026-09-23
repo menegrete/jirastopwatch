@@ -63,6 +63,7 @@ namespace StopWatch.Update
             {
                 TagName = root.GetProperty("tag_name").GetString(),
                 Assets = assets,
+                HtmlUrl = root.GetProperty("html_url").GetString(),
             };
         }
 

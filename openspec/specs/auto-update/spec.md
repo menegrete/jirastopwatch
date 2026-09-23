@@ -92,7 +92,15 @@ instalarla).
 - **WHEN** una actualización terminó de descargarse y verificarse
 - **THEN** la app sigue funcionando con la versión actual sin interrupción,
   y muestra en rojo y negrita que hay una actualización lista para
-  aplicarse al reiniciar
+  aplicarse al reiniciar, junto con un link "What's new" hacia la página
+  del release en GitHub correspondiente a esa versión
+
+#### Scenario: El usuario abre las notas de la versión desde el aviso
+- **WHEN** el usuario hace clic en el link "What's new" del aviso de
+  actualización lista
+- **THEN** la app abre la página de ese release en GitHub en el navegador
+  por defecto del usuario, sin afectar la actualización staged ni la
+  sesión en curso
 
 #### Scenario: El usuario cierra la app normalmente con una actualización lista
 - **WHEN** el usuario cierra la app y hay una actualización verificada y

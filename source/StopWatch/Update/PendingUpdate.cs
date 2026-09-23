@@ -27,11 +27,12 @@ namespace StopWatch.Update
     /// </summary>
     internal sealed class PendingUpdate
     {
-        public PendingUpdate(string version, string stagedPath, bool isSelfContained)
+        public PendingUpdate(string version, string stagedPath, bool isSelfContained, string releaseUrl)
         {
             Version = version;
             StagedPath = stagedPath;
             IsSelfContained = isSelfContained;
+            ReleaseUrl = releaseUrl;
         }
 
         /// <summary>The version this update will bring the app to.</summary>
@@ -44,5 +45,8 @@ namespace StopWatch.Update
         public string StagedPath { get; }
 
         public bool IsSelfContained { get; }
+
+        /// <summary>This version's release page on GitHub, with its notes.</summary>
+        public string ReleaseUrl { get; }
     }
 }

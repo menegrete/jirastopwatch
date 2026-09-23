@@ -101,5 +101,44 @@ namespace StopWatchTest
 
             Assert.That(result, Is.Null);
         }
+
+
+        [Test]
+        public async Task CheckAndStageAsync_CarriesTheReleaseUrlIntoTheStagedUpdate()
+        {
+            const string assetName = "JiraStopWatch-v3.1.0-self-contained.exe";
+            const string checksumName = assetName + ".sha256";
+            byte[] assetBytes = System.Text.Encoding.UTF8.GetBytes("fake exe contents");
+            string digest = System.Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(assetBytes));
+
+            releaseSource
+                .Setup(r => r.GetLatestReleaseAsync())
+                .ReturnsAsync(new ReleaseInfo
+                {
+                    TagName = "v3.1.0",
+                    HtmlUrl = "https://github.com/menegrete/jirastopwatch/releases/tag/v3.1.0",
+                    Assets = new[]
+                    {
+                        new ReleaseAsset { Name = assetName, DownloadUrl = "https://example.com/" + assetName },
+                        new ReleaseAsset { Name = checksumName, DownloadUrl = "https://example.com/" + checksumName },
+                    },
+                });
+            releaseSource
+                .Setup(r => r.DownloadAssetAsync("https://example.com/" + checksumName))
+                .ReturnsAsync(System.Text.Encoding.UTF8.GetBytes($"{digest}  {assetName}"));
+            releaseSource
+                .Setup(r => r.DownloadAssetAsync("https://example.com/" + assetName))
+                .ReturnsAsync(assetBytes);
+
+            PendingUpdate result = await service.CheckAndStageAsync(
+                checkForUpdatesEnabled: true,
+                currentVersion: "3.0.0",
+                isSelfContained: true,
+                stagingBaseDir: stagingBaseDir);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReleaseUrl, Is.EqualTo("https://github.com/menegrete/jirastopwatch/releases/tag/v3.1.0"));
+        }
     }
 }
