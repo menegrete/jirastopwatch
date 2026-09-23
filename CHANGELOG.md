@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.7.0](https://github.com/menegrete/jirastopwatch/compare/v3.6.0...v3.7.0) (2026-09-23)
+
+### Added
+
+* link to release notes from the update-ready notice ([f792d61](https://github.com/menegrete/jirastopwatch/commit/f792d61405a8bafab7daaf62864001ec13b028ab))
+
 ## [3.6.0](https://github.com/menegrete/jirastopwatch/compare/v3.5.0...v3.6.0) (2026-09-22)
 
 ### Added
