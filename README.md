@@ -23,6 +23,18 @@ A Windows desktop tool for recording time spent on different Jira tasks.
 |---|
 | ![mini timer view](docs/img/mini-timer.png) |
 
+## Installation
+
+1. Go to the [Releases page][releases] and download the latest version.
+2. Choose one of the two `.zip` assets:
+   - **Self-contained** — no dependencies, just larger to download.
+   - **Framework-dependent** (smaller) — requires the [.NET 10 Desktop Runtime][dotnet-10-runtime]; Windows will prompt you to install it automatically if it's missing.
+3. Unzip and run `StopWatch.exe` — no installer, it's portable.
+
+Avoid unzipping into `Program Files` (or another folder your user account can't write to) — the app updates itself in place, and without write access, auto-update will silently fail to apply new versions.
+
+In corporate environments with restrictive security policies (SmartScreen, Defender, Entra ID / Conditional Access), the self-contained executable may be blocked since it isn't digitally signed — in that case, try the framework-dependent build instead.
+
 ## Getting started
 
 - [Basic setup](docs/basic-setup.md) - connecting to Jira
@@ -84,3 +96,4 @@ All icons on buttons were downloaded from [Icons8].
 [LICENSE]: LICENSE.md
 [dotnet-10-runtime]: https://dotnet.microsoft.com/download/dotnet/10.0
 [issues]: https://github.com/menegrete/jirastopwatch/issues
+[releases]: https://github.com/menegrete/jirastopwatch/releases
