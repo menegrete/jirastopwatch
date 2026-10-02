@@ -5,7 +5,7 @@ run-name: "Build"
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'rc*']
   pull_request:
     branches: [main]
     types:
@@ -110,7 +110,7 @@ jobs:
   release:
     name: "Release"
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/rc'))
     runs-on: windows-latest
 
     permissions:

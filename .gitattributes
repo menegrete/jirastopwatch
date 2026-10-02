@@ -10,4 +10,4 @@
 CHANGELOG.md text eol=lf
 package.json text eol=lf
 package-lock.json text eol=lf
-.releaserc.json text eol=lf
+release.config.js text eol=lf
