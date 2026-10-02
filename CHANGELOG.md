@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.8.0](https://github.com/menegrete/jirastopwatch/compare/v3.7.0...v3.8.0) (2026-10-02)
+
+### Added
+
+* **update:** opt-in setting to receive beta releases ([#39](https://github.com/menegrete/jirastopwatch/issues/39)) ([92e7389](https://github.com/menegrete/jirastopwatch/commit/92e7389ba0eaaba31c2d272241c3cef07163f4a2))
+
 ## [3.7.0](https://github.com/menegrete/jirastopwatch/compare/v3.6.0...v3.7.0) (2026-09-23)
 
 ### Added
