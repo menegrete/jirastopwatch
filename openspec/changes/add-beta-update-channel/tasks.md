@@ -24,4 +24,4 @@
 ## 5. Verificación de integración
 
 - [x] 5.1 Suite completa: `dotnet build StopWatch.sln` sin warnings y `dotnet test StopWatch.sln --settings .runsettings` en verde.
-- [ ] 5.2 Prueba de punta a punta con una `rc*` de prueba (CI de #38): con un build local con ajuste activo y versión menor, confirmar que descarga, verifica y deja staged el beta con el aviso "(beta)"; con el ajuste apagado, que no ofrece nada. Luego borrar la rama de prueba y sus tags y pre-releases.
+- [x] 5.2 Prueba de punta a punta con una `rc*` de prueba (CI de #38): con un build local con ajuste activo y versión menor, confirmar que descarga, verifica y deja staged el beta con el aviso "(beta)"; con el ajuste apagado, que no ofrece nada. Luego borrar la rama de prueba y sus tags y pre-releases.
