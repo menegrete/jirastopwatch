@@ -22,6 +22,6 @@
 
 ## 5. Verificación de integración
 
-- [ ] 5.1 Tras mergear a `main`, crear una rama `rc-test` desde `main` con un commit `feat:` de prueba y confirmar: se publica `vX.Y.0-rc.1` como pre-release con los 4 assets, la rama no recibe commits automáticos, y `gh api repos/menegrete/jirastopwatch/releases/latest` sigue devolviendo la última estable.
-- [ ] 5.2 En esa rama, agregar un segundo commit release-able y confirmar `-rc.2`. Descargar el `.exe` framework-dependent, verificar su checksum y que arranca mostrando la versión rc. Luego borrar la rama de prueba y las pre-releases/tags de prueba.
+- [x] 5.1 Tras mergear a `main`, crear una rama `rc-test` desde `main` con un commit `feat:` de prueba y confirmar: se publica `vX.Y.0-rc.1` como pre-release con los 4 assets, la rama no recibe commits automáticos, y `gh api repos/menegrete/jirastopwatch/releases/latest` sigue devolviendo la última estable.
+- [x] 5.2 En esa rama, agregar un segundo commit release-able y confirmar `-rc.2`. Descargar el `.exe` framework-dependent, verificar su checksum y que arranca mostrando la versión rc. Luego borrar la rama de prueba y las pre-releases/tags de prueba.
 - [ ] 5.3 Confirmar que el siguiente push a `main` con cambios en `source/StopWatch/**` sigue produciendo un release estable con commit `chore(release)`, sin regresiones.
