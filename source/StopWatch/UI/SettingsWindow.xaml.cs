@@ -75,6 +75,7 @@ namespace StopWatch
             cbIncludeProjectName.IsChecked = settings.IncludeProjectName;
             cbLoggingEnabled.IsChecked = settings.LoggingEnabled;
             cbCheckForUpdates.IsChecked = settings.CheckForUpdates;
+            cbSubscribeToBetaReleases.IsChecked = settings.SubscribeToBetaReleases;
 
             Fill(cbSaveTimerState, settings.SaveTimerState,
                 new Choice<SaveTimerSetting>("Reset all timers on exit", SaveTimerSetting.NoSave),
@@ -133,6 +134,7 @@ namespace StopWatch
             settings.IncludeProjectName = cbIncludeProjectName.IsChecked == true;
             settings.LoggingEnabled = cbLoggingEnabled.IsChecked == true;
             settings.CheckForUpdates = cbCheckForUpdates.IsChecked == true;
+            settings.SubscribeToBetaReleases = cbSubscribeToBetaReleases.IsChecked == true;
 
             settings.SaveTimerState = Selected<SaveTimerSetting>(cbSaveTimerState);
             settings.PauseOnSessionLock = Selected<PauseAndResumeSetting>(cbPauseOnSessionLock);

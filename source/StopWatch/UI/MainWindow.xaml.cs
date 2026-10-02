@@ -352,12 +352,14 @@ namespace StopWatch
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "StopWatch", "updates");
 
-            PendingUpdate update = await updateService.CheckAndStageAsync(settings.CheckForUpdates, AppInfo.Version, AppInfo.IsSelfContained, stagingBaseDir);
+            PendingUpdate update = await updateService.CheckAndStageAsync(settings.CheckForUpdates, settings.SubscribeToBetaReleases, AppInfo.Version, AppInfo.IsSelfContained, stagingBaseDir);
             if (update == null)
                 return;
 
             pendingUpdate = update;
-            lblUpdateReady.Text = $"v{update.Version} ready — restart to apply";
+            lblUpdateReady.Text = update.IsPrerelease
+                ? $"v{update.Version} (beta) ready — restart to apply"
+                : $"v{update.Version} ready — restart to apply";
             lblUpdateReady.Visibility = Visibility.Visible;
 
             hlUpdateWhatsNew.NavigateUri = new Uri(update.ReleaseUrl);

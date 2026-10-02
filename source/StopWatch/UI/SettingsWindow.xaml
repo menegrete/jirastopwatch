@@ -214,6 +214,11 @@
                 <!-- ==================== updates ==================== -->
 
                 <CheckBox x:Name="cbCheckForUpdates" Content="Automatically check for and install updates" />
+                <CheckBox x:Name="cbSubscribeToBetaReleases"
+                          Content="Subscribe to beta releases"
+                          Margin="20,3,0,3"
+                          IsEnabled="{Binding IsChecked, ElementName=cbCheckForUpdates}"
+                          ToolTip="Also receive pre-release (beta) versions. They may be unstable. Turning this off later keeps the version you have until a newer stable release is out." />
 
                 <Border Style="{StaticResource Divider}" />
 

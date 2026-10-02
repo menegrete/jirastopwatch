@@ -28,27 +28,54 @@ using System.Threading.Tasks;
 namespace StopWatch.Update
 {
     /// <summary>
-    /// Reads the latest non-prerelease GitHub release for this repo through
-    /// the public, unauthenticated GitHub REST API - no token needed, and
-    /// well within its 60 requests/hour/IP anonymous rate limit for a
-    /// once-per-launch check.
+    /// Reads releases of this repo through the public, unauthenticated
+    /// GitHub REST API - no token needed, and well within its 60
+    /// requests/hour/IP anonymous rate limit for a once-per-launch check
+    /// (one request per check either way). Without pre-releases it uses
+    /// `releases/latest`, which GitHub already restricts to the latest
+    /// non-draft, non-prerelease release.
     /// </summary>
     internal sealed class GitHubReleaseSource : IReleaseSource
     {
         private const string Owner = "menegrete";
         private const string Repo = "jirastopwatch";
 
-        public async Task<ReleaseInfo> GetLatestReleaseAsync()
+        // GitHub lists releases newest-first by creation date, so the
+        // highest version is always among the most recent ones.
+        private const int ReleasesPageSize = 30;
+
+        public async Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(bool includePrereleases)
         {
-            using HttpResponseMessage response = await HttpClient.GetAsync(
-                $"https://api.github.com/repos/{Owner}/{Repo}/releases/latest");
+            string url = includePrereleases
+                ? $"https://api.github.com/repos/{Owner}/{Repo}/releases?per_page={ReleasesPageSize}"
+                : $"https://api.github.com/repos/{Owner}/{Repo}/releases/latest";
+
+            using HttpResponseMessage response = await HttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             using System.IO.Stream stream = await response.Content.ReadAsStreamAsync();
             using JsonDocument document = await JsonDocument.ParseAsync(stream);
 
-            JsonElement root = document.RootElement;
+            List<ReleaseInfo> releases = new List<ReleaseInfo>();
+            if (!includePrereleases)
+            {
+                releases.Add(ParseRelease(document.RootElement));
+                return releases;
+            }
 
+            foreach (JsonElement element in document.RootElement.EnumerateArray())
+            {
+                if (element.TryGetProperty("draft", out JsonElement draft) && draft.GetBoolean())
+                    continue;
+
+                releases.Add(ParseRelease(element));
+            }
+            return releases;
+        }
+
+
+        private static ReleaseInfo ParseRelease(JsonElement root)
+        {
             List<ReleaseAsset> assets = new List<ReleaseAsset>();
             foreach (JsonElement assetElement in root.GetProperty("assets").EnumerateArray())
             {
@@ -64,6 +91,7 @@ namespace StopWatch.Update
                 TagName = root.GetProperty("tag_name").GetString(),
                 Assets = assets,
                 HtmlUrl = root.GetProperty("html_url").GetString(),
+                IsPrerelease = root.TryGetProperty("prerelease", out JsonElement prerelease) && prerelease.GetBoolean(),
             };
         }
 

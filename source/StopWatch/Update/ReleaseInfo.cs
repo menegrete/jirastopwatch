@@ -32,5 +32,8 @@ namespace StopWatch.Update
 
         /// <summary>The release's page on GitHub, with its notes.</summary>
         public string HtmlUrl { get; set; }
+
+        /// <summary>Whether GitHub marks this release as a pre-release (a beta).</summary>
+        public bool IsPrerelease { get; set; }
     }
 }

@@ -20,6 +20,7 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace StopWatch.Update
@@ -32,7 +33,15 @@ namespace StopWatch.Update
     /// </summary>
     internal interface IReleaseSource
     {
-        Task<ReleaseInfo> GetLatestReleaseAsync();
+        /// <summary>
+        /// The releases the updater may pick from. Without
+        /// <paramref name="includePrereleases"/>, just the latest stable
+        /// release; with it, the recent releases including pre-releases
+        /// (never drafts), in no particular order - choosing the highest
+        /// version is the caller's job.
+        /// </summary>
+        Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(bool includePrereleases);
+
         Task<byte[]> DownloadAssetAsync(string url);
     }
 }
