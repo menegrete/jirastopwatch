@@ -35,6 +35,10 @@ Avoid unzipping into `Program Files` (or another folder your user account can't 
 
 In corporate environments with restrictive security policies (SmartScreen, Defender, Entra ID / Conditional Access), the self-contained executable may be blocked since it isn't digitally signed — in that case, try the framework-dependent build instead.
 
+### Beta builds
+
+Release candidates are published as GitHub *pre-releases* (versions like `3.8.0-rc.1`) from `rc*` branches. They show up on the [Releases page][releases] but are not marked as the latest release, so stable users are unaffected. Betas are for testing and may be unstable; the assets are the same as in a stable release.
+
 ## Getting started
 
 - [Basic setup](docs/basic-setup.md) - connecting to Jira
@@ -58,7 +62,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the detailed, version-by-version history si
 
 ## Building and releasing
 
-Jira StopWatch targets `net10.0-windows`. Releases are fully automated: every push to `main` that changes `source/StopWatch/**` and passes tests is versioned, changelogged and published as a GitHub Release by CI, with no manual steps. Each release attaches two artifacts:
+Jira StopWatch targets `net10.0-windows`. Releases are fully automated: every push to `main` that changes `source/StopWatch/**` and passes tests is versioned, changelogged and published as a GitHub Release by CI, with no manual steps. Pushes to an `rc*` branch (one at a time) publish `X.Y.Z-rc.N` pre-releases the same way, without committing anything back to the branch. Each release attaches two artifacts:
 
 - a self-contained single-file executable - no separate runtime install needed
 - a zip of the framework-dependent single-file build - requires the [.NET 10 Desktop Runtime][dotnet-10-runtime] to already be installed on the machine; if it's missing, Windows shows its own prompt to install it
