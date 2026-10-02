@@ -39,6 +39,8 @@ In corporate environments with restrictive security policies (SmartScreen, Defen
 
 Release candidates are published as GitHub *pre-releases* (versions like `3.8.0-rc.1`) from `rc*` branches. They show up on the [Releases page][releases] but are not marked as the latest release, so stable users are unaffected. Betas are for testing and may be unstable; the assets are the same as in a stable release.
 
+To receive betas through auto-update, turn on **Subscribe to beta releases** in Settings (off by default, and only available while automatic update checks are on). The app then offers the highest version published, stable or beta, but only if it is newer than the one you run. Turning the option off later does not downgrade you: you stay on your version until a newer stable release is out, or reinstall a stable one by hand.
+
 ## Getting started
 
 - [Basic setup](docs/basic-setup.md) - connecting to Jira

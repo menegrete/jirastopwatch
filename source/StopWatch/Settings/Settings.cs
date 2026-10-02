@@ -160,6 +160,14 @@ namespace StopWatch
         public bool CheckForUpdates { get; set; }
 
         /// <summary>
+        /// Whether the update check also considers beta (pre-release)
+        /// versions. Off by default; only meaningful while
+        /// <see cref="CheckForUpdates"/> is on. See the auto-update spec,
+        /// "El usuario puede suscribirse a las versiones beta".
+        /// </summary>
+        public bool SubscribeToBetaReleases { get; set; }
+
+        /// <summary>
         /// Which single monitor (0 = primary, 1+ = secondary, in the same
         /// order <see cref="System.Windows.Forms.Screen.AllScreens"/> would
         /// once sorted by position) shows the taskbar widget when
@@ -274,6 +282,7 @@ namespace StopWatch
             this.MainWindowWidth = Properties.Settings.Default.MainWindowWidth;
 
             this.CheckForUpdates = Properties.Settings.Default.CheckForUpdates;
+            this.SubscribeToBetaReleases = Properties.Settings.Default.SubscribeToBetaReleases;
 
             this.TaskbarWidgetMonitor = Properties.Settings.Default.TaskbarWidgetMonitor;
 
@@ -328,6 +337,7 @@ namespace StopWatch
                 Properties.Settings.Default.MainWindowWidth = this.MainWindowWidth;
 
                 Properties.Settings.Default.CheckForUpdates = this.CheckForUpdates;
+                Properties.Settings.Default.SubscribeToBetaReleases = this.SubscribeToBetaReleases;
 
                 Properties.Settings.Default.TaskbarWidgetMonitor = this.TaskbarWidgetMonitor;
 

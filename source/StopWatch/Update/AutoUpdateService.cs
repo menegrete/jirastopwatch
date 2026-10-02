@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -56,27 +57,32 @@ namespace StopWatch.Update
         /// caller to gate the call) so the "off means no network activity at
         /// all" behaviour is covered by a unit test against this service
         /// rather than needing to stand up the WPF window that calls it.
+        ///
+        /// Of the releases the source offers, the one with the highest
+        /// semantic version wins (pre-releases count only with
+        /// <paramref name="includePrereleases"/>), and it's offered only if
+        /// strictly newer than <paramref name="currentVersion"/> - so there
+        /// is no downgrade and no special case for leaving the beta channel.
         /// </summary>
-        public async Task<PendingUpdate> CheckAndStageAsync(bool checkForUpdatesEnabled, string currentVersion, bool isSelfContained, string stagingBaseDir)
+        public async Task<PendingUpdate> CheckAndStageAsync(bool checkForUpdatesEnabled, bool includePrereleases, string currentVersion, bool isSelfContained, string stagingBaseDir)
         {
             if (!checkForUpdatesEnabled)
                 return null;
 
             try
             {
-                ReleaseInfo release = await releaseSource.GetLatestReleaseAsync();
-                if (release == null)
+                IReadOnlyList<ReleaseInfo> releases = await releaseSource.GetReleasesAsync(includePrereleases);
+
+                if (!UpdateVersion.TryParse(currentVersion, out SemanticVersion current))
                     return null;
 
-                if (!UpdateVersion.TryParse(release.TagName, out Version latest) ||
-                    !UpdateVersion.TryParse(currentVersion, out Version current) ||
-                    !UpdateVersion.IsNewer(latest, current))
-                {
+                (ReleaseInfo release, SemanticVersion version) = PickHighest(releases, includePrereleases);
+                if (release == null || !UpdateVersion.IsNewer(version, current))
                     return null;
-                }
 
-                string versionText = latest.ToString();
-                return await DownloadAndStageAsync(versionText, isSelfContained, stagingBaseDir, release);
+                // The canonical text keeps a prerelease suffix ("3.8.0-rc.1"),
+                // which the asset names and the staging folder both carry.
+                return await DownloadAndStageAsync(version.ToString(), version.IsPrerelease || release.IsPrerelease, isSelfContained, stagingBaseDir, release);
             }
             catch (Exception ex)
             {
@@ -86,7 +92,33 @@ namespace StopWatch.Update
         }
 
 
-        private async Task<PendingUpdate> DownloadAndStageAsync(string versionText, bool isSelfContained, string stagingBaseDir, ReleaseInfo release)
+        private static (ReleaseInfo release, SemanticVersion version) PickHighest(IReadOnlyList<ReleaseInfo> releases, bool includePrereleases)
+        {
+            ReleaseInfo best = null;
+            SemanticVersion bestVersion = null;
+
+            foreach (ReleaseInfo release in releases ?? Array.Empty<ReleaseInfo>())
+            {
+                if (release == null || !UpdateVersion.TryParse(release.TagName, out SemanticVersion version))
+                    continue;
+
+                // A stable-only check never offers a pre-release, whatever
+                // the source returned (and a tag with a suffix is one too).
+                if (!includePrereleases && (release.IsPrerelease || version.IsPrerelease))
+                    continue;
+
+                if (bestVersion == null || version.CompareTo(bestVersion) > 0)
+                {
+                    best = release;
+                    bestVersion = version;
+                }
+            }
+
+            return (best, bestVersion);
+        }
+
+
+        private async Task<PendingUpdate> DownloadAndStageAsync(string versionText, bool isPrerelease, bool isSelfContained, string stagingBaseDir, ReleaseInfo release)
         {
             string assetName = ReleaseAssetSelector.AssetFileName(versionText, isSelfContained);
             string checksumName = ReleaseAssetSelector.ChecksumFileName(versionText, isSelfContained);
@@ -121,7 +153,7 @@ namespace StopWatch.Update
                 {
                     string stagedExePath = Path.Combine(versionDir, "StopWatch.exe");
                     File.WriteAllBytes(stagedExePath, assetBytes);
-                    return new PendingUpdate(versionText, stagedExePath, isSelfContained: true, release.HtmlUrl);
+                    return new PendingUpdate(versionText, stagedExePath, isSelfContained: true, release.HtmlUrl, isPrerelease: isPrerelease);
                 }
 
                 string zipPath = Path.Combine(versionDir, assetName);
@@ -130,7 +162,7 @@ namespace StopWatch.Update
                 string extractedDir = Path.Combine(versionDir, "extracted");
                 ZipFile.ExtractToDirectory(zipPath, extractedDir);
 
-                return new PendingUpdate(versionText, extractedDir, isSelfContained: false, release.HtmlUrl);
+                return new PendingUpdate(versionText, extractedDir, isSelfContained: false, release.HtmlUrl, isPrerelease: isPrerelease);
             }
             catch
             {

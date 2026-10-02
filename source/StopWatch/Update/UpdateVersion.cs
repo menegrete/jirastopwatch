@@ -20,32 +20,25 @@
  * limitations under the License.
  */
 
-using System;
-
 namespace StopWatch.Update
 {
     /// <summary>
     /// Parses and compares the semantic-release version strings this project
-    /// uses - a git tag like "v3.1.0" and AppInfo.Version's "3.1.0" - as a
-    /// plain <see cref="Version"/>. GitHub's `releases/latest` endpoint
-    /// already excludes drafts and prereleases, so no prerelease suffix
-    /// handling is needed here.
+    /// uses - a git tag like "v3.1.0" or "v3.8.0-rc.1" and AppInfo.Version's
+    /// "3.1.0" / "3.8.0-rc.1" - as a <see cref="SemanticVersion"/>, so a
+    /// prerelease suffix is understood and ordered correctly.
     /// </summary>
     internal static class UpdateVersion
     {
-        public static bool TryParse(string text, out Version version)
+        public static bool TryParse(string text, out SemanticVersion version)
         {
-            string trimmed = text?.Trim();
-            if (!string.IsNullOrEmpty(trimmed) && (trimmed[0] == 'v' || trimmed[0] == 'V'))
-                trimmed = trimmed.Substring(1);
-
-            return Version.TryParse(trimmed, out version);
+            return SemanticVersion.TryParse(text, out version);
         }
 
 
-        public static bool IsNewer(Version candidate, Version current)
+        public static bool IsNewer(SemanticVersion candidate, SemanticVersion current)
         {
-            return candidate != null && current != null && candidate > current;
+            return candidate != null && current != null && candidate.CompareTo(current) > 0;
         }
     }
 }

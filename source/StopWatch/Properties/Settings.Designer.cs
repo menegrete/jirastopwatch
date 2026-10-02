@@ -325,6 +325,18 @@ namespace StopWatch.Properties {
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SubscribeToBetaReleases {
+            get {
+                return ((bool)(this["SubscribeToBetaReleases"]));
+            }
+            set {
+                this["SubscribeToBetaReleases"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public int TaskbarWidgetMonitor {
             get {

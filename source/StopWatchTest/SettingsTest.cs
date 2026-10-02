@@ -24,6 +24,7 @@ namespace StopWatchTest
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using NUnit.Framework;
     using StopWatch;
 
@@ -133,6 +134,22 @@ namespace StopWatchTest
         public void MigrateMinimizeBehavior_MapsMiniViewWhenMinimizeToTrayWasOff()
         {
             Assert.That(Settings.MigrateMinimizeBehavior(false), Is.EqualTo(MinimizeBehavior.MiniView));
+        }
+
+
+        [Test]
+        public void SubscribeToBetaReleases_IsOffByDefault()
+        {
+            // Reads the declared default rather than Settings.Instance, which
+            // holds whatever the developer running the tests has saved.
+            System.Configuration.DefaultSettingValueAttribute declaredDefault =
+                typeof(StopWatch.Properties.Settings)
+                    .GetProperty(nameof(StopWatch.Properties.Settings.SubscribeToBetaReleases))
+                    .GetCustomAttributes(typeof(System.Configuration.DefaultSettingValueAttribute), false)
+                    .Cast<System.Configuration.DefaultSettingValueAttribute>()
+                    .Single();
+
+            Assert.That(declaredDefault.Value, Is.EqualTo("False"));
         }
     }
 }
