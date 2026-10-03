@@ -12,6 +12,8 @@ on:
     branches: [main]
     paths:
       - 'source/StopWatch.Plugin.Abstractions/**'
+      - '.github/workflows/publish-plugin-abstractions.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,9 +40,11 @@ jobs:
       - name: "Pack"
         run: dotnet pack source/StopWatch.Plugin.Abstractions/StopWatch.Plugin.Abstractions.csproj --configuration Release --output artifacts
 
+      # The backslash matters: on Windows dotnet nuget push does not expand a
+      # glob written with a forward slash and fails with "File does not exist".
       - name: "Push to GitHub Packages"
         run: >
-          dotnet nuget push "artifacts/*.nupkg"
+          dotnet nuget push "artifacts\*.nupkg"
           --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
           --api-key "${{ secrets.GITHUB_TOKEN }}"
           --skip-duplicate
