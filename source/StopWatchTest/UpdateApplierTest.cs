@@ -59,6 +59,20 @@ namespace StopWatchTest
 
 
         [Test]
+        public void BuildApplyScript_FrameworkDependentLeavesAPluginsFolderAlone()
+        {
+            string script = UpdateApplier.BuildApplyScript(
+                processId: 1234,
+                stagedPath: @"C:\staged\extracted",
+                isSelfContained: false,
+                installDir: @"C:\install\dir",
+                installExePath: @"C:\install\dir\StopWatch.exe");
+
+            Assert.That(script, Does.Contain("/MIR /XD plugins"));
+        }
+
+
+        [Test]
         public void BuildApplyScript_SelfContainedSwapsTheExeDirectly()
         {
             string script = UpdateApplier.BuildApplyScript(

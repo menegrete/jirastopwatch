@@ -30,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Also the ApplicationIcon above, but the windows need it as a resource
          so that XAML can reference it by pack URI. -->
     <Resource Include="stopwatchicon.ico" />

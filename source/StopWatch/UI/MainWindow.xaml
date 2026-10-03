@@ -620,6 +620,19 @@
                     </Grid>
                 </Button>
 
+                <!-- Only shown when there is a plugins folder with something
+                     in it; see MainWindow.SetPlugins. -->
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnPlugins"
+                        Style="{StaticResource GlyphButton}"
+                        ToolTip="Plugins"
+                        Visibility="Collapsed"
+                        Click="btnPlugins_Click">
+                    <TextBlock Text="&#x29C9;"
+                               FontSize="14"
+                               Foreground="{DynamicResource Text}" />
+                </Button>
+
                 <TextBlock DockPanel.Dock="Left"
                            x:Name="lblConnectionStatus"
                            VerticalAlignment="Center"

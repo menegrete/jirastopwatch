@@ -19,6 +19,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StopWatch\StopWatch.csproj" />
+    <ProjectReference Include="..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj" />
+
+    <!-- Built first so the plugin integration test can load their output;
+         ReferenceOutputAssembly=false keeps them out of this assembly. -->
+    <ProjectReference Include="..\Samples\HelloWorld\HelloWorld.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Samples\HelloSqlite\HelloSqlite.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
