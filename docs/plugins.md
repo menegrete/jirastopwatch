@@ -73,6 +73,37 @@ public class MyPlugin : IPlugin
 }
 ```
 
+### Referencing the contract package
+
+`StopWatch.Plugin.Abstractions` is published as a NuGet package to this repository's GitHub Packages feed. GitHub Packages requires authentication even to read, so a plugin repository needs a feed entry and a token.
+
+1. Create a personal access token (classic) with the **`read:packages`** scope. It must belong to someone with access to this repository. Keep it out of the repository: put it in an environment variable, for example `GITHUB_PACKAGES_TOKEN`.
+2. Add a `nuget.config` next to the plugin's solution (it is safe to commit, because it holds no secret, only the name of the variable):
+
+   ```xml
+   <?xml version="1.0" encoding="utf-8"?>
+   <configuration>
+     <packageSources>
+       <add key="stopwatch" value="https://nuget.pkg.github.com/menegrete/index.json" />
+     </packageSources>
+     <packageSourceCredentials>
+       <stopwatch>
+         <add key="Username" value="%GITHUB_USERNAME%" />
+         <add key="ClearTextPassword" value="%GITHUB_PACKAGES_TOKEN%" />
+       </stopwatch>
+     </packageSourceCredentials>
+   </configuration>
+   ```
+
+   NuGet expands `%VARIABLE%` references in `nuget.config`, so set `GITHUB_USERNAME` (your GitHub user name) and `GITHUB_PACKAGES_TOKEN` in the environment where you build. In GitHub Actions of another repository, pass a token with `read:packages` as a secret, since the default `GITHUB_TOKEN` of that repository cannot read this one's packages.
+3. Reference the package with `ExcludeAssets="runtime"`, so the plugin does not copy the contract assembly into its output (the host already has it loaded):
+
+   ```xml
+   <PackageReference Include="StopWatch.Plugin.Abstractions" Version="1.0.0" ExcludeAssets="runtime" />
+   ```
+
+Use the package version that matches the `contractVersion` you declare in `plugin.json`: package `1.0.x` is contract `1.0`.
+
 ### Lifecycle
 
 The host loads the plugin, calls `Initialize(host)` once on the UI thread, then `GetCommands()` once. There is no unload. Plugins must not depend on each other or on load order.
