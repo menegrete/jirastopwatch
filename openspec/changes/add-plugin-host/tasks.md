@@ -10,7 +10,7 @@
 ## 2. Composition root (no behavior change)
 
 - [x] 2.1 Extract construction of `JiraClient`, `IssueJiraService`, `IssueListViewModel`, `ActiveTimerViewModel` out of the `MainWindow` constructor into a composition class
-- [ ] 2.2 Verify existing tests pass and smoke-test the app unchanged
+- [x] 2.2 Verify existing tests pass and smoke-test the app unchanged
 
 ## 3. Loader and host adapters
 
