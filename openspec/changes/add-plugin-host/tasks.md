@@ -27,7 +27,7 @@
 - [x] 4.1 Create `Samples/HelloWorld` (themed window with `Owner`, writes to data directory, logs, `plugin.json`) and wire its output into a plugin-shaped folder
 - [x] 4.2 Add `Microsoft.Data.Sqlite` to `Directory.Packages.props`; create `Samples/HelloSqlite` (in-memory create/insert/select shown in a window)
 - [x] 4.3 Exclude samples from release publish/packaging
-- [ ] 4.4 Gate: publish framework-dependent single-file, install both samples, verify both load and run on an EntraID machine, from the folder next to the executable and from `%LocalAppData%`; if blocked, revisit plugin location before continuing
+- [x] 4.4 Gate: publish framework-dependent single-file, install both samples, verify both load and run on an EntraID machine, from the folder next to the executable and from `%LocalAppData%`; if blocked, revisit plugin location before continuing
 
 ## 5. Commands and UI
 
