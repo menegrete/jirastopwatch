@@ -130,7 +130,11 @@ namespace StopWatch.Update
                 // /R and /W bound robocopy's own retrying (its defaults
                 // amount to retrying for hours), covering the same
                 // transient-lock case as the self-contained move above.
-                : $"robocopy \"{stagedPath}\" \"{installDir}\" /MIR /NFL /NDL /NJH /NJS /R:{MaxSwapRetries} /W:1";
+                // /XD plugins keeps a plugins folder beside the exe (not where
+                // plugins normally live, but a convenient place while
+                // developing one) from being mirrored away as "no longer in
+                // the new build".
+                : $"robocopy \"{stagedPath}\" \"{installDir}\" /MIR /XD plugins /NFL /NDL /NJH /NJS /R:{MaxSwapRetries} /W:1";
 
             return string.Join(Environment.NewLine,
                 "@echo off",

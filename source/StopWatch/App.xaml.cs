@@ -26,6 +26,7 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using StopWatch.Plugins;
 
 namespace StopWatch
 {
@@ -64,8 +65,15 @@ namespace StopWatch
             Theme.Current = Theme.ForMode(settings.Theme);
             ThemeBrushes.ApplyToApplication();
 
-            window = new MainWindow(settings);
+            var composition = new AppComposition(settings);
+
+            window = new MainWindow(settings, composition);
             MainWindow = window;
+
+            // Loaded before the window is shown so that the tray menu and the
+            // Plugins entry are complete from the start. Never throws.
+            window.SetPlugins(PluginManager.Load(PluginManager.DefaultPluginsFolders, PluginManager.DefaultDataFolder, window, composition));
+
             window.Show();
         }
 

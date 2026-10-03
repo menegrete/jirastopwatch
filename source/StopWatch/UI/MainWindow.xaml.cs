@@ -58,28 +58,25 @@ namespace StopWatch
     internal partial class MainWindow : Window
     {
         #region public methods
-        public MainWindow(Settings settings)
+        public MainWindow(Settings settings, AppComposition composition)
         {
             if (settings == null)
                 throw new ArgumentNullException("settings");
+            if (composition == null)
+                throw new ArgumentNullException("composition");
 
             this.settings = settings;
 
             Theme.Current = Theme.ForMode(settings.Theme);
 
-            jiraApiRequestFactory = new JiraApiRequestFactory(new RestRequestFactory());
+            restClientFactory = composition.RestClientFactory;
+            jiraClient = composition.JiraClient;
+            jiraService = composition.JiraService;
 
-            restClientFactory = new RestClientFactory();
-            restClientFactory.BaseUrl = settings.JiraBaseUrl;
-
-            jiraClient = new JiraClient(jiraApiRequestFactory, new JiraApiRequester(restClientFactory, jiraApiRequestFactory));
-
-            jiraService = new IssueJiraService(jiraClient, settings);
-
-            issues = new IssueListViewModel(settings);
+            issues = composition.Issues;
             issues.TimerStarted += issues_TimerStarted;
 
-            activeTimer = new ActiveTimerViewModel(() => issues.Issues.Cast<ITimerSource>());
+            activeTimer = composition.ActiveTimer;
 
             updateService = new AutoUpdateService(new GitHubReleaseSource());
 
@@ -577,10 +574,104 @@ namespace StopWatch
                     Icon = Properties.Resources.stopwatchicon,
                     Text = "Jira StopWatch"
                 };
-                trayIcon.Click += trayIcon_Click;
+                trayIcon.MouseClick += trayIcon_MouseClick;
+                trayIcon.ContextMenuStrip = BuildTrayMenu();
             }
 
             trayIcon.Visible = true;
+        }
+
+
+        /// <summary>
+        /// The tray context menu, built from the plugins' tray commands - or
+        /// null when there are none, so a right-click behaves exactly as it
+        /// did before plugins existed.
+        /// </summary>
+        private System.Windows.Forms.ContextMenuStrip BuildTrayMenu()
+        {
+            var menu = new System.Windows.Forms.ContextMenuStrip();
+
+            foreach (var group in plugins.GetCommands(Plugin.PluginCommandLocation.Tray).GroupBy(c => c.Plugin))
+            {
+                if (menu.Items.Count > 0)
+                    menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
+                var header = new System.Windows.Forms.ToolStripLabel(group.Key.Name) { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) };
+                menu.Items.Add(header);
+
+                foreach (Plugins.PluginCommandItem command in group)
+                {
+                    Plugins.PluginCommandItem captured = command;
+                    menu.Items.Add(captured.Title, null, (s, e) => RunPluginCommand(captured));
+                }
+            }
+
+            if (menu.Items.Count == 0)
+            {
+                menu.Dispose();
+                return null;
+            }
+
+            return menu;
+        }
+
+
+        private void RunPluginCommand(Plugins.PluginCommandItem command)
+        {
+            string error = command.Run();
+            if (error != null)
+                MessageBox.Show(this, error, "Plugin error");
+        }
+
+
+        /// <summary>
+        /// Hands the loaded plugins to the window, which shows their commands
+        /// in the tray menu and the Plugins button. Called once, before the
+        /// window is first shown.
+        /// </summary>
+        internal void SetPlugins(Plugins.PluginManager manager)
+        {
+            plugins = manager ?? Plugins.PluginManager.Empty;
+
+            btnPlugins.Visibility = plugins.HasPlugins ? Visibility.Visible : Visibility.Collapsed;
+
+            if (trayIcon != null)
+                trayIcon.ContextMenuStrip = BuildTrayMenu();
+        }
+
+
+        private void btnPlugins_Click(object sender, RoutedEventArgs e)
+        {
+            var menu = new ContextMenu { PlacementTarget = btnPlugins, Placement = System.Windows.Controls.Primitives.PlacementMode.Top };
+
+            foreach (var group in plugins.GetCommands(Plugin.PluginCommandLocation.MainWindow).GroupBy(c => c.Plugin))
+            {
+                menu.Items.Add(new MenuItem { Header = group.Key.Name, IsEnabled = false, FontWeight = FontWeights.Bold });
+
+                foreach (Plugins.PluginCommandItem command in group)
+                {
+                    Plugins.PluginCommandItem captured = command;
+                    var item = new MenuItem { Header = captured.Title };
+                    item.Click += (s, args) => RunPluginCommand(captured);
+                    menu.Items.Add(item);
+                }
+            }
+
+            if (menu.Items.Count > 0)
+                menu.Items.Add(new Separator());
+
+            var status = new MenuItem { Header = "Plugin status..." };
+            status.Click += (s, args) => ShowPluginStatus();
+            menu.Items.Add(status);
+
+            menu.IsOpen = true;
+        }
+
+
+        private void ShowPluginStatus()
+        {
+            string text = string.Join(Environment.NewLine, plugins.Plugins.Select(p => p.StatusText));
+            MessageBox.Show(this, text, "Plugins");
         }
 
 
@@ -602,8 +693,13 @@ namespace StopWatch
         }
 
 
-        private void trayIcon_Click(object sender, EventArgs e)
+        private void trayIcon_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+            // A right-click opens the plugin menu, when there is one, instead
+            // of restoring the window.
+            if (e.Button == System.Windows.Forms.MouseButtons.Right && trayIcon.ContextMenuStrip != null)
+                return;
+
             Show();
             WindowState = WindowState.Normal;
             Activate();
@@ -1650,7 +1746,6 @@ namespace StopWatch
         #region private members
         private readonly Settings settings;
 
-        private readonly JiraApiRequestFactory jiraApiRequestFactory;
         private readonly RestClientFactory restClientFactory;
         private readonly JiraClient jiraClient;
         private readonly IssueJiraService jiraService;
@@ -1665,6 +1760,7 @@ namespace StopWatch
         private readonly System.Windows.Threading.DispatcherTimer ticker;
 
         private System.Windows.Forms.NotifyIcon trayIcon;
+        private Plugins.PluginManager plugins = Plugins.PluginManager.Empty;
 
         private MiniTimerWindow miniView;
         private bool inMiniView;

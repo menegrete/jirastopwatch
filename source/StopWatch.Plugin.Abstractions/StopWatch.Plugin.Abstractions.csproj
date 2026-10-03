@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- WPF only for Window/Dispatcher in the host services; nothing here
+         depends on WinForms. -->
+    <UseWPF>true</UseWPF>
+    <RootNamespace>StopWatch.Plugin</RootNamespace>
+    <AssemblyName>StopWatch.Plugin.Abstractions</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Self-describing members (ids, titles) are left without a summary. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Packaged for plugin repositories. The package version follows the
+         plugin contract (PluginContract.ContractVersion), not the version of
+         the StopWatch executable, which semantic-release manages. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>StopWatch.Plugin.Abstractions</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Contract for Jira StopWatch plugins.</Description>
+  </PropertyGroup>
+
+</Project>
