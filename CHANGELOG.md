@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.9.0](https://github.com/menegrete/jirastopwatch/compare/v3.8.0...v3.9.0) (2026-10-03)
+
+### Added
+
+* add plugin host (contract, loader, commands, samples) ([6119c16](https://github.com/menegrete/jirastopwatch/commit/6119c16cfdc1a0f64b377f0835432ca0e16e1201)), closes [#35](https://github.com/menegrete/jirastopwatch/issues/35)
+
 ## [3.8.0](https://github.com/menegrete/jirastopwatch/compare/v3.7.0...v3.8.0) (2026-10-02)
 
 ### Added
