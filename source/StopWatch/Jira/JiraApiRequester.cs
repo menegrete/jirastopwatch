@@ -49,20 +49,31 @@ namespace StopWatch
             RestResponse<T> response = client.Execute<T>(request);
             _logger.Log(string.Format("Response: {0} - {1}", response.StatusCode, StringHelpers.Truncate(response.Content, 100)));
 
-            // If login session has expired, try to login, and then re-execute the original request
-            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                throw new RequestDeniedException();
-            }
-
-            if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created)
-            {
-                ErrorMessage = response.ErrorMessage;
-                throw new RequestDeniedException();
-            }
+            ThrowIfFailed(response);
 
             ErrorMessage = "";
             return response.Data;
+        }
+
+        /// <summary>
+        /// Throws <see cref="RequestDeniedException"/> carrying the status and
+        /// body of any response that is not a success, so that callers can tell
+        /// a 401 from a 400 or a dropped connection.
+        /// </summary>
+        internal void ThrowIfFailed(RestResponse response)
+        {
+            if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
+                return;
+
+            // 401/400 leave ErrorMessage untouched, as they always have.
+            if (response.StatusCode != HttpStatusCode.Unauthorized && response.StatusCode != HttpStatusCode.BadRequest)
+                ErrorMessage = response.ErrorMessage;
+
+            string message = string.IsNullOrEmpty(response.ErrorMessage)
+                ? string.Format("Jira responded with HTTP {0}", (int)response.StatusCode)
+                : response.ErrorMessage;
+
+            throw new RequestDeniedException(message, response.StatusCode, response.Content, response.ErrorException);
         }
 
         public void SetAuthentication(string username, string apiToken)
@@ -101,6 +112,18 @@ namespace StopWatch
         public RequestDeniedException(string message, Exception innerException) : base(message, innerException)
         {
         }
+
+        public RequestDeniedException(string message, HttpStatusCode statusCode, string responseContent, Exception innerException) : base(message, innerException)
+        {
+            StatusCode = statusCode;
+            ResponseContent = responseContent;
+        }
+
+        /// <summary>The HTTP status Jira answered with, or 0 when there was no response at all.</summary>
+        public HttpStatusCode StatusCode { get; }
+
+        /// <summary>The raw body of the failed response, which is where Jira explains what was wrong.</summary>
+        public string ResponseContent { get; }
     }
 
     internal class UsernameAndApiTokenNotSetException : Exception

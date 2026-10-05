@@ -102,6 +102,44 @@ namespace StopWatch
             return request;
         }
 
+        /// <summary>
+        /// Jira Cloud's search. The classic <c>/search</c> is gone there; this one
+        /// pages with a token instead of an offset and only returns the fields asked for.
+        /// </summary>
+        public RestRequest CreateSearchIssuesRequest(string jql, string nextPageToken)
+        {
+            var request = restRequestFactory.Create("/rest/api/2/search/jql", Method.Get);
+            request.AddQueryParameter("jql", jql);
+            request.AddQueryParameter("fields", "summary,issuetype,parent,project,status");
+            request.AddQueryParameter("maxResults", "100");
+            if (!string.IsNullOrEmpty(nextPageToken))
+                request.AddQueryParameter("nextPageToken", nextPageToken);
+            return request;
+        }
+
+        public RestRequest CreateGetProjectRequest(string projectKey)
+        {
+            return restRequestFactory.Create(String.Format("/rest/api/2/project/{0}", projectKey.Trim()), Method.Get);
+        }
+
+        public RestRequest CreateCreateSubtaskRequest(string projectKey, string parentKey, string summary, string issueTypeId)
+        {
+            var request = restRequestFactory.Create("/rest/api/2/issue", Method.Post);
+            request.RequestFormat = DataFormat.Json;
+            request.AddBody(new
+                {
+                    fields = new
+                    {
+                        project = new { key = projectKey.Trim() },
+                        parent = new { key = parentKey.Trim() },
+                        summary = summary,
+                        issuetype = new { id = issueTypeId }
+                    }
+                }
+            );
+            return request;
+        }
+
         public RestRequest CreateGetAvailableTransitions(string key)
         {
             var request = restRequestFactory.Create(String.Format("/rest/api/2/issue/{0}/transitions", key.Trim()), Method.Get);

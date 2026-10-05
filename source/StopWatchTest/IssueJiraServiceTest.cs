@@ -52,10 +52,10 @@ namespace StopWatchTest
             jira.SetupGet(j => j.SessionValid).Returns(true);
             jira.Setup(j => j.PostComment(It.IsAny<string>(), It.IsAny<string>()))
                 .Callback(() => calls.Add("comment"))
-                .Returns(true);
+                .Returns(JiraResult.Ok());
             jira.Setup(j => j.PostWorklog(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>(), It.IsAny<EstimateUpdateMethods>(), It.IsAny<string>()))
                 .Callback(() => calls.Add("worklog"))
-                .Returns(true);
+                .Returns(JiraResult<string>.Ok("10001"));
 
             settings = new Settings();
             service = new IssueJiraService(jira.Object, settings);
@@ -170,7 +170,7 @@ namespace StopWatchTest
         public async Task AFailedCommentStopsTheWorklog()
         {
             settings.PostWorklogComment = WorklogCommentSetting.WorklogAndComment;
-            jira.Setup(j => j.PostComment(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+            jira.Setup(j => j.PostComment(It.IsAny<string>(), It.IsAny<string>())).Returns(JiraResult.Fail(JiraFailureReason.Forbidden, "no"));
 
             PostWorklogResult result = await Post("some note");
 
@@ -184,7 +184,7 @@ namespace StopWatchTest
         public async Task AFailedCommentStopsTheReset()
         {
             settings.PostWorklogComment = WorklogCommentSetting.WorklogAndComment;
-            jira.Setup(j => j.PostComment(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+            jira.Setup(j => j.PostComment(It.IsAny<string>(), It.IsAny<string>())).Returns(JiraResult.Fail(JiraFailureReason.Forbidden, "no"));
 
             PostWorklogResult result = await Post("some note");
 
@@ -196,7 +196,7 @@ namespace StopWatchTest
         public async Task AFailedWorklogStopsTheReset()
         {
             settings.PostWorklogComment = WorklogCommentSetting.WorklogOnly;
-            jira.Setup(j => j.PostWorklog(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>(), It.IsAny<EstimateUpdateMethods>(), It.IsAny<string>())).Returns(false);
+            jira.Setup(j => j.PostWorklog(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>(), It.IsAny<EstimateUpdateMethods>(), It.IsAny<string>())).Returns(JiraResult<string>.Fail(JiraFailureReason.Forbidden, "no"));
 
             PostWorklogResult result = await Post("some note");
 

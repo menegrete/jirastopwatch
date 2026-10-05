@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace StopWatch
 {
@@ -39,8 +40,34 @@ namespace StopWatch
 
         TimetrackingFields GetIssueTimetracking(string key);
 
-        bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue);
+        /// <summary>Posts a worklog. On success the value is the id Jira gave it.</summary>
+        JiraResult<string> PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue);
 
-        bool PostComment(string key, string comment);
+        JiraResult PostComment(string key, string comment);
+
+        /// <summary>Every issue the JQL matches, across all result pages.</summary>
+        JiraResult<IReadOnlyList<JiraIssueInfo>> SearchIssues(string jql);
+
+        /// <summary>
+        /// The subtasks of <paramref name="parentKey"/>, with their summaries as
+        /// Jira has them.
+        ///
+        /// Built on search, which in Jira Cloud is eventually consistent: a subtask
+        /// created a moment ago may not be listed yet. Whoever creates one should
+        /// keep the key <see cref="CreateSubtask"/> returned instead of looking it
+        /// up again, or a retry will create it twice.
+        /// </summary>
+        JiraResult<IReadOnlyList<JiraIssueInfo>> GetSubtasks(string parentKey);
+
+        /// <summary>The subtask issue types a project offers; empty when it has none.</summary>
+        JiraResult<IReadOnlyList<JiraIssueType>> GetSubtaskTypes(string projectKey);
+
+        /// <summary>
+        /// Creates a subtask with the standard fields only: project, parent, summary
+        /// and type. A project that requires further fields fails with
+        /// <see cref="JiraFailureReason.Validation"/> naming them. On success the
+        /// value is the new key.
+        /// </summary>
+        JiraResult<string> CreateSubtask(string parentKey, string summary, string issueTypeId);
     }
 }

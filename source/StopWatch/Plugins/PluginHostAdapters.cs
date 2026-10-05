@@ -218,7 +218,7 @@ namespace StopWatch.Plugins
                 try
                 {
                     return jira.SessionValid
-                        && jira.PostWorklog(key, startTime, timeSpent, comment ?? "", EstimateUpdateMethods.Auto, "");
+                        && jira.PostWorklog(key, startTime, timeSpent, comment ?? "", EstimateUpdateMethods.Auto, "").Success;
                 }
                 catch (Exception ex)
                 {
@@ -234,7 +234,7 @@ namespace StopWatch.Plugins
             {
                 try
                 {
-                    return jira.SessionValid && jira.PostComment(key, comment ?? "");
+                    return jira.SessionValid && jira.PostComment(key, comment ?? "").Success;
                 }
                 catch (Exception ex)
                 {

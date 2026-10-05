@@ -130,5 +130,52 @@ namespace StopWatchTest
             });
         }
 
+        [TestCase(HttpStatusCode.OK)]
+        [TestCase(HttpStatusCode.Created)]
+        [Description("ThrowIfFailed: a successful response does not throw")]
+        public void ThrowIfFailed_OnSuccess_It_Does_Not_Throw(HttpStatusCode status)
+        {
+            Assert.DoesNotThrow(() => jiraApiRequester.ThrowIfFailed(new RestResponse { StatusCode = status }));
+        }
+
+
+        [TestCase(HttpStatusCode.Unauthorized)]
+        [TestCase(HttpStatusCode.BadRequest)]
+        [TestCase(HttpStatusCode.Forbidden)]
+        [TestCase(HttpStatusCode.NotFound)]
+        [Description("ThrowIfFailed: a failed response throws RequestDeniedException carrying its status and body")]
+        public void ThrowIfFailed_OnFailure_It_Carries_Status_And_Body(HttpStatusCode status)
+        {
+            var response = new RestResponse { StatusCode = status, Content = "{\"errorMessages\":[\"nope\"]}" };
+
+            var ex = Assert.Throws<RequestDeniedException>(() => jiraApiRequester.ThrowIfFailed(response));
+
+            Assert.That(ex.StatusCode, Is.EqualTo(status));
+            Assert.That(ex.ResponseContent, Is.EqualTo(response.Content));
+        }
+
+
+        [Test, Description("ThrowIfFailed: with no response at all the status is 0 and the network error is the inner exception")]
+        public void ThrowIfFailed_OnNetworkError_It_Keeps_The_Original_Exception()
+        {
+            var original = new System.Net.Http.HttpRequestException("connection refused");
+            var response = new RestResponse { ErrorException = original, ErrorMessage = "connection refused" };
+
+            var ex = Assert.Throws<RequestDeniedException>(() => jiraApiRequester.ThrowIfFailed(response));
+
+            Assert.That((int)ex.StatusCode, Is.EqualTo(0));
+            Assert.That(ex.InnerException, Is.SameAs(original));
+            Assert.That(jiraApiRequester.ErrorMessage, Is.EqualTo("connection refused"));
+        }
+
+
+        [Test, Description("ThrowIfFailed: a 401 leaves ErrorMessage as it was")]
+        public void ThrowIfFailed_On401_It_Leaves_ErrorMessage_Alone()
+        {
+            Assert.Throws<RequestDeniedException>(() => jiraApiRequester.ThrowIfFailed(new RestResponse { StatusCode = HttpStatusCode.Unauthorized, ErrorMessage = "ignored" }));
+
+            Assert.That(jiraApiRequester.ErrorMessage, Is.Empty);
+        }
+
     }
 }
