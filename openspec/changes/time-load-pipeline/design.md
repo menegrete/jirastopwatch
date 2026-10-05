@@ -30,7 +30,7 @@ What the code looks like today and constrains the approach:
 
 ### 1. `TimeLoadPipeline` in `Model/`, collaborators injected
 
-`TimeLoadPipeline` is an internal class constructed with: the original load (`IssueJiraService`), a registry of handlers and observers, a factory for the per-invocation scoped Jira API, a notifier for user notices, and a log delegate. It has no WPF types. `AppComposition` builds one instance; `MainWindow` and the plugin adapters both receive it from there.
+`TimeLoadPipeline` is an internal class constructed with: the original load (`IssueJiraService`), a registry of handlers and observers, the shared Jira API from which it builds the per-invocation scoped one, and a log delegate. It has no WPF types. `AppComposition` builds one instance; `MainWindow` and the plugin adapters both receive it from there. The notifier for user notices is a property, not a constructor argument: the pipeline is built in `AppComposition` before the main window exists, and `MainWindow` assigns the notifier when it is created. Left unassigned, notices are only logged.
 
 *Alternative:* put the stages inside `IssueJiraService`. Rejected: that class posts to Jira and knows nothing of plugins, and the issue asks for the `IssueJiraService` pattern, not its extension.
 
@@ -59,7 +59,7 @@ The pipeline reduces one consulted handler to an outcome, without touching UI or
 | Failed / exception | 0 | – | Fallback to original, visible | Reset if the fallback succeeds |
 | Failed / exception | >0 | – | Failed with writes: no fallback | Reduced by the measured time |
 
-The result object returned to `MainWindow` says: the outcome, the time the host measured as loaded, the kind of notice needed (none, non-modal, message box) and its text. `MainWindow` resets the timer on success and reduces it by the measured time on a partial load. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
+The result object returned to `MainWindow` says: the outcome, who handled the load, the number of writes, the time that is in Jira because of it (the confirmed total on success, otherwise the time the host measured) and a reason. It does not carry the notice: the pipeline sends it to the notifier itself (non-modal for the fallback, a message box for the serious cases, nothing for cancels), and only for loads the user started, so the window never has to decide what to say. `MainWindow` resets the timer on success and reduces it by the measured time on a partial load. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
 
 ### 5. Validation of `TimeLoaded` is against the confirmed total only
 
