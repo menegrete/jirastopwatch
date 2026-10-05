@@ -19,10 +19,11 @@ What the code looks like today and constrains the approach:
 - One pipeline in `Model/`, UI-agnostic, unit-testable with fakes, whose outcome for every combination of handler answer and write count is a function of its inputs only.
 - No behavior change when no plugin takes part.
 - Failure of a plugin never loses time silently and never loads the same time twice when it can be avoided.
+- After a partial load, the timer holds only what is not loaded, so a retry needs no help from the plugin to avoid loading the same time again.
 
 **Non-Goals:**
-- Verifying what a plugin actually wrote beyond its declared `TimeLoaded` and the write count.
-- Partial loads on purpose, a partial timer, or any way for a plugin to keep the timer from resetting.
+- Verifying what a plugin actually wrote beyond its declared `TimeLoaded`, the write count and the time of the worklogs it posted through `request.Jira`.
+- Partial loads on purpose, or any way for a plugin to keep the timer from resetting or to choose how much is subtracted.
 - Changing `WorklogWindow`.
 
 ## Decisions
@@ -43,32 +44,32 @@ The handler answers with a class (`InsteadOfResult`) built only through static f
 
 *Alternative:* `event Func<…, Task<InsteadOfResult>>`. Rejected: a multicast delegate only returns its last value and cannot carry the plugin id.
 
-### 4. Outcome is a pure function of (answer, writes, declared time)
+### 4. Outcome is a pure function of (answer, writes, measured time, declared time)
 
 The pipeline reduces one consulted handler to an outcome, without touching UI or Jira:
 
-| Answer | Writes | Declared vs confirmed | Outcome |
-|---|---|---|---|
-| Declined | 0 | – | Run original |
-| Declined | >0 | – | Failed with writes |
-| Handled | any | equal | Succeeded, reset timer |
-| Handled | any | different | Partial: no reset, notice |
-| Cancelled | 0 | – | Nothing |
-| Cancelled | >0 | – | Failed with writes (a cancel after writing is not a clean cancel) |
-| Failed / exception | 0 | – | Fallback to original, visible |
-| Failed / exception | >0 | – | Failed with writes: no fallback, no reset |
+| Answer | Writes | Declared vs confirmed | Outcome | Timer |
+|---|---|---|---|---|
+| Declined | 0 | – | Run original | Reset if it succeeds |
+| Declined | >0 | – | Failed with writes | Reduced by the measured time |
+| Handled | any | equal | Succeeded | Reset |
+| Handled | any | different | Partial: notice | Reduced by the measured time |
+| Cancelled | 0 | – | Nothing | Kept |
+| Cancelled | >0 | – | Failed with writes (a cancel after writing is not a clean cancel) | Reduced by the measured time |
+| Failed / exception | 0 | – | Fallback to original, visible | Reset if the fallback succeeds |
+| Failed / exception | >0 | – | Failed with writes: no fallback | Reduced by the measured time |
 
-The result object returned to `MainWindow` says only: `ResetTimer`, the kind of notice needed (none, non-modal, message box) and its text. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
+The result object returned to `MainWindow` says: the outcome, the time the host measured as loaded, the kind of notice needed (none, non-modal, message box) and its text. `MainWindow` resets the timer on success and reduces it by the measured time on a partial load. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
 
 ### 5. Validation of `TimeLoaded` is against the confirmed total only
 
-`Handled` is valid when the declared `TimeLoaded` equals the total the host passed in the request (whole minutes, as `TimeElapsedNearestMinute` already is). It is not cross-checked against the scoped API's counter, which counts writes, not time. Cross-checking would need the counter to sum time and would still trust the plugin about which writes were meant to cover the load.
+`Handled` is valid when the declared `TimeLoaded` equals the total the host passed in the request (whole minutes, as `TimeElapsedNearestMinute` already is). It is not cross-checked against the measured time: a plugin can post worklogs by other means (through `host.Jira`, for instance), which the counter does not see, so a mismatch between declared and measured would not prove anything. The measured time is used for one thing only: how much to take off the timer after a partial load (decision 13).
 
 *Trade-off:* a plugin can declare the right total and write something else. The host does not claim to catch that.
 
 ### 6. The scoped Jira API is a counting decorator, passed in the request
 
-For each `InsteadOf` invocation the pipeline builds a fresh decorator over the shared `PluginJiraApi`. It counts a write only when the underlying call reports success (`AddWorklogAsync` true, `CreateSubtaskAsync` non-null key). It is per invocation, so concurrent loads never share a counter.
+For each `InsteadOf` invocation the pipeline builds a fresh decorator over the shared `PluginJiraApi`. It counts a write only when the underlying call reports success (`AddWorklogAsync` true, `CreateSubtaskAsync` non-null key), and adds up the time of each accepted worklog: that sum is the time the host measures as loaded. It is per invocation, so concurrent loads never share a counter. The time comes from what Jira accepted, not from what the plugin declares, so a plugin cannot make the host subtract more or less than was written.
 
 *Rejected alternative:* an ambient counter (`AsyncLocal`) so that `host.Jira` also counts. It would catch plugins that ignore `request.Jira`, but it is implicit, leaks into background work the plugin starts, and is hard to test. The cost is a documented footgun: writes through `host.Jira` inside a handler are not counted, so a later failure would fall back and may load the time twice. `docs/plugins.md` and the `SplitTime` sample say to use `request.Jira` inside the handler.
 
@@ -100,16 +101,28 @@ Notices are shown **only for loads whose source is the user**. A load started by
 
 `IJiraApi` gains: an `AddWorklogAsync` overload taking the estimate method and value; `GetSubtasksAsync(parentKey)` returning public descriptions (key, summary) or `null` on failure; `CreateSubtaskAsync(parentKey, summary)` returning the new key or `null`. The host resolves the issue type id itself: it asks `GetSubtaskTypes` for the parent's project and uses the first type, failing if the project offers none. `PluginContract.ContractVersion` and the Abstractions `<Version>` move to 1.1; the existing compatibility check already makes 1.0 plugins load on a 1.1 host and the reverse not.
 
-### 13. The timer is reset after a possibly long interaction
+### 13. The timer after a load: reset on success, reduced on a partial load
 
-The elapsed time is read once, when the dialog closes, and carried in the request, as today. If a plugin dialog takes minutes while the timer runs, the reset at the end also discards the time accrued meanwhile. This is the same behavior the app has with a slow Jira request, only longer. Fixing it would mean a partial timer, which is out of scope.
+The elapsed time is read once, when the dialog closes, and carried in the request, as today. On **success** the timer is reset, as today. If a plugin dialog takes minutes while the timer runs, that reset also discards the time accrued meanwhile, the same behavior as a slow Jira request, only longer; this is accepted.
+
+On a **partial load** (a failure, a decline or a cancel after writes, or a handled load whose time does not match) the timer is not reset: the host reduces it by the time the counting decorator measured. This is what lets a retry load only what is missing, and what makes the fallback on a retry that fails before writing load the remainder instead of the whole time.
+
+- *How:* through the same path as the "Edit Timer" action (`IssueViewModel.SetTimeElapsed`), so the row's notifications stay consistent. The new value is the timer's value **at that moment** minus the measured time, never below zero. That value includes whatever accrued while the handler waited, and a running timer keeps running.
+- *Start time:* the recorded start time is kept untouched. The worklog dialog proposes it again for the retry (or "now minus what remains" when that is earlier, as it does today), and the user can edit it there. Advancing it by the loaded time would be more faithful, but it does not apply to a timer whose time was edited by hand, and it adds a second rule for little gain.
+- *Comment and estimate:* kept on the row as the user left them, and shown again by the dialog, so the user can adjust them. An estimate of "Reduce by" is applied again to the remainder; the dialog is where the user sees and corrects that.
+- *Rounding:* each attempt rounds the timer up to a whole minute, so a chain of partial loads can load up to a minute more than the user tracked. Accepted.
+- *Notice:* the message box says how much was loaded and how much remains in the timer, because the timer no longer shows what the user tracked.
+
+*Alternative:* the plugin recognizes the retry as "the same load" (a hash of issue, start and elapsed time kept in its data directory). Rejected after trying it against the running application: the start time of a timer edited by hand is recalculated as "now minus elapsed" on every dialog, and the elapsed time of a running timer keeps growing, so neither is stable between attempts. It also worked per plugin and left the fallback hole open (a retry that failed before writing looked like a failure with no writes and loaded the whole time again).
 
 ## Risks / Trade-offs
 
 - [Plugin writes through `host.Jira` instead of `request.Jira`] → Not counted, so a failure falls back and may double-load. Documented; the sample follows the rule. Detectable only by convention.
 - [Plugin declares the right `TimeLoaded` but wrote something else] → Not caught. The host validates the declaration, not the writes.
-- [Retry after a partial failure] → The timer is not reset, so the user retries with the same button and the plugin sees the same load again. The plugin must be idempotent (key, start and elapsed hash stored in its data directory); the host promises nothing about it.
-- [Time accrued during a long plugin dialog is lost on reset] → See decision 13; documented.
+- [Writes made through `host.Jira` are not measured] → The timer is reduced by less than what was written, so a retry may load some time twice. Same cause and same mitigation as the counting risk above: use `request.Jira`.
+- [The timer stops showing what the user tracked after a partial load] → The message box says how much was loaded and how much remains, and the log has it.
+- [Each retry rounds up to a whole minute] → A chain of partial loads can load up to a minute more than tracked. Accepted; see decision 13.
+- [Time accrued during a long plugin dialog is lost on a successful reset] → See decision 13; documented.
 - [Fallback notice is missed] → Kept until dismissed or the next load, plus the log. Acceptable: the time was loaded.
 - [Two message boxes at once from simultaneous loads on different issues] → Possible but rare; each is about a different issue and its text names it.
 - [`IPluginHost` gains members] → Plugins consume it, they do not implement it, so it is additive for them.

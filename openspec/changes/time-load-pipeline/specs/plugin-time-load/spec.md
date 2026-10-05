@@ -32,15 +32,19 @@ A handler SHALL answer one of: declined (not for it), handled (with the time it 
 - **THEN** the host treats it as a failure and logs the exception
 
 ### Requirement: The scoped Jira API counts writes
-The Jira API passed to a handler SHALL count the writes (worklogs and subtasks) that succeeded during that invocation. The host SHALL use that count to choose between fallback and no fallback. Calls made through it SHALL NOT trigger the pipeline.
+The Jira API passed to a handler SHALL count the writes (worklogs and subtasks) that succeeded during that invocation, and SHALL add up the time of the worklogs Jira accepted. The host SHALL use the count to choose between fallback and no fallback, and the time to reduce the timer after a partial load. Calls made through it SHALL NOT trigger the pipeline.
 
 #### Scenario: Counting
 - **WHEN** a handler adds two worklogs and creates a subtask, all accepted by Jira
 - **THEN** the host sees three writes for that invocation
 
+#### Scenario: Adding up the time
+- **WHEN** a handler adds worklogs of 3 and 2 minutes accepted by Jira
+- **THEN** the host measures 5 minutes loaded for that invocation, whatever the handler reports
+
 #### Scenario: Failed write
 - **WHEN** a write through the scoped API is rejected by Jira
-- **THEN** it is not counted
+- **THEN** it is not counted and its time is not added
 
 ### Requirement: Raw posting does not enter the pipeline
 Posting a worklog through the Jira API SHALL be a raw operation: it SHALL NOT run replacement handlers nor notify observers. A worklog post SHALL accept an estimate update method and value, so a plugin that handles a load can respect what the user chose.

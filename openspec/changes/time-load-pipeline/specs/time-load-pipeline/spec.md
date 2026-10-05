@@ -36,7 +36,7 @@ When every consulted handler declines and made no writes, the host SHALL run the
 - **THEN** the original load runs as if no plugin existed
 
 ### Requirement: A handled load replaces the original and is validated
-When a handler reports the load as handled, the host SHALL NOT run the original load and SHALL NOT post the comment itself. The handler reports the time it loaded; if that equals the total the user confirmed, the host SHALL reset the timer. Otherwise the host SHALL NOT reset the timer and SHALL tell the user, in a message box, the time loaded and the time confirmed.
+When a handler reports the load as handled, the host SHALL NOT run the original load and SHALL NOT post the comment itself. The handler reports the time it loaded; if that equals the total the user confirmed, the host SHALL reset the timer. Otherwise the host SHALL NOT reset the timer, SHALL reduce it by the time actually loaded and SHALL tell the user, in a message box, the time loaded and the time that remains in the timer.
 
 #### Scenario: Handled completely
 - **WHEN** a handler reports the load as handled with a loaded time equal to the confirmed total
@@ -44,7 +44,7 @@ When a handler reports the load as handled, the host SHALL NOT run the original 
 
 #### Scenario: Handled but time does not match
 - **WHEN** a handler reports the load as handled with a loaded time different from the confirmed total
-- **THEN** the original load does not run, the timer is not reset and a message box says how much was loaded and how much was confirmed
+- **THEN** the original load does not run, the timer is not reset but reduced by the time actually loaded, and a message box says how much was loaded and how much remains in the timer
 
 ### Requirement: A cancelled load changes nothing
 When a handler reports that the user cancelled in the plugin's own dialog and made no writes, the host SHALL NOT run the original load, SHALL NOT reset the timer and SHALL NOT show a failure notice. Cancelling is different from declining: it SHALL NOT cause the full total to be loaded.
@@ -65,11 +65,41 @@ When a handler reports failure or throws, and made no writes, the host SHALL run
 - **THEN** the original load runs, the failure is logged and a non-modal notice says the plugin failed and the standard load was used
 
 ### Requirement: A failure after writes does not fall back
-When a handler reports failure or throws after having made one or more writes, the host SHALL NOT run the original load, SHALL NOT reset the timer and SHALL tell the user, in a message box, how many writes were made before the failure.
+When a handler reports failure or throws after having made one or more writes, the host SHALL NOT run the original load, SHALL NOT reset the timer, SHALL reduce it by the time actually loaded and SHALL tell the user, in a message box, how many writes were made, how much time was loaded and how much remains in the timer.
 
 #### Scenario: Partial failure
 - **WHEN** a handler fails after some of its writes succeeded
-- **THEN** the original load does not run, the timer is not reset and a message box reports the writes already made
+- **THEN** the original load does not run, the timer is not reset but reduced by the time those writes loaded, and a message box reports the writes made, the time loaded and the time that remains
+
+### Requirement: The timer keeps only what is not loaded
+When a load ends with time written to Jira but not completed (a failure after writes, a declined or cancelled load after writes, or a handled load whose time does not match the total), the host SHALL reduce the timer by the time the host measured as loaded, never below zero. It SHALL NOT reset the timer: the running or paused state and the recorded start time SHALL be kept, and a running timer SHALL be reduced from its value at that moment. The timer SHALL be reset only when the load succeeded. The comment and the estimate the user chose SHALL be kept for the retry.
+
+#### Scenario: Reduced by the measured time
+- **WHEN** a handler loads 4 of 7 minutes and then fails
+- **THEN** the timer holds 3 minutes and keeps its recorded start time
+
+#### Scenario: Running timer
+- **WHEN** the timer was running during the handler's dialog and the load ends after writing
+- **THEN** the timer is reduced from its value at that moment and keeps running
+
+#### Scenario: Never below zero
+- **WHEN** the time measured as loaded is greater than what the timer holds
+- **THEN** the timer holds zero
+
+#### Scenario: Not trusting the plugin
+- **WHEN** a handler declares a loaded time different from what its writes through the host's Jira API added up to
+- **THEN** the timer is reduced by the time the host measured
+
+### Requirement: A retry loads only the remainder
+After a partial load the user SHALL be able to load again from the same timer, and the retry SHALL load only the time the timer still holds, including when it falls back to the original load.
+
+#### Scenario: Retry completes the load
+- **WHEN** a load failed after writing 4 of 7 minutes and the user loads again and a handler completes the remaining 3
+- **THEN** 7 minutes in total are loaded and the timer is reset
+
+#### Scenario: Retry that fails before writing anything new
+- **WHEN** a load failed after writing 4 of 7 minutes and the retry fails before writing
+- **THEN** the original load runs for the 3 minutes the timer holds, not for 7
 
 ### Requirement: Declining after writing is a contract violation
 When a handler declines after having made one or more writes, the host SHALL treat it as a failure with writes.
@@ -104,7 +134,7 @@ The host SHALL wait for a handler for as long as it takes, since it may be waiti
 - **THEN** the host keeps waiting and applies the result when it arrives
 
 ### Requirement: Observers are notified of the outcome
-After every load attempt that reached the pipeline, the host SHALL notify the observers with what was loaded, who handled it (the host or a plugin id), whether it succeeded, the reason, and the number of writes made. Observers SHALL NOT be able to veto or modify the load. An observer that throws SHALL be logged and SHALL NOT affect the load or the other observers.
+After every load attempt that reached the pipeline, the host SHALL notify the observers with what was loaded (the confirmed total when the load succeeded, otherwise the time the host measured, zero when nothing was), who handled it (the host or a plugin id), whether it succeeded, the reason, and the number of writes made. Observers SHALL NOT be able to veto or modify the load. An observer that throws SHALL be logged and SHALL NOT affect the load or the other observers.
 
 #### Scenario: Load handled by the host
 - **WHEN** the original load completes
