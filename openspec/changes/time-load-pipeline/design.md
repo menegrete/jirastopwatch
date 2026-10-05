@@ -29,7 +29,7 @@ What the code looks like today and constrains the approach:
 
 ### 1. `TimeLoadPipeline` in `Model/`, collaborators injected
 
-`TimeLoadPipeline` is an internal class constructed with: the original load (`IssueJiraService`), a registry of handlers and observers, a factory for the per-invocation scoped Jira API, a notifier for visible notices, and a log delegate. It has no WPF types. `AppComposition` builds one instance; `MainWindow` and the plugin adapters both receive it from there.
+`TimeLoadPipeline` is an internal class constructed with: the original load (`IssueJiraService`), a registry of handlers and observers, a factory for the per-invocation scoped Jira API, a notifier for user notices, and a log delegate. It has no WPF types. `AppComposition` builds one instance; `MainWindow` and the plugin adapters both receive it from there.
 
 *Alternative:* put the stages inside `IssueJiraService`. Rejected: that class posts to Jira and knows nothing of plugins, and the issue asks for the `IssueJiraService` pattern, not its extension.
 
@@ -58,7 +58,7 @@ The pipeline reduces one consulted handler to an outcome, without touching UI or
 | Failed / exception | 0 | – | Fallback to original, visible |
 | Failed / exception | >0 | – | Failed with writes: no fallback, no reset |
 
-The result object returned to `MainWindow` says only: `ResetTimer`, whether a notice is needed and its text. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
+The result object returned to `MainWindow` says only: `ResetTimer`, the kind of notice needed (none, non-modal, message box) and its text. Tests assert on this table row by row, with a fake handler, a fake original and a fake notifier. The row *Cancelled with writes* is not in the issue; it follows the same logic as *Declined with writes* and closes a gap in the table.
 
 ### 5. Validation of `TimeLoaded` is against the confirmed total only
 
@@ -88,9 +88,13 @@ Handlers may open WPF windows. `MainWindow` starts the pipeline from the UI thre
 
 `ITimeLoader.LoadAsync` called while a replacement handler is running (tracked with an `AsyncLocal` flag set by the pipeline for the handler's duration) skips the replacement stage: the original load and the observers still run. This prevents `A → B → A` recursion. A load a plugin starts outside a handler, from a command for example, goes through the full pipeline, with its own handler excluded.
 
-### 11. Notices: status bar plus log, tray balloon when the window is hidden
+### 11. Notices: non-modal for the fallback, a message box for the serious cases
 
-The notifier writes a message to a new label in the status bar, themed with the existing brushes, kept until the user clicks it or the next load starts, and logs the same text. When the main window is not visible (the mini timer view hides it), it also raises a tray balloon. A modal `MessageBox` is not used: it contradicts the non-modal requirement and blocks the thing the user is trying to finish.
+Severity decides the channel. The **fallback** is informational (the time was loaded) and the issue asks for it to be non-modal: a short line in a new status bar label, themed with the existing brushes, with the detail in a tooltip, kept until the user clicks it or the next load starts. A **partial failure** and a **`TimeLoaded` mismatch** leave time written in Jira and the timer running, and the user has to read them before retrying or risk loading twice, so they use a `MessageBox` with the full text, matching how the app already reports errors (connection error, plugin error). Everything is also logged.
+
+Notices are shown **only for loads whose source is the user**. A load started by a plugin through `ITimeLoader` returns its outcome to that plugin and only logs, so a plugin that imports many entries cannot flood the user with dialogs. The notifier decides the message box owner: the main window when it is visible, otherwise none, so a box raised while the mini view hides the main window still appears. A tray balloon is not needed.
+
+*Alternative:* a status bar label for everything. Rejected for the serious cases: an easy-to-miss line is the wrong channel for something that can double-load time on retry. *Alternative:* a message box for everything. Rejected for the fallback: a broken plugin would interrupt every load with a modal, and the issue asks for non-modal there.
 
 ### 12. Contract 1.1 surface
 
@@ -106,13 +110,10 @@ The elapsed time is read once, when the dialog closes, and carried in the reques
 - [Plugin declares the right `TimeLoaded` but wrote something else] → Not caught. The host validates the declaration, not the writes.
 - [Retry after a partial failure] → The timer is not reset, so the user retries with the same button and the plugin sees the same load again. The plugin must be idempotent (key, start and elapsed hash stored in its data directory); the host promises nothing about it.
 - [Time accrued during a long plugin dialog is lost on reset] → See decision 13; documented.
-- [Status bar notice is missed] → Kept until dismissed, plus the log, plus a tray balloon when the window is hidden.
+- [Fallback notice is missed] → Kept until dismissed or the next load, plus the log. Acceptable: the time was loaded.
+- [Two message boxes at once from simultaneous loads on different issues] → Possible but rare; each is about a different issue and its text names it.
 - [`IPluginHost` gains members] → Plugins consume it, they do not implement it, so it is additive for them.
 
 ## Migration Plan
 
 No data or settings migration. Existing 1.0 plugins keep working. Rolling back is removing the pipeline wiring in `MainWindow` and returning to the direct `IssueJiraService` call; the Abstractions additions are harmless if left.
-
-## Open Questions
-
-- Wording and styling of the status bar notice, and whether the click-to-dismiss behavior is enough. It does not affect the specs or the task breakdown.

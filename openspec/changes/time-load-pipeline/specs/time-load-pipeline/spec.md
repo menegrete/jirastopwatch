@@ -36,7 +36,7 @@ When every consulted handler declines and made no writes, the host SHALL run the
 - **THEN** the original load runs as if no plugin existed
 
 ### Requirement: A handled load replaces the original and is validated
-When a handler reports the load as handled, the host SHALL NOT run the original load and SHALL NOT post the comment itself. The handler reports the time it loaded; if that equals the total the user confirmed, the host SHALL reset the timer. Otherwise the host SHALL NOT reset the timer and SHALL show a visible, non-modal notice stating the time loaded and the time confirmed.
+When a handler reports the load as handled, the host SHALL NOT run the original load and SHALL NOT post the comment itself. The handler reports the time it loaded; if that equals the total the user confirmed, the host SHALL reset the timer. Otherwise the host SHALL NOT reset the timer and SHALL tell the user, in a message box, the time loaded and the time confirmed.
 
 #### Scenario: Handled completely
 - **WHEN** a handler reports the load as handled with a loaded time equal to the confirmed total
@@ -44,7 +44,7 @@ When a handler reports the load as handled, the host SHALL NOT run the original 
 
 #### Scenario: Handled but time does not match
 - **WHEN** a handler reports the load as handled with a loaded time different from the confirmed total
-- **THEN** the original load does not run, the timer is not reset and a visible notice says how much was loaded and how much was confirmed
+- **THEN** the original load does not run, the timer is not reset and a message box says how much was loaded and how much was confirmed
 
 ### Requirement: A cancelled load changes nothing
 When a handler reports that the user cancelled in the plugin's own dialog and made no writes, the host SHALL NOT run the original load, SHALL NOT reset the timer and SHALL NOT show a failure notice. Cancelling is different from declining: it SHALL NOT cause the full total to be loaded.
@@ -58,18 +58,18 @@ When a handler reports that the user cancelled in the plugin's own dialog and ma
 - **THEN** the host behaves as for a failure after writes
 
 ### Requirement: A failing handler falls back only if it wrote nothing
-When a handler reports failure or throws, and made no writes, the host SHALL run the original load. The fallback SHALL always be visible: a log entry and a non-modal notice naming the plugin.
+When a handler reports failure or throws, and made no writes, the host SHALL run the original load. The fallback SHALL always be visible, without blocking the user: a log entry and a non-modal notice naming the plugin.
 
 #### Scenario: Failure before writing
 - **WHEN** a handler fails or throws before making any write
-- **THEN** the original load runs, the failure is logged and a visible notice says the plugin failed and the standard load was used
+- **THEN** the original load runs, the failure is logged and a non-modal notice says the plugin failed and the standard load was used
 
 ### Requirement: A failure after writes does not fall back
-When a handler reports failure or throws after having made one or more writes, the host SHALL NOT run the original load, SHALL NOT reset the timer and SHALL show a visible notice stating how many writes were made before the failure.
+When a handler reports failure or throws after having made one or more writes, the host SHALL NOT run the original load, SHALL NOT reset the timer and SHALL tell the user, in a message box, how many writes were made before the failure.
 
 #### Scenario: Partial failure
 - **WHEN** a handler fails after some of its writes succeeded
-- **THEN** the original load does not run, the timer is not reset and a notice reports the writes already made
+- **THEN** the original load does not run, the timer is not reset and a message box reports the writes already made
 
 ### Requirement: Declining after writing is a contract violation
 When a handler declines after having made one or more writes, the host SHALL treat it as a failure with writes.
@@ -135,3 +135,14 @@ While a load for an issue is in progress, the host SHALL ignore a new request to
 #### Scenario: Second request while a plugin dialog is open
 - **WHEN** a load for an issue is waiting for a plugin and the user asks to load time for that issue again
 - **THEN** the second request is ignored and the first continues
+
+### Requirement: Notices are only shown for loads started by the user
+The host SHALL show the fallback notice and the message boxes only for loads whose source is the user. For a load started by a plugin, the host SHALL return the outcome to that plugin and SHALL NOT show any notice, though it SHALL still log it.
+
+#### Scenario: Plugin-initiated load fails
+- **WHEN** a load started by a plugin through the host's time loader ends in a failure after writes
+- **THEN** no message box is shown, the outcome is returned to the plugin and the failure is logged
+
+#### Scenario: Many plugin-initiated loads
+- **WHEN** a plugin loads many entries through the host's time loader and several fail
+- **THEN** the user is not shown one message per failure

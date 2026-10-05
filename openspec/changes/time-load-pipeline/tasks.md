@@ -36,8 +36,10 @@
 - [ ] 5.1 Replace the direct `IssueJiraService` call in `MainWindow.PostWorklogAsync` with the pipeline, reading the elapsed time once and carrying it in the request, and reset the timer from the pipeline's result; verify with no plugin that posting a worklog still resets the timer only on success
 - [ ] 5.2 Move the wait cursor to the busy callback so it is not set while a plugin handler is running; verify manually with a handler that waits that the cursor stays normal
 - [ ] 5.3 Ignore a new post request for an issue whose load is in progress; verify manually that a second post on the same issue while a plugin dialog is open does nothing
-- [ ] 5.4 Add the status bar notice label (themed, kept until clicked or the next load, text logged) and the tray balloon when the main window is not visible; verify manually by forcing a fallback and a partial failure in both light and dark themes with the window visible and hidden
-- [ ] 5.5 Document the pipeline, results table, fallback rule, `Source`, raw API versus `ITimeLoader`, the `request.Jira` rule and the idempotency pattern in `docs/plugins.md`; verify every row of the specs' outcome table appears in the document
+- [ ] 5.4 Add the non-modal status bar label for the fallback (short line, detail in the tooltip, themed, kept until clicked or the next load) and verify manually by forcing a fallback in both light and dark themes
+- [ ] 5.5 Show a message box for a partial failure and a `TimeLoaded` mismatch, owned by the main window only when it is visible; verify manually by forcing both, with the window visible and with the mini view hiding it
+- [ ] 5.6 Show notices only for loads whose source is the user and log the rest; verify with a unit test that a plugin-sourced failure produces no notice request, and that a user-sourced one does for each kind
+- [ ] 5.7 Document the pipeline, results table, fallback rule, `Source`, raw API versus `ITimeLoader`, the `request.Jira` rule and the idempotency pattern in `docs/plugins.md`; verify every row of the specs' outcome table appears in the document
 
 ## 6. SplitTime sample
 
