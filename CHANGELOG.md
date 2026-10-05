@@ -11,6 +11,13 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.11.0](https://github.com/menegrete/jirastopwatch/compare/v3.10.0...v3.11.0) (2026-10-05)
+
+### Added
+
+* add time-load pipeline with InsteadOf and After events for plugins ([e12822b](https://github.com/menegrete/jirastopwatch/commit/e12822b471f99d6372713ae776eac8783fcfc64d))
+* reduce the timer by the time a partial load wrote, and drop SplitTime's retry ledger ([bc395cd](https://github.com/menegrete/jirastopwatch/commit/bc395cd12c9a232c748405f9c6417f9f0f29e69c))
+
 ## [3.10.0](https://github.com/menegrete/jirastopwatch/compare/v3.9.0...v3.10.0) (2026-10-05)
 
 ### Added
