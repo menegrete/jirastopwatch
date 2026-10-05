@@ -90,12 +90,11 @@ namespace StopWatch.Plugins
                 Action<string, Exception> log = (message, ex) => Logger.Instance.Log(message, ex);
 
                 var issues = new PluginIssueList(composition.Issues, composition.ActiveTimer, log);
-                var jira = new PluginJiraApi(composition.JiraService, composition.JiraClient, log);
 
                 var loader = new PluginLoader(
                     pluginsFolders,
                     PluginContract.ContractVersion,
-                    id => new PluginHost(id, dataFolder, mainWindow, issues, jira, log),
+                    id => new PluginHost(id, dataFolder, mainWindow, issues, composition.PluginJira, new PluginTimeLoad(id, composition.TimeLoadRegistry), new PluginTimeLoader(id, composition.TimeLoad), log),
                     log);
 
                 return new PluginManager(loader.LoadAll());

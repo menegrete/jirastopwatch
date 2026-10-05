@@ -4,6 +4,7 @@ namespace StopWatchTest
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
     using Moq;
     using NUnit.Framework;
     using StopWatch.Plugin;
@@ -22,6 +23,7 @@ namespace StopWatchTest
         private string root;
         private IReadOnlyList<PluginInfo> loaded;
         private List<string> logged;
+        private int registeredHandlers;
 
         [OneTimeSetUp]
         public void LoadSamples()
@@ -31,6 +33,7 @@ namespace StopWatchTest
 
             CopyDirectory(SampleOutput("HelloWorld"), Path.Combine(root, "HelloWorld"));
             CopyDirectory(SampleOutput("HelloSqlite"), Path.Combine(root, "HelloSqlite"));
+            CopyDirectory(SampleOutput("SplitTime"), Path.Combine(root, "SplitTime"));
 
             // A plugin that is broken on purpose, sorted between the two.
             string broken = Path.Combine(root, "Broken");
@@ -41,6 +44,13 @@ namespace StopWatchTest
             var logger = new Mock<IPluginLogger>();
             var host = new Mock<IPluginHost>();
             host.SetupGet(h => h.Logger).Returns(logger.Object);
+
+            // SplitTime registers a time-load handler and keeps a ledger in its data folder.
+            var timeLoad = new Mock<IPluginTimeLoad>();
+            timeLoad.Setup(t => t.RegisterInsteadOf(It.IsAny<Func<TimeLoadRequest, Task<InsteadOfResult>>>()))
+                .Callback<Func<TimeLoadRequest, Task<InsteadOfResult>>>(h => registeredHandlers++);
+            host.SetupGet(h => h.TimeLoad).Returns(timeLoad.Object);
+            host.SetupGet(h => h.DataDirectory).Returns(Path.Combine(root, "data"));
 
             var loader = new PluginLoader(new[] { root }, PluginContract.ContractVersion, id => host.Object, (m, e) => logged.Add(m));
             loaded = loader.LoadAll();
@@ -70,7 +80,7 @@ namespace StopWatchTest
         [Test]
         public void LoadsInIdOrder()
         {
-            Assert.That(loaded.Select(p => p.Id), Is.EqualTo(new[] { "Broken", "HelloSqlite", "HelloWorld" }));
+            Assert.That(loaded.Select(p => p.Id), Is.EqualTo(new[] { "Broken", "HelloSqlite", "HelloWorld", "SplitTime" }));
         }
 
 
@@ -92,6 +102,17 @@ namespace StopWatchTest
 
             Assert.That(info.IsLoaded, Is.True, info.Reason);
             Assert.That(info.Commands.Select(c => c.Command.Id), Is.EqualTo(new[] { "run-query" }));
+        }
+
+
+        [Test]
+        public void SplitTime_LoadsAndRegistersItsHandlerWithoutCommands()
+        {
+            PluginInfo info = Plugin("SplitTime");
+
+            Assert.That(info.IsLoaded, Is.True, info.Reason);
+            Assert.That(info.Commands, Is.Empty);
+            Assert.That(registeredHandlers, Is.EqualTo(1));
         }
 
 

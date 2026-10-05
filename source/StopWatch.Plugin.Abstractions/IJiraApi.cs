@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace StopWatch.Plugin
@@ -20,6 +21,39 @@ namespace StopWatch.Plugin
     }
 
 
+    /// <summary>How Jira should adjust an issue's remaining estimate when a worklog is added.</summary>
+    public enum PluginEstimateUpdate
+    {
+        /// <summary>Jira reduces the estimate by the time spent.</summary>
+        Auto,
+
+        /// <summary>The estimate is left as it is.</summary>
+        Leave,
+
+        /// <summary>The estimate is set to the value given with it.</summary>
+        SetTo,
+
+        /// <summary>The estimate is reduced by the value given with it.</summary>
+        ManualDecrease
+    }
+
+
+    /// <summary>A subtask of an issue.</summary>
+    public sealed class PluginSubtask
+    {
+        public PluginSubtask(string key, string summary)
+        {
+            Key = key;
+            Summary = summary;
+        }
+
+        public string Key { get; }
+
+        /// <summary>Jira's own summary, not composed with the parent's.</summary>
+        public string Summary { get; }
+    }
+
+
     /// <summary>
     /// The Jira operations a plugin can use. They run with the host's own
     /// session; the API token is not reachable from here. Each method reports
@@ -33,8 +67,31 @@ namespace StopWatch.Plugin
         /// <summary>The remaining estimate of an issue, or null when it could not be read.</summary>
         Task<PluginTimeTracking> GetTimeTrackingAsync(string key);
 
-        /// <summary>Adds a worklog; true when Jira accepted it.</summary>
+        /// <summary>
+        /// Adds a worklog; true when Jira accepted it. This is the raw
+        /// operation: it does not run time-load handlers nor notify
+        /// observers, so a handler can use it without intercepting itself.
+        /// The estimate is updated automatically.
+        /// </summary>
         Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment);
+
+        /// <summary>
+        /// Adds a worklog with the estimate update the user chose, so a
+        /// handler that takes over a load can honor it. Raw, like the
+        /// overload without an estimate.
+        /// </summary>
+        Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment, PluginEstimateUpdate estimateUpdate, string estimateValue);
+
+        /// <summary>The subtasks of an issue, or null when they could not be read.</summary>
+        Task<IReadOnlyList<PluginSubtask>> GetSubtasksAsync(string parentKey);
+
+        /// <summary>
+        /// Creates a subtask with only a summary, using the first subtask
+        /// type the parent's project offers. Returns the new key, or null
+        /// when it could not be created. Keep the key: creating again after
+        /// a lost answer creates a second subtask.
+        /// </summary>
+        Task<string> CreateSubtaskAsync(string parentKey, string summary);
 
         /// <summary>Adds a comment; true when Jira accepted it.</summary>
         Task<bool> AddCommentAsync(string key, string comment);

@@ -13,7 +13,7 @@ namespace StopWatch.Plugin
     public static class PluginContract
     {
         /// <summary>The contract version this assembly describes.</summary>
-        public static readonly Version ContractVersion = new Version(1, 0);
+        public static readonly Version ContractVersion = new Version(1, 1);
 
 
         /// <summary>

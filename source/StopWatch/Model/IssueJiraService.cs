@@ -81,7 +81,7 @@ namespace StopWatch
     /// read their own input back out of controls on the UI thread and could not
     /// be tested at all. Nothing here knows about controls or windows.
     /// </summary>
-    internal class IssueJiraService
+    internal class IssueJiraService : IWorklogPoster
     {
         #region public methods
         public IssueJiraService(IJiraOperations jira, Settings settings)

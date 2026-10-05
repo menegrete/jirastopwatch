@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using StopWatch.Logging;
+using StopWatch.Plugins;
 
 namespace StopWatch
 {
@@ -25,6 +27,12 @@ namespace StopWatch
 
             JiraService = new IssueJiraService(JiraClient, settings);
 
+            Action<string, Exception> log = (message, ex) => Logger.Instance.Log(message, ex);
+
+            PluginJira = new PluginJiraApi(JiraService, JiraClient, log);
+            TimeLoadRegistry = new TimeLoadRegistry();
+            TimeLoad = new TimeLoadPipeline(JiraService, TimeLoadRegistry, PluginJira, log);
+
             Issues = new IssueListViewModel(settings);
 
             ActiveTimer = new ActiveTimerViewModel(() => Issues.Issues.Cast<ITimerSource>());
@@ -38,6 +46,13 @@ namespace StopWatch
         public JiraClient JiraClient { get; private set; }
 
         public IssueJiraService JiraService { get; private set; }
+
+        /// <summary>The Jira API plugins use. Shared, so the pipeline can count writes made through it.</summary>
+        public PluginJiraApi PluginJira { get; private set; }
+
+        public TimeLoadRegistry TimeLoadRegistry { get; private set; }
+
+        public TimeLoadPipeline TimeLoad { get; private set; }
 
         public IssueListViewModel Issues { get; private set; }
 

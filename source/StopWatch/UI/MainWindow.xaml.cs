@@ -72,6 +72,8 @@ namespace StopWatch
             restClientFactory = composition.RestClientFactory;
             jiraClient = composition.JiraClient;
             jiraService = composition.JiraService;
+            timeLoad = composition.TimeLoad;
+            timeLoad.Notifier = new TimeLoadNotifier(this);
 
             issues = composition.Issues;
             issues.TimerStarted += issues_TimerStarted;
@@ -1566,6 +1568,11 @@ namespace StopWatch
             if (issue == null || !issue.CanPost)
                 return;
 
+            // A plugin may be holding an earlier load of this issue open, with
+            // its own dialog and no timeout: do not start a second one.
+            if (loadingIssues.Contains(issue))
+                return;
+
             var dialog = new WorklogWindow(
                 issue.WatchTimer.GetInitialStartTime(),
                 issue.WatchTimer.TimeElapsedNearestMinute,
@@ -1609,25 +1616,111 @@ namespace StopWatch
 
         private async Task PostWorklogAsync(IssueViewModel issue, DateTimeOffset startTime)
         {
-            Cursor previous = Cursor;
-            Cursor = Cursors.Wait;
+            ClearTimeLoadNotice();
 
+            var input = new TimeLoadInput
+            {
+                IssueKey = issue.IssueKey,
+                StartTime = startTime,
+                TimeElapsed = issue.WatchTimer.TimeElapsedNearestMinute,
+                Comment = issue.Comment,
+                EstimateUpdateMethod = issue.EstimateUpdateMethod,
+                EstimateUpdateValue = issue.EstimateUpdateValue,
+                Source = Plugin.TimeLoadSource.User,
+
+                // The timer may keep running while a plugin waits for a person;
+                // a notice counts what remains from what it holds at that point.
+                CurrentElapsed = () => issue.WatchTimer.TimeElapsedNearestMinute
+            };
+
+            // The wait cursor belongs to the host's own load only: while a
+            // plugin handler waits for a person it would be misleading.
+            Cursor previous = null;
+            Action<bool> setBusy = busy =>
+            {
+                if (busy)
+                {
+                    previous = Cursor;
+                    Cursor = Cursors.Wait;
+                }
+                else
+                {
+                    Cursor = previous;
+                }
+            };
+
+            loadingIssues.Add(issue);
             try
             {
-                PostWorklogResult result = await jiraService.PostWorklogAsync(
-                    issue.IssueKey,
-                    startTime,
-                    issue.WatchTimer.TimeElapsedNearestMinute,
-                    issue.Comment,
-                    issue.EstimateUpdateMethod,
-                    issue.EstimateUpdateValue);
+                TimeLoadPipelineResult result = await timeLoad.LoadAsync(input, setBusy);
 
-                if (result.Success)
-                    ResetTimer(issue);
+                // Reset on success; after a partial load, reduced by what reached
+                // Jira so a retry loads only the rest. The row's comment and
+                // estimate are left as the user had them.
+                TimerAfterLoad.Apply(
+                    result,
+                    () => issue.WatchTimer.TimeElapsed,
+                    elapsed => issue.SetTimeElapsed(elapsed),
+                    () => ResetTimer(issue));
             }
             finally
             {
-                Cursor = previous;
+                loadingIssues.Remove(issue);
+            }
+        }
+
+
+        private void ShowTimeLoadNotice(string message)
+        {
+            lblTimeLoadNotice.Text = message;
+            lblTimeLoadNotice.ToolTip = message + Environment.NewLine + "(click to dismiss)";
+            lblTimeLoadNotice.Visibility = Visibility.Visible;
+        }
+
+
+        private void ClearTimeLoadNotice()
+        {
+            lblTimeLoadNotice.Visibility = Visibility.Collapsed;
+            lblTimeLoadNotice.Text = "";
+        }
+
+
+        private void lblTimeLoadNotice_Click(object sender, MouseButtonEventArgs e)
+        {
+            ClearTimeLoadNotice();
+        }
+
+
+        private void ShowTimeLoadWarning(string message)
+        {
+            // Owned by the main window only while it can be seen: with the
+            // mini view up the window is hidden and an invisible owner would
+            // keep the box out of sight.
+            if (IsVisible && WindowState != WindowState.Minimized)
+                MessageBox.Show(this, message, "Time load", MessageBoxButton.OK, MessageBoxImage.Warning);
+            else
+                MessageBox.Show(message, "Time load", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+
+        /// <summary>How the pipeline's notices reach the user: a short line for the harmless one, a message box for the others.</summary>
+        private class TimeLoadNotifier : ITimeLoadNotifier
+        {
+            private readonly MainWindow window;
+
+            public TimeLoadNotifier(MainWindow window)
+            {
+                this.window = window;
+            }
+
+            public void Info(string message)
+            {
+                window.ShowTimeLoadNotice(message);
+            }
+
+            public void Warning(string message)
+            {
+                window.ShowTimeLoadWarning(message);
             }
         }
         #endregion
@@ -1749,6 +1842,8 @@ namespace StopWatch
         private readonly RestClientFactory restClientFactory;
         private readonly JiraClient jiraClient;
         private readonly IssueJiraService jiraService;
+        private readonly TimeLoadPipeline timeLoad;
+        private readonly HashSet<IssueViewModel> loadingIssues = new HashSet<IssueViewModel>();
 
         private readonly IssueListViewModel issues;
         private readonly ActiveTimerViewModel activeTimer;
