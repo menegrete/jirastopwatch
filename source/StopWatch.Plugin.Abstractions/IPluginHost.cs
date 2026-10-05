@@ -33,6 +33,12 @@ namespace StopWatch.Plugin
 
         /// <summary>The Jira operations the host offers. Credentials never pass through it.</summary>
         IJiraApi Jira { get; }
+
+        /// <summary>Registers a time-load handler and observes time loads.</summary>
+        IPluginTimeLoad TimeLoad { get; }
+
+        /// <summary>Loads time through the host's pipeline.</summary>
+        ITimeLoader TimeLoader { get; }
     }
 
 

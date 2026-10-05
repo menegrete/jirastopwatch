@@ -19,13 +19,15 @@ namespace StopWatch.Plugins
         private readonly Window mainWindow;
         private string dataDirectory;
 
-        public PluginHost(string pluginId, string dataRoot, Window mainWindow, IPluginIssueList issues, IJiraApi jira, Action<string, Exception> log)
+        public PluginHost(string pluginId, string dataRoot, Window mainWindow, IPluginIssueList issues, IJiraApi jira, IPluginTimeLoad timeLoad, ITimeLoader timeLoader, Action<string, Exception> log)
         {
             this.pluginId = pluginId;
             this.dataRoot = dataRoot;
             this.mainWindow = mainWindow;
             Issues = issues;
             Jira = jira;
+            TimeLoad = timeLoad;
+            TimeLoader = timeLoader;
             Logger = new PluginLogger(pluginId, log);
         }
 
@@ -64,6 +66,10 @@ namespace StopWatch.Plugins
         public IPluginIssueList Issues { get; private set; }
 
         public IJiraApi Jira { get; private set; }
+
+        public IPluginTimeLoad TimeLoad { get; private set; }
+
+        public ITimeLoader TimeLoader { get; private set; }
     }
 
 
@@ -213,17 +219,76 @@ namespace StopWatch.Plugins
 
         public Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment)
         {
+            return AddWorklogAsync(key, startTime, timeSpent, comment, PluginEstimateUpdate.Auto, "");
+        }
+
+        public Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment, PluginEstimateUpdate estimateUpdate, string estimateValue)
+        {
             return Task.Run(() =>
             {
                 try
                 {
                     return jira.SessionValid
-                        && jira.PostWorklog(key, startTime, timeSpent, comment ?? "", EstimateUpdateMethods.Auto, "").Success;
+                        && jira.PostWorklog(key, startTime, timeSpent, comment ?? "", EstimateMapping.ToHost(estimateUpdate), estimateValue ?? "").Success;
                 }
                 catch (Exception ex)
                 {
                     log($"Plugin Jira call AddWorklog({key}) failed: {ex.Message}", ex);
                     return false;
+                }
+            });
+        }
+
+        public Task<IReadOnlyList<PluginSubtask>> GetSubtasksAsync(string parentKey)
+        {
+            return Task.Run<IReadOnlyList<PluginSubtask>>(() =>
+            {
+                try
+                {
+                    if (!jira.SessionValid)
+                        return null;
+
+                    JiraResult<IReadOnlyList<JiraIssueInfo>> result = jira.GetSubtasks(parentKey);
+                    if (!result.Success)
+                        return null;
+
+                    return result.Value.Select(i => new PluginSubtask(i.Key, i.Summary)).ToList();
+                }
+                catch (Exception ex)
+                {
+                    log($"Plugin Jira call GetSubtasks({parentKey}) failed: {ex.Message}", ex);
+                    return null;
+                }
+            });
+        }
+
+        public Task<string> CreateSubtaskAsync(string parentKey, string summary)
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    if (!jira.SessionValid)
+                        return null;
+
+                    int dash = parentKey == null ? -1 : parentKey.LastIndexOf('-');
+                    if (dash <= 0)
+                        return null;
+
+                    // The contract has no issue type: the project's first
+                    // subtask type is used, and a project with none cannot
+                    // take subtasks at all.
+                    JiraResult<IReadOnlyList<JiraIssueType>> types = jira.GetSubtaskTypes(parentKey.Substring(0, dash));
+                    if (!types.Success || types.Value.Count == 0)
+                        return null;
+
+                    JiraResult<string> created = jira.CreateSubtask(parentKey, summary, types.Value[0].Id);
+                    return created.Success ? created.Value : null;
+                }
+                catch (Exception ex)
+                {
+                    log($"Plugin Jira call CreateSubtask({parentKey}) failed: {ex.Message}", ex);
+                    return null;
                 }
             });
         }

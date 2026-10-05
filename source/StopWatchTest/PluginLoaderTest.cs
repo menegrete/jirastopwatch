@@ -91,6 +91,8 @@ namespace StopWatchTest
 
         #region contract version
         [TestCase("1.0", "1.0", true)]
+        [TestCase("1.1", "1.0", true)]
+        [TestCase("1.1", "1.1", true)]
         [TestCase("1.2", "1.1", true)]
         [TestCase("1.0", "1.1", false)]
         [TestCase("1.0", "2.0", false)]
@@ -98,6 +100,12 @@ namespace StopWatchTest
         public void IsCompatible_SameMajorAndMinorNotNewer(string host, string plugin, bool expected)
         {
             Assert.That(PluginContract.IsCompatible(Version.Parse(host), Version.Parse(plugin)), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void ContractVersion_IsOnePointOne()
+        {
+            Assert.That(PluginContract.ContractVersion, Is.EqualTo(new Version(1, 1)));
         }
         #endregion
 

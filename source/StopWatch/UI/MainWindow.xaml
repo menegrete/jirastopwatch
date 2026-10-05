@@ -649,6 +649,20 @@
                            Visibility="Collapsed"
                            Style="{StaticResource DangerBoldText}" />
 
+                <!-- The one notice that is not a message box: a plugin failed
+                     before writing anything and the standard load ran. Click
+                     dismisses it; see MainWindow.ShowTimeLoadNotice. -->
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblTimeLoadNotice"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           MaxWidth="260"
+                           TextTrimming="CharacterEllipsis"
+                           Cursor="Hand"
+                           Visibility="Collapsed"
+                           Foreground="{DynamicResource Text}"
+                           MouseLeftButtonUp="lblTimeLoadNotice_Click" />
+
                 <TextBlock DockPanel.Dock="Left"
                            x:Name="lblUpdateWhatsNew"
                            VerticalAlignment="Center"

@@ -25,6 +25,9 @@
          ReferenceOutputAssembly=false keeps them out of this assembly. -->
     <ProjectReference Include="..\Samples\HelloWorld\HelloWorld.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Samples\HelloSqlite\HelloSqlite.csproj" ReferenceOutputAssembly="false" />
+
+    <!-- Referenced for real: its handler is exercised directly through the host's pipeline. -->
+    <ProjectReference Include="..\Samples\SplitTime\SplitTime.csproj" />
   </ItemGroup>
 
 </Project>
