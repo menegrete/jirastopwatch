@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.10.0](https://github.com/menegrete/jirastopwatch/compare/v3.9.0...v3.10.0) (2026-10-05)
+
+### Added
+
+* add Jira search, subtask creation and typed worklog results ([3cfada5](https://github.com/menegrete/jirastopwatch/commit/3cfada5809728a4f42cfeaa5becaf220e327952b))
+
 ## [3.9.0](https://github.com/menegrete/jirastopwatch/compare/v3.8.0...v3.9.0) (2026-10-03)
 
 ### Added
