@@ -35,6 +35,9 @@ namespace StopWatch
         RestRequest CreateGetAvailableTransitions(string key);
         RestRequest CreateDoTransition(string key, int transitionId);
         RestRequest CreateGetConfigurationRequest();
+        RestRequest CreateSearchIssuesRequest(string jql, string nextPageToken);
+        RestRequest CreateGetProjectRequest(string projectKey);
+        RestRequest CreateCreateSubtaskRequest(string projectKey, string parentKey, string summary, string issueTypeId);
     }
 
 }

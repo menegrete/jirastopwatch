@@ -21,6 +21,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace StopWatch
 {
@@ -142,41 +144,70 @@ namespace StopWatch
             }
         }
 
-        public bool PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
+        public JiraResult<string> PostWorklog(string key, DateTimeOffset startTime, TimeSpan time, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
         {
             var request = jiraApiRequestFactory.CreatePostWorklogRequest(key, startTime, time, comment, estimateUpdateMethod, estimateUpdateValue);
-            try
-            {
-                jiraApiRequester.DoAuthenticatedRequest<object>(request);
-                return true;
-            }
-            catch (RequestDeniedException)
-            {
-                return false;
-            }
-            catch (UsernameAndApiTokenNotSetException)
-            {
-                return false;
-            }
+            return Execute(() => jiraApiRequester.DoAuthenticatedRequest<CreatedWorklog>(request)?.Id ?? "");
         }
 
 
-        public bool PostComment(string key, string comment)
+        public JiraResult PostComment(string key, string comment)
         {
             var request = jiraApiRequestFactory.CreatePostCommentRequest(key, comment);
-            try
+            return Execute<object>(() => jiraApiRequester.DoAuthenticatedRequest<object>(request));
+        }
+
+
+        public JiraResult<IReadOnlyList<JiraIssueInfo>> SearchIssues(string jql)
+        {
+            return Execute<IReadOnlyList<JiraIssueInfo>>(() =>
             {
-                jiraApiRequester.DoAuthenticatedRequest<object>(request);
-                return true;
-            }
-            catch (RequestDeniedException)
+                var issues = new List<JiraIssueInfo>();
+                string nextPageToken = null;
+                do
+                {
+                    var request = jiraApiRequestFactory.CreateSearchIssuesRequest(jql, nextPageToken);
+                    SearchResults page = jiraApiRequester.DoAuthenticatedRequest<SearchResults>(request);
+                    if (page?.Issues != null)
+                        issues.AddRange(page.Issues.Select(ToIssueInfo));
+
+                    nextPageToken = page?.NextPageToken;
+                } while (!string.IsNullOrEmpty(nextPageToken));
+
+                return issues;
+            });
+        }
+
+
+        public JiraResult<IReadOnlyList<JiraIssueInfo>> GetSubtasks(string parentKey)
+        {
+            return SearchIssues(string.Format("parent = \"{0}\"", parentKey.Trim().Replace("\"", "\\\"")));
+        }
+
+
+        public JiraResult<IReadOnlyList<JiraIssueType>> GetSubtaskTypes(string projectKey)
+        {
+            var request = jiraApiRequestFactory.CreateGetProjectRequest(projectKey);
+            return Execute<IReadOnlyList<JiraIssueType>>(() =>
             {
-                return false;
-            }
-            catch (UsernameAndApiTokenNotSetException)
-            {
-                return false;
-            }
+                ProjectDetails project = jiraApiRequester.DoAuthenticatedRequest<ProjectDetails>(request);
+                return (project?.IssueTypes ?? new List<IssueTypeFields>())
+                    .Where(t => t.Subtask)
+                    .Select(t => new JiraIssueType { Id = t.Id ?? "", Name = t.Name ?? "" })
+                    .ToList();
+            });
+        }
+
+
+        public JiraResult<string> CreateSubtask(string parentKey, string summary, string issueTypeId)
+        {
+            // Jira wants the project alongside the parent, and a key is always PROJECT-NUMBER.
+            int dash = parentKey?.LastIndexOf('-') ?? -1;
+            if (dash <= 0)
+                return JiraResult<string>.Fail(JiraFailureReason.Validation, string.Format("'{0}' is not an issue key.", parentKey));
+
+            var request = jiraApiRequestFactory.CreateCreateSubtaskRequest(parentKey.Substring(0, dash), parentKey, summary, issueTypeId);
+            return Execute(() => jiraApiRequester.DoAuthenticatedRequest<CreatedIssue>(request)?.Key ?? "");
         }
 
 
@@ -218,6 +249,44 @@ namespace StopWatch
         #endregion
 
         #region private members
+        /// <summary>
+        /// Runs a request and folds its exceptions into the result, keeping what
+        /// Jira said about why it failed.
+        /// </summary>
+        private static JiraResult<T> Execute<T>(Func<T> action)
+        {
+            try
+            {
+                return JiraResult<T>.Ok(action());
+            }
+            catch (RequestDeniedException ex)
+            {
+                return JiraResult<T>.Fail(JiraErrors.ReasonFor(ex), JiraErrors.MessageFor(ex));
+            }
+            catch (UsernameAndApiTokenNotSetException)
+            {
+                return JiraResult<T>.Fail(JiraFailureReason.Unauthorized, "No Jira username and API token are set.");
+            }
+        }
+
+
+        private static JiraIssueInfo ToIssueInfo(Issue issue)
+        {
+            IssueFields fields = issue.Fields;
+            return new JiraIssueInfo
+            {
+                Key = issue.Key ?? "",
+                Summary = fields?.Summary ?? "",
+                IssueTypeId = fields?.IssueType?.Id ?? "",
+                IssueTypeName = fields?.IssueType?.Name ?? "",
+                IsSubtask = fields?.IssueType?.Subtask == true,
+                ParentKey = fields?.Parent?.Key ?? "",
+                ProjectKey = fields?.Project?.Key ?? "",
+                Status = fields?.Status?.Name ?? ""
+            };
+        }
+
+
         private IJiraApiRequestFactory jiraApiRequestFactory;
         private IJiraApiRequester jiraApiRequester;
         #endregion

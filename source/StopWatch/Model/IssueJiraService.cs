@@ -118,7 +118,7 @@ namespace StopWatch
                 // Only actually post in the comment track if text is not empty.
                 if (settings.PostWorklogComment != WorklogCommentSetting.WorklogOnly && !string.IsNullOrEmpty(comment))
                 {
-                    postSuccesful = jira.PostComment(key, comment);
+                    postSuccesful = jira.PostComment(key, comment).Success;
                     result.CommentPosted = postSuccesful;
 
                     if (postSuccesful && settings.PostWorklogComment == WorklogCommentSetting.CommentOnly)
@@ -129,7 +129,7 @@ namespace StopWatch
                 // unless it was reset.
                 if (postSuccesful)
                 {
-                    postSuccesful = jira.PostWorklog(key, startTime, timeElapsed, comment, estimateUpdateMethod, estimateUpdateValue);
+                    postSuccesful = jira.PostWorklog(key, startTime, timeElapsed, comment, estimateUpdateMethod, estimateUpdateValue).Success;
                     result.WorklogPosted = postSuccesful;
                 }
 

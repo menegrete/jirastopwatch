@@ -27,6 +27,7 @@ namespace StopWatchTest
     using RestSharp;
     using StopWatch;
     using System;
+    using System.Linq;
 
     [TestFixture]
     public class JiraApiRequestFactoryTest
@@ -197,6 +198,56 @@ namespace StopWatchTest
                     }
                 }).GetHashCode()
             ), ContentType.Json));
+        }
+
+        [Test]
+        public void CreateSearchIssuesRequest_AsksForTheFieldsThePageReads()
+        {
+            var request = new JiraApiRequestFactory(new RestRequestFactory()).CreateSearchIssuesRequest("project = DG", null);
+
+            Assert.That(request.Resource, Is.EqualTo("/rest/api/2/search/jql"));
+            Assert.That(request.Method, Is.EqualTo(Method.Get));
+            Assert.That(QueryValue(request, "jql"), Is.EqualTo("project = DG"));
+            Assert.That(QueryValue(request, "fields"), Is.EqualTo("summary,issuetype,parent,project,status"));
+            Assert.That(QueryValue(request, "nextPageToken"), Is.Null);
+        }
+
+
+        [Test]
+        public void CreateSearchIssuesRequest_WithToken_AsksForTheNextPage()
+        {
+            var request = new JiraApiRequestFactory(new RestRequestFactory()).CreateSearchIssuesRequest("project = DG", "tok1");
+
+            Assert.That(QueryValue(request, "nextPageToken"), Is.EqualTo("tok1"));
+        }
+
+
+        [Test]
+        public void CreateGetProjectRequest_CreatesValidRequest()
+        {
+            var request = new JiraApiRequestFactory(new RestRequestFactory()).CreateGetProjectRequest(" DG ");
+
+            Assert.That(request.Resource, Is.EqualTo("/rest/api/2/project/DG"));
+            Assert.That(request.Method, Is.EqualTo(Method.Get));
+        }
+
+
+        [Test]
+        public void CreateCreateSubtaskRequest_PostsTheStandardFieldsOnly()
+        {
+            var request = new JiraApiRequestFactory(new RestRequestFactory()).CreateCreateSubtaskRequest("DG", "DG-42", "Desarrollo", "5");
+
+            Assert.That(request.Resource, Is.EqualTo("/rest/api/2/issue"));
+            Assert.That(request.Method, Is.EqualTo(Method.Post));
+            var body = request.Parameters.Single(p => p.Type == ParameterType.RequestBody);
+            string json = System.Text.Json.JsonSerializer.Serialize(body.Value);
+            Assert.That(json, Is.EqualTo("{\"fields\":{\"project\":{\"key\":\"DG\"},\"parent\":{\"key\":\"DG-42\"},\"summary\":\"Desarrollo\",\"issuetype\":{\"id\":\"5\"}}}"));
+        }
+
+
+        private static string QueryValue(RestRequest request, string name)
+        {
+            return request.Parameters.FirstOrDefault(p => p.Type == ParameterType.QueryString && p.Name == name)?.Value as string;
         }
 
     }
