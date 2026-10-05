@@ -34,10 +34,22 @@ namespace StopWatch
         public EstimateUpdateMethods EstimateUpdateMethod { get; set; }
         public string EstimateUpdateValue { get; set; }
         public TimeLoadSource Source { get; set; } = TimeLoadSource.User;
+
+        /// <summary>
+        /// What the timer holds right now, when the load comes from a timer. It
+        /// can be more than <see cref="TimeElapsed"/> if the timer ran while a
+        /// handler waited; it is what a notice should count the remainder from.
+        /// Left null, the confirmed total stands in for it.
+        /// </summary>
+        public Func<TimeSpan> CurrentElapsed { get; set; }
     }
 
 
-    /// <summary>How a load ended. The timer may be reset exactly when <see cref="Outcome"/> is <see cref="TimeLoadOutcome.Succeeded"/>.</summary>
+    /// <summary>
+    /// How a load ended. The timer is reset exactly when <see cref="Outcome"/>
+    /// is <see cref="TimeLoadOutcome.Succeeded"/>; after a partial load it is
+    /// reduced by <see cref="TimeLoaded"/> (see <see cref="TimerAfterLoad"/>).
+    /// </summary>
     internal class TimeLoadPipelineResult
     {
         public TimeLoadOutcome Outcome { get; set; }
@@ -47,6 +59,11 @@ namespace StopWatch
 
         public int WritesMade { get; set; }
 
+        /// <summary>
+        /// The time that is in Jira because of this load: the confirmed total
+        /// when it succeeded, otherwise the time the host measured through the
+        /// handler's Jira API - never what the handler says it loaded.
+        /// </summary>
         public TimeSpan TimeLoaded { get; set; }
 
         public string Reason { get; set; } = "";
@@ -118,21 +135,22 @@ namespace StopWatch
                     var api = new CountingJiraApi(jira);
                     InsteadOfResult answer = await AskAsync(registered, input, api);
                     int writes = api.WritesMade;
+                    TimeSpan measured = api.TimeLoaded;
 
                     switch (answer.Kind)
                     {
                         case InsteadOfKind.Declined:
                             if (writes == 0)
                                 continue;
-                            return FailedWithWrites(input, registered.PluginId, writes, "it declined the load after writing");
+                            return FailedWithWrites(input, registered.PluginId, writes, measured, "it declined the load after writing");
 
                         case InsteadOfKind.Handled:
-                            return Handled(input, registered.PluginId, writes, answer.TimeLoaded);
+                            return Handled(input, registered.PluginId, writes, measured, answer.TimeLoaded);
 
                         case InsteadOfKind.Cancelled:
                             if (writes == 0)
                                 return Cancelled(registered.PluginId);
-                            return FailedWithWrites(input, registered.PluginId, writes, "it was cancelled after writing");
+                            return FailedWithWrites(input, registered.PluginId, writes, measured, "it was cancelled after writing");
 
                         default:
                             if (writes == 0)
@@ -140,7 +158,7 @@ namespace StopWatch
                                 Notify(input, false, $"Plugin {registered.PluginId} failed on {input.IssueKey}{Because(answer.Reason)}; the standard load was used.");
                                 return await RunOriginalAsync(input, setBusy);
                             }
-                            return FailedWithWrites(input, registered.PluginId, writes, answer.Reason);
+                            return FailedWithWrites(input, registered.PluginId, writes, measured, answer.Reason);
                     }
                 }
             }
@@ -217,7 +235,7 @@ namespace StopWatch
         }
 
 
-        private TimeLoadPipelineResult Handled(TimeLoadInput input, string pluginId, int writes, TimeSpan declared)
+        private TimeLoadPipelineResult Handled(TimeLoadInput input, string pluginId, int writes, TimeSpan measured, TimeSpan declared)
         {
             if (declared == input.TimeElapsed)
             {
@@ -230,7 +248,7 @@ namespace StopWatch
                 };
             }
 
-            string message = $"Plugin {pluginId} says it loaded {Minutes(declared)} on {input.IssueKey}, but {Minutes(input.TimeElapsed)} was confirmed. The timer was not reset; check the worklogs in Jira before retrying.";
+            string message = $"Plugin {pluginId} says it loaded {Minutes(declared)} on {input.IssueKey}, but {Minutes(input.TimeElapsed)} was confirmed. {Minutes(measured)} reached Jira. {TimerNote(input, measured)} Check the worklogs in Jira before retrying.";
             Notify(input, true, message);
 
             return new TimeLoadPipelineResult
@@ -238,7 +256,7 @@ namespace StopWatch
                 Outcome = TimeLoadOutcome.Failed,
                 HandledBy = pluginId,
                 WritesMade = writes,
-                TimeLoaded = declared,
+                TimeLoaded = measured,
                 Reason = $"loaded {Minutes(declared)} of {Minutes(input.TimeElapsed)}"
             };
         }
@@ -250,9 +268,9 @@ namespace StopWatch
         }
 
 
-        private TimeLoadPipelineResult FailedWithWrites(TimeLoadInput input, string pluginId, int writes, string reason)
+        private TimeLoadPipelineResult FailedWithWrites(TimeLoadInput input, string pluginId, int writes, TimeSpan measured, string reason)
         {
-            string message = $"Plugin {pluginId} failed on {input.IssueKey} after {writes} write(s) to Jira{Because(reason)}. The timer was not reset; check Jira before retrying.";
+            string message = $"Plugin {pluginId} failed on {input.IssueKey} after {writes} write(s) to Jira, {Minutes(measured)} loaded{Because(reason)}. {TimerNote(input, measured)} Check Jira before retrying.";
             Notify(input, true, message);
 
             return new TimeLoadPipelineResult
@@ -260,6 +278,7 @@ namespace StopWatch
                 Outcome = TimeLoadOutcome.Failed,
                 HandledBy = pluginId,
                 WritesMade = writes,
+                TimeLoaded = measured,
                 Reason = reason ?? "failed after writing"
             };
         }
@@ -276,6 +295,14 @@ namespace StopWatch
         private static string Because(string reason)
         {
             return string.IsNullOrEmpty(reason) ? "" : " (" + reason + ")";
+        }
+
+
+        /// <summary>Tells what the timer keeps: what it holds now, less what reached Jira, the same figure <see cref="TimerAfterLoad"/> leaves in it.</summary>
+        private static string TimerNote(TimeLoadInput input, TimeSpan measured)
+        {
+            TimeSpan current = input.CurrentElapsed != null ? input.CurrentElapsed() : input.TimeElapsed;
+            return $"The timer was not reset: it keeps the {Minutes(TimerAfterLoad.Remaining(current, measured))} that are left.";
         }
 
 

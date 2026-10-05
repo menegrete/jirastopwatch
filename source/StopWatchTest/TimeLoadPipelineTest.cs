@@ -141,6 +141,7 @@ namespace StopWatchTest
 
             Assert.That(result.Outcome, Is.EqualTo(TimeLoadOutcome.Failed));
             Assert.That(result.WritesMade, Is.EqualTo(1));
+            Assert.That(result.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(1)));
             VerifyOriginalRan(Times.Never());
             Assert.That(notifier.Warnings, Has.Count.EqualTo(1));
         }
@@ -171,7 +172,36 @@ namespace StopWatchTest
             Assert.That(result.Outcome, Is.EqualTo(TimeLoadOutcome.Failed));
             VerifyOriginalRan(Times.Never());
             Assert.That(notifier.Warnings, Has.Count.EqualTo(1));
-            Assert.That(notifier.Warnings[0], Does.Contain("5 min").And.Contain("7 min"));
+
+            // It says what the plugin declared (5), what was confirmed (7), what
+            // reached Jira (2) and what the timer keeps (5).
+            Assert.That(notifier.Warnings[0], Does.Contain("loaded 5 min").And.Contain("7 min was confirmed").And.Contain("2 min reached Jira").And.Contain("keeps the 5 min"));
+        }
+
+
+        [Test]
+        public async Task Handled_TimeDiffers_TheTimeToSubtractIsWhatTheHostMeasured_NotWhatThePluginDeclared()
+        {
+            Register("Alpha", Answer(InsteadOfResult.Handled(TimeSpan.FromMinutes(5)), writesFirst: 2));
+
+            TimeLoadPipelineResult result = await Load();
+
+            Assert.That(result.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(2)));
+        }
+
+
+        [Test]
+        public async Task ThePartialNotice_CountsTheRemainderFromWhatTheTimerHoldsNow()
+        {
+            Register("Alpha", Answer(InsteadOfResult.Failed("halfway"), writesFirst: 2));
+            TimeLoadInput input = Input();
+
+            // The timer kept running while the handler waited.
+            input.CurrentElapsed = () => TimeSpan.FromMinutes(9);
+
+            await pipeline.LoadAsync(input);
+
+            Assert.That(notifier.Warnings[0], Does.Contain("keeps the 7 min"));
         }
 
 
@@ -197,6 +227,7 @@ namespace StopWatchTest
             TimeLoadPipelineResult result = await Load();
 
             Assert.That(result.Outcome, Is.EqualTo(TimeLoadOutcome.Failed));
+            Assert.That(result.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(1)));
             VerifyOriginalRan(Times.Never());
             Assert.That(notifier.Warnings, Has.Count.EqualTo(1));
         }
@@ -228,9 +259,10 @@ namespace StopWatchTest
 
             Assert.That(result.Outcome, Is.EqualTo(TimeLoadOutcome.Failed));
             Assert.That(result.WritesMade, Is.EqualTo(2));
+            Assert.That(result.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(2)));
             VerifyOriginalRan(Times.Never());
             Assert.That(notifier.Warnings, Has.Count.EqualTo(1));
-            Assert.That(notifier.Warnings[0], Does.Contain("2 write"));
+            Assert.That(notifier.Warnings[0], Does.Contain("2 write").And.Contain("2 min loaded").And.Contain("keeps the 5 min"));
         }
         #endregion
 
@@ -550,6 +582,7 @@ namespace StopWatchTest
             Assert.That(seen.Outcome, Is.EqualTo(TimeLoadOutcome.Failed));
             Assert.That(seen.Reason, Is.EqualTo("halfway"));
             Assert.That(seen.WritesMade, Is.EqualTo(1));
+            Assert.That(seen.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(1)));
         }
 
 

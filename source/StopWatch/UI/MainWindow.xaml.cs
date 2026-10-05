@@ -1626,7 +1626,11 @@ namespace StopWatch
                 Comment = issue.Comment,
                 EstimateUpdateMethod = issue.EstimateUpdateMethod,
                 EstimateUpdateValue = issue.EstimateUpdateValue,
-                Source = Plugin.TimeLoadSource.User
+                Source = Plugin.TimeLoadSource.User,
+
+                // The timer may keep running while a plugin waits for a person;
+                // a notice counts what remains from what it holds at that point.
+                CurrentElapsed = () => issue.WatchTimer.TimeElapsedNearestMinute
             };
 
             // The wait cursor belongs to the host's own load only: while a
@@ -1650,8 +1654,14 @@ namespace StopWatch
             {
                 TimeLoadPipelineResult result = await timeLoad.LoadAsync(input, setBusy);
 
-                if (result.Outcome == Plugin.TimeLoadOutcome.Succeeded)
-                    ResetTimer(issue);
+                // Reset on success; after a partial load, reduced by what reached
+                // Jira so a retry loads only the rest. The row's comment and
+                // estimate are left as the user had them.
+                TimerAfterLoad.Apply(
+                    result,
+                    () => issue.WatchTimer.TimeElapsed,
+                    elapsed => issue.SetTimeElapsed(elapsed),
+                    () => ResetTimer(issue));
             }
             finally
             {

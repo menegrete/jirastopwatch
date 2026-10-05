@@ -151,6 +151,32 @@ namespace StopWatchTest
 
 
         [Test]
+        public async Task TheTimeOfAcceptedWorklogs_IsAddedUp()
+        {
+            inner.Setup(j => j.AddWorklogAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(true);
+            inner.Setup(j => j.AddWorklogAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>(), It.IsAny<PluginEstimateUpdate>(), It.IsAny<string>())).ReturnsAsync(true);
+            inner.Setup(j => j.CreateSubtaskAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("TST-2");
+
+            await counting.AddWorklogAsync("TST-1", Start, TimeSpan.FromMinutes(3), "");
+            await counting.AddWorklogAsync("TST-1", Start, TimeSpan.FromMinutes(2), "", PluginEstimateUpdate.Leave, null);
+            await counting.CreateSubtaskAsync("TST-1", "Part");
+
+            Assert.That(counting.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(5)));
+        }
+
+
+        [Test]
+        public async Task ARejectedWorklog_AddsNoTime()
+        {
+            inner.Setup(j => j.AddWorklogAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(false);
+
+            await counting.AddWorklogAsync("TST-1", Start, TimeSpan.FromMinutes(3), "");
+
+            Assert.That(counting.TimeLoaded, Is.EqualTo(TimeSpan.Zero));
+        }
+
+
+        [Test]
         public async Task RejectedWrites_AreNotCounted()
         {
             inner.Setup(j => j.AddWorklogAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(false);
@@ -189,6 +215,8 @@ namespace StopWatchTest
 
             Assert.That(counting.WritesMade, Is.EqualTo(2));
             Assert.That(other.WritesMade, Is.EqualTo(1));
+            Assert.That(counting.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(2)));
+            Assert.That(other.TimeLoaded, Is.EqualTo(TimeSpan.FromMinutes(1)));
         }
     }
 

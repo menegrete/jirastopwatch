@@ -10,15 +10,19 @@ namespace StopWatch
     /// The Jira API handed to one replacement handler for one invocation. It
     /// forwards every call and counts the writes Jira accepted, which is what
     /// tells the pipeline whether a handler that failed can still be replaced
-    /// by the standard load without loading the same time twice.
+    /// by the standard load without loading the same time twice. It also adds
+    /// up the time of the worklogs Jira accepted: after a partial load that is
+    /// the time the host takes off the timer, measured here rather than taken
+    /// from what the plugin says.
     ///
     /// A fresh instance is made per invocation, so concurrent loads never share
-    /// a count.
+    /// a count or a time.
     /// </summary>
     internal class CountingJiraApi : IJiraApi
     {
         private readonly IJiraApi inner;
         private int writes;
+        private long loadedTicks;
 
         public CountingJiraApi(IJiraApi inner)
         {
@@ -29,6 +33,12 @@ namespace StopWatch
         public int WritesMade
         {
             get { return Volatile.Read(ref writes); }
+        }
+
+        /// <summary>The time of the worklogs Jira accepted through this instance.</summary>
+        public TimeSpan TimeLoaded
+        {
+            get { return TimeSpan.FromTicks(Interlocked.Read(ref loadedTicks)); }
         }
 
 
@@ -54,12 +64,12 @@ namespace StopWatch
 
         public async Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment)
         {
-            return Count(await inner.AddWorklogAsync(key, startTime, timeSpent, comment));
+            return CountWorklog(await inner.AddWorklogAsync(key, startTime, timeSpent, comment), timeSpent);
         }
 
         public async Task<bool> AddWorklogAsync(string key, DateTimeOffset startTime, TimeSpan timeSpent, string comment, PluginEstimateUpdate estimateUpdate, string estimateValue)
         {
-            return Count(await inner.AddWorklogAsync(key, startTime, timeSpent, comment, estimateUpdate, estimateValue));
+            return CountWorklog(await inner.AddWorklogAsync(key, startTime, timeSpent, comment, estimateUpdate, estimateValue), timeSpent);
         }
 
         public async Task<string> CreateSubtaskAsync(string parentKey, string summary)
@@ -76,6 +86,15 @@ namespace StopWatch
                 Interlocked.Increment(ref writes);
 
             return accepted;
+        }
+
+
+        private bool CountWorklog(bool accepted, TimeSpan timeSpent)
+        {
+            if (accepted)
+                Interlocked.Add(ref loadedTicks, timeSpent.Ticks);
+
+            return Count(accepted);
         }
     }
 }

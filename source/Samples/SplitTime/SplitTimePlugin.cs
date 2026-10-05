@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Windows;
 using StopWatch.Plugin;
 
 namespace SplitTime
@@ -12,11 +11,7 @@ namespace SplitTime
     {
         public void Initialize(IPluginHost host)
         {
-            var handler = new SplitTimeHandler(
-                new SplitDialogPrompt(host),
-                new SplitLedger(host.DataDirectory),
-                message => host.Logger.Log(message),
-                message => MessageBox.Show(host.MainWindow, message, "Split Time", MessageBoxButton.OK, MessageBoxImage.Warning));
+            var handler = new SplitTimeHandler(new SplitDialogPrompt(host), message => host.Logger.Log(message));
 
             host.TimeLoad.RegisterInsteadOf(handler.HandleAsync);
             host.Logger.Log("SplitTime initialized");

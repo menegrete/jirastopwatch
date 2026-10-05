@@ -13,16 +13,10 @@ namespace SplitTime
         public string NewSummary { get; set; }
 
         public int Minutes { get; set; }
-
-        /// <summary>The key Jira gave the new subtask; kept so a retry reuses it instead of creating a second one.</summary>
-        public string CreatedKey { get; set; }
-
-        /// <summary>Whether this share's worklog was accepted by Jira.</summary>
-        public bool Posted { get; set; }
     }
 
 
-    /// <summary>How the time is shared, and how far its execution got.</summary>
+    /// <summary>How the time is shared.</summary>
     public sealed class SplitPlan
     {
         public List<SplitPart> Parts { get; set; } = new List<SplitPart>();
@@ -36,12 +30,6 @@ namespace SplitTime
         public bool Conserves(int totalMinutes)
         {
             return Parts.Count > 0 && Parts.All(p => p.Minutes >= 0) && TotalMinutes == totalMinutes;
-        }
-
-        /// <summary>Whether an earlier attempt already wrote something to Jira.</summary>
-        public bool HasProgress
-        {
-            get { return Parts.Any(p => p.Posted || p.CreatedKey != null); }
         }
     }
 }
