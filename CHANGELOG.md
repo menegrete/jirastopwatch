@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.12.0](https://github.com/menegrete/jirastopwatch/compare/v3.11.0...v3.12.0) (2026-10-06)
+
+### Added
+
+* choose the subtask issue type from plugins and expose it on PluginSubtask ([0c2c684](https://github.com/menegrete/jirastopwatch/commit/0c2c68490a149f1adea129944d1876c26bc152bd))
+
 ## [3.11.0](https://github.com/menegrete/jirastopwatch/compare/v3.10.0...v3.11.0) (2026-10-05)
 
 ### Added
