@@ -17,7 +17,7 @@
          the StopWatch executable, which semantic-release manages. -->
     <IsPackable>true</IsPackable>
     <PackageId>StopWatch.Plugin.Abstractions</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Description>Contract for Jira StopWatch plugins.</Description>
   </PropertyGroup>
 

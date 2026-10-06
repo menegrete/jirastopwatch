@@ -79,6 +79,18 @@ namespace StopWatch
             return created;
         }
 
+        public async Task<string> CreateSubtaskAsync(string parentKey, string summary, string issueTypeName)
+        {
+            string created = await inner.CreateSubtaskAsync(parentKey, summary, issueTypeName);
+            Count(created != null);
+            return created;
+        }
+
+        public Task<IReadOnlyList<string>> GetSubtaskTypesAsync(string projectKey)
+        {
+            return inner.GetSubtaskTypesAsync(projectKey);
+        }
+
 
         private bool Count(bool accepted)
         {

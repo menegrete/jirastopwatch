@@ -87,6 +87,28 @@ namespace StopWatchTest
 
 
         [Test]
+        public async Task GetSubtasks_CarriesTheIssueTypeName()
+        {
+            var typed = Subtask("TST-2", "One");
+            typed.IssueTypeName = "Task A";
+            jira.Setup(j => j.GetSubtasks("TST-1")).Returns(JiraResult<IReadOnlyList<JiraIssueInfo>>.Ok(new[] { typed, Subtask("TST-3", "Two") }));
+
+            IReadOnlyList<PluginSubtask> result = await api.GetSubtasksAsync("TST-1");
+
+            Assert.That(result.Select(s => s.IssueType), Is.EqualTo(new[] { "Task A", "" }));
+        }
+
+
+        [Test]
+        public void PluginSubtask_WithoutAType_HasAnEmptyIssueType()
+        {
+            Assert.That(new PluginSubtask("TST-2", "One").IssueType, Is.EqualTo(""));
+            Assert.That(new PluginSubtask("TST-2", "One", null).IssueType, Is.EqualTo(""));
+            Assert.That(new PluginSubtask("TST-2", "One", "Task A").IssueType, Is.EqualTo("Task A"));
+        }
+
+
+        [Test]
         public async Task GetSubtasks_JiraRefuses_ReturnsNull()
         {
             jira.Setup(j => j.GetSubtasks("TST-1")).Returns(JiraResult<IReadOnlyList<JiraIssueInfo>>.Fail(JiraFailureReason.NotFound, "no"));
@@ -116,6 +138,74 @@ namespace StopWatchTest
             jira.Setup(j => j.CreateSubtask("TST-1", "Part", "10")).Returns(JiraResult<string>.Ok("TST-9"));
 
             Assert.That(await api.CreateSubtaskAsync("TST-1", "Part"), Is.EqualTo("TST-9"));
+        }
+
+
+        private void ProjectOffersTypes()
+        {
+            jira.Setup(j => j.GetSubtaskTypes("TST")).Returns(JiraResult<IReadOnlyList<JiraIssueType>>.Ok(new[]
+            {
+                new JiraIssueType { Id = "10", Name = "Sub-task" },
+                new JiraIssueType { Id = "11", Name = "Task A" }
+            }));
+        }
+
+
+        [Test]
+        public async Task CreateSubtask_KnownType_CreatesItWithThatType()
+        {
+            ProjectOffersTypes();
+            jira.Setup(j => j.CreateSubtask("TST-1", "Part", "11")).Returns(JiraResult<string>.Ok("TST-9"));
+
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part", "Task A"), Is.EqualTo("TST-9"));
+        }
+
+
+        [TestCase("task a")]
+        [TestCase("TASK A")]
+        [TestCase("  Task A ")]
+        public async Task CreateSubtask_TypeNameIgnoresCaseAndSurroundingWhitespace(string name)
+        {
+            ProjectOffersTypes();
+            jira.Setup(j => j.CreateSubtask("TST-1", "Part", "11")).Returns(JiraResult<string>.Ok("TST-9"));
+
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part", name), Is.EqualTo("TST-9"));
+        }
+
+
+        [Test]
+        public async Task CreateSubtask_UnknownType_ReturnsNullCreatesNothingAndLogsWhy()
+        {
+            ProjectOffersTypes();
+
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part", "Nope"), Is.Null);
+
+            jira.Verify(j => j.CreateSubtask(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            Assert.That(logged, Has.Some.Contain("Nope").And.Contain("Sub-task").And.Contain("Task A"));
+        }
+
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("   ")]
+        public async Task CreateSubtask_NoTypeName_BehavesLikeTheTwoArgumentOverload(string name)
+        {
+            ProjectOffersTypes();
+            jira.Setup(j => j.CreateSubtask("TST-1", "Part", "10")).Returns(JiraResult<string>.Ok("TST-9"));
+
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part", name), Is.EqualTo("TST-9"));
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part"), Is.EqualTo("TST-9"));
+            jira.Verify(j => j.CreateSubtask("TST-1", "Part", "10"), Times.Exactly(2));
+        }
+
+
+        [Test]
+        public async Task CreateSubtask_NamedTypeAndNoSubtaskTypes_ReturnsNull()
+        {
+            jira.Setup(j => j.GetSubtaskTypes("TST")).Returns(JiraResult<IReadOnlyList<JiraIssueType>>.Ok(new JiraIssueType[0]));
+
+            Assert.That(await api.CreateSubtaskAsync("TST-1", "Part", "Task A"), Is.Null);
+            jira.Verify(j => j.CreateSubtask(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
 
@@ -156,6 +246,67 @@ namespace StopWatchTest
         public async Task CreateSubtask_ParentWithoutAProjectKey_ReturnsNull(string parent)
         {
             Assert.That(await api.CreateSubtaskAsync(parent, "Part"), Is.Null);
+            Assert.That(await api.CreateSubtaskAsync(parent, "Part", "Task A"), Is.Null);
+        }
+        #endregion
+
+
+        #region subtask types
+        [Test]
+        public async Task GetSubtaskTypes_ReturnsTheNames()
+        {
+            ProjectOffersTypes();
+
+            Assert.That(await api.GetSubtaskTypesAsync("TST"), Is.EqualTo(new[] { "Sub-task", "Task A" }));
+        }
+
+
+        [Test]
+        public async Task GetSubtaskTypes_ProjectWithoutThem_ReturnsAnEmptyList()
+        {
+            jira.Setup(j => j.GetSubtaskTypes("TST")).Returns(JiraResult<IReadOnlyList<JiraIssueType>>.Ok(new JiraIssueType[0]));
+
+            IReadOnlyList<string> result = await api.GetSubtaskTypesAsync("TST");
+
+            Assert.That(result, Is.Not.Null.And.Empty);
+        }
+
+
+        [Test]
+        public async Task GetSubtaskTypes_JiraRefuses_ReturnsNull()
+        {
+            jira.Setup(j => j.GetSubtaskTypes("NOPE")).Returns(JiraResult<IReadOnlyList<JiraIssueType>>.Fail(JiraFailureReason.NotFound, "no"));
+
+            Assert.That(await api.GetSubtaskTypesAsync("NOPE"), Is.Null);
+        }
+
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("  ")]
+        public async Task GetSubtaskTypes_BlankProjectKey_ReturnsNullWithoutAsking(string project)
+        {
+            Assert.That(await api.GetSubtaskTypesAsync(project), Is.Null);
+            jira.Verify(j => j.GetSubtaskTypes(It.IsAny<string>()), Times.Never);
+        }
+
+
+        [Test]
+        public async Task GetSubtaskTypes_NoSession_ReturnsNull()
+        {
+            jira.SetupGet(j => j.SessionValid).Returns(false);
+
+            Assert.That(await api.GetSubtaskTypesAsync("TST"), Is.Null);
+        }
+
+
+        [Test]
+        public async Task GetSubtaskTypes_ThrowingClient_ReturnsNullAndLogs()
+        {
+            jira.Setup(j => j.GetSubtaskTypes("TST")).Throws(new InvalidOperationException("boom"));
+
+            Assert.That(await api.GetSubtaskTypesAsync("TST"), Is.Null);
+            Assert.That(logged, Has.Some.Contain("boom"));
         }
         #endregion
     }

@@ -42,15 +42,24 @@ namespace StopWatch.Plugin
     public sealed class PluginSubtask
     {
         public PluginSubtask(string key, string summary)
+            : this(key, summary, "")
+        {
+        }
+
+        public PluginSubtask(string key, string summary, string issueType)
         {
             Key = key;
             Summary = summary;
+            IssueType = issueType ?? "";
         }
 
         public string Key { get; }
 
         /// <summary>Jira's own summary, not composed with the parent's.</summary>
         public string Summary { get; }
+
+        /// <summary>The name of the subtask's issue type, empty when unknown.</summary>
+        public string IssueType { get; }
     }
 
 
@@ -92,6 +101,23 @@ namespace StopWatch.Plugin
         /// a lost answer creates a second subtask.
         /// </summary>
         Task<string> CreateSubtaskAsync(string parentKey, string summary);
+
+        /// <summary>
+        /// Creates a subtask of the named issue type, which must be one of the
+        /// subtask types the parent's project offers (see
+        /// <see cref="GetSubtaskTypesAsync"/>); the name is matched ignoring
+        /// case and surrounding whitespace. A null or empty name behaves like
+        /// the overload without a type. Returns the new key, or null when it
+        /// could not be created, including when the project does not offer
+        /// the type: nothing is created and no other type is used instead.
+        /// </summary>
+        Task<string> CreateSubtaskAsync(string parentKey, string summary, string issueTypeName);
+
+        /// <summary>
+        /// The names of the subtask types a project offers (an empty list when
+        /// it has none), or null when they could not be read.
+        /// </summary>
+        Task<IReadOnlyList<string>> GetSubtaskTypesAsync(string projectKey);
 
         /// <summary>Adds a comment; true when Jira accepted it.</summary>
         Task<bool> AddCommentAsync(string key, string comment);
