@@ -190,6 +190,40 @@ namespace StopWatchTest
 
 
         [Test]
+        public async Task ASubtaskOfANamedType_IsCountedOnceWhenCreated()
+        {
+            inner.Setup(j => j.CreateSubtaskAsync("TST-1", "Part", "Task A")).ReturnsAsync("TST-2");
+
+            Assert.That(await counting.CreateSubtaskAsync("TST-1", "Part", "Task A"), Is.EqualTo("TST-2"));
+
+            Assert.That(counting.WritesMade, Is.EqualTo(1));
+            inner.Verify(j => j.CreateSubtaskAsync("TST-1", "Part", "Task A"), Times.Once);
+        }
+
+
+        [Test]
+        public async Task ASubtaskOfANamedTypeTheProjectDoesNotOffer_IsNotCounted()
+        {
+            inner.Setup(j => j.CreateSubtaskAsync("TST-1", "Part", "Nope")).ReturnsAsync((string)null);
+
+            Assert.That(await counting.CreateSubtaskAsync("TST-1", "Part", "Nope"), Is.Null);
+
+            Assert.That(counting.WritesMade, Is.EqualTo(0));
+        }
+
+
+        [Test]
+        public async Task SubtaskTypes_AreForwardedAndNotCounted()
+        {
+            inner.Setup(j => j.GetSubtaskTypesAsync("TST")).ReturnsAsync(new[] { "Sub-task" });
+
+            Assert.That(await counting.GetSubtaskTypesAsync("TST"), Is.EqualTo(new[] { "Sub-task" }));
+
+            Assert.That(counting.WritesMade, Is.EqualTo(0));
+        }
+
+
+        [Test]
         public async Task ReadsAndComments_AreForwardedAndNotCounted()
         {
             inner.Setup(j => j.GetSummaryAsync("TST-1")).ReturnsAsync("Summary");

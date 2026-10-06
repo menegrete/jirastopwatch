@@ -252,7 +252,7 @@ namespace StopWatch.Plugins
                     if (!result.Success)
                         return null;
 
-                    return result.Value.Select(i => new PluginSubtask(i.Key, i.Summary)).ToList();
+                    return result.Value.Select(i => new PluginSubtask(i.Key, i.Summary, i.IssueTypeName)).ToList();
                 }
                 catch (Exception ex)
                 {
@@ -263,6 +263,11 @@ namespace StopWatch.Plugins
         }
 
         public Task<string> CreateSubtaskAsync(string parentKey, string summary)
+        {
+            return CreateSubtaskAsync(parentKey, summary, null);
+        }
+
+        public Task<string> CreateSubtaskAsync(string parentKey, string summary, string issueTypeName)
         {
             return Task.Run(() =>
             {
@@ -275,19 +280,54 @@ namespace StopWatch.Plugins
                     if (dash <= 0)
                         return null;
 
-                    // The contract has no issue type: the project's first
-                    // subtask type is used, and a project with none cannot
-                    // take subtasks at all.
+                    // Without a name the project's first subtask type is
+                    // used; a project with none cannot take subtasks at all.
                     JiraResult<IReadOnlyList<JiraIssueType>> types = jira.GetSubtaskTypes(parentKey.Substring(0, dash));
                     if (!types.Success || types.Value.Count == 0)
                         return null;
 
-                    JiraResult<string> created = jira.CreateSubtask(parentKey, summary, types.Value[0].Id);
+                    JiraIssueType type = types.Value[0];
+                    string wanted = issueTypeName == null ? "" : issueTypeName.Trim();
+                    if (wanted.Length > 0)
+                    {
+                        type = types.Value.FirstOrDefault(t => string.Equals((t.Name ?? "").Trim(), wanted, StringComparison.OrdinalIgnoreCase));
+                        if (type == null)
+                        {
+                            // Never another type: the plugin asked for this one.
+                            log($"Plugin Jira call CreateSubtask({parentKey}) refused: the project does not offer the subtask type '{wanted}' (offers: {string.Join(", ", types.Value.Select(t => t.Name))})", null);
+                            return null;
+                        }
+                    }
+
+                    JiraResult<string> created = jira.CreateSubtask(parentKey, summary, type.Id);
                     return created.Success ? created.Value : null;
                 }
                 catch (Exception ex)
                 {
                     log($"Plugin Jira call CreateSubtask({parentKey}) failed: {ex.Message}", ex);
+                    return null;
+                }
+            });
+        }
+
+        public Task<IReadOnlyList<string>> GetSubtaskTypesAsync(string projectKey)
+        {
+            return Task.Run<IReadOnlyList<string>>(() =>
+            {
+                try
+                {
+                    if (!jira.SessionValid || string.IsNullOrWhiteSpace(projectKey))
+                        return null;
+
+                    JiraResult<IReadOnlyList<JiraIssueType>> types = jira.GetSubtaskTypes(projectKey);
+                    if (!types.Success)
+                        return null;
+
+                    return types.Value.Select(t => t.Name).ToList();
+                }
+                catch (Exception ex)
+                {
+                    log($"Plugin Jira call GetSubtaskTypes({projectKey}) failed: {ex.Message}", ex);
                     return null;
                 }
             });
