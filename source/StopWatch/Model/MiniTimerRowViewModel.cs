@@ -90,6 +90,10 @@ namespace StopWatch
             Raise("IsRunning");
             Raise("ElapsedText");
 
+            // Same reasoning as Summary below: the key can be edited in the
+            // main window while this row stays wrapped around the same source.
+            Raise("IssueKey");
+
             // Summary starts empty until Jira resolves it, and this row keeps
             // wrapping the same source across ticks (and across hiding and
             // showing the mini view again) rather than being recreated - so
