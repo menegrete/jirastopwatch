@@ -317,20 +317,13 @@ namespace StopWatch
 
 
         /// <summary>
-        /// Every source the mini view should list right now: every running
-        /// timer, or - if none are running - the single issue
-        /// <see cref="ActiveTimerViewModel"/> resolves, same as before this
-        /// window could show more than one row.
+        /// Every source the mini view should list right now. Which ones is
+        /// <see cref="ActiveTimerViewModel"/>'s call: running timers, plus
+        /// paused ones still holding time when several timers are allowed.
         /// </summary>
         private List<ITimerSource> ResolveSources()
         {
-            List<ITimerSource> running = viewModel.RunningSources.ToList();
-            if (running.Count > 0)
-                return running;
-
-            return viewModel.ActiveSource != null
-                ? new List<ITimerSource> { viewModel.ActiveSource }
-                : new List<ITimerSource>();
+            return viewModel.TrackedSources.ToList();
         }
 
 

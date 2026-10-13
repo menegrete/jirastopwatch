@@ -117,16 +117,41 @@ namespace StopWatch
         {
             get { return running; }
         }
+
+        /// <summary>
+        /// The rows a display that follows several timers should list. With
+        /// multiple timers allowed: every running row plus every paused row
+        /// still holding time that has not been loaded to Jira, in the order
+        /// the main window shows them. Otherwise, the running rows or, when
+        /// none runs, the active one. Empty only when there are no rows.
+        /// </summary>
+        public IEnumerable<ITimerSource> TrackedSources
+        {
+            get { return tracked; }
+        }
         #endregion
 
 
         #region public methods
         public ActiveTimerViewModel(Func<IEnumerable<ITimerSource>> sourcesProvider)
+            : this(sourcesProvider, () => false)
+        {
+        }
+
+
+        /// <param name="allowMultiple">
+        /// Whether several timers may run at once. Read on every Refresh(),
+        /// since the user can change it while the application is open.
+        /// </param>
+        public ActiveTimerViewModel(Func<IEnumerable<ITimerSource>> sourcesProvider, Func<bool> allowMultiple)
         {
             if (sourcesProvider == null)
                 throw new ArgumentNullException("sourcesProvider");
+            if (allowMultiple == null)
+                throw new ArgumentNullException("allowMultiple");
 
             this.sourcesProvider = sourcesProvider;
+            this.allowMultiple = allowMultiple;
             Refresh();
         }
 
@@ -155,6 +180,7 @@ namespace StopWatch
             ITimerSource resolved = Resolve(sources, running);
 
             SetActive(resolved);
+            tracked = ResolveTracked(sources, running, resolved);
             Set(ref issueKey, resolved == null ? "" : resolved.IssueKey ?? "", "IssueKey");
             Set(ref summary, resolved == null ? "" : resolved.Summary ?? "", "Summary");
             Set(ref isRunning, resolved != null && resolved.WatchTimer.Running, "IsRunning");
@@ -213,6 +239,26 @@ namespace StopWatch
         }
 
 
+        /// <summary>
+        /// With multiple timers allowed, a paused row stays listed for as long
+        /// as it holds elapsed time - that is time still owed to Jira, and it
+        /// goes back to zero once loaded. Without them, a paused row holding
+        /// time is the normal result of switching issues, so only the running
+        /// rows (or the active one when none runs) are listed.
+        /// </summary>
+        private List<ITimerSource> ResolveTracked(List<ITimerSource> sources, List<ITimerSource> running, ITimerSource resolved)
+        {
+            List<ITimerSource> result = allowMultiple()
+                ? sources.Where(s => s.WatchTimer.Running || s.WatchTimer.TimeElapsed > TimeSpan.Zero).ToList()
+                : running;
+
+            if (result.Count == 0 && resolved != null)
+                result = new List<ITimerSource> { resolved };
+
+            return result;
+        }
+
+
         private void SetActive(ITimerSource resolved)
         {
             if (ReferenceEquals(active, resolved))
@@ -244,10 +290,12 @@ namespace StopWatch
 
         #region private members
         private readonly Func<IEnumerable<ITimerSource>> sourcesProvider;
+        private readonly Func<bool> allowMultiple;
 
         private ITimerSource lastStarted;
         private ITimerSource active;
         private List<ITimerSource> running = new List<ITimerSource>();
+        private List<ITimerSource> tracked = new List<ITimerSource>();
 
         private string issueKey = "";
         private string summary = "";

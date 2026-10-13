@@ -323,6 +323,143 @@ namespace StopWatchTest
         #endregion
 
 
+        #region tracked sources
+        private bool allowMultiple;
+
+
+        private void UseMultipleTimers(bool allowed)
+        {
+            allowMultiple = allowed;
+            viewModel = new ActiveTimerViewModel(() => sources.Cast<ITimerSource>(), () => allowMultiple);
+        }
+
+
+        private static string[] Keys(IEnumerable<ITimerSource> tracked)
+        {
+            return tracked.Select(s => s.IssueKey).ToArray();
+        }
+
+
+        [Test]
+        public void TrackedSources_keeps_a_paused_row_with_time_in_list_order()
+        {
+            UseMultipleTimers(true);
+            FakeSource first = Add("ABC-1", "first");
+            FakeSource second = Add("ABC-2", "second");
+            first.WatchTimer.Start();
+            second.WatchTimer.Start();
+            viewModel.Refresh();
+
+            first.WatchTimer.TimeElapsed = System.TimeSpan.FromMinutes(5);
+            first.WatchTimer.Pause();
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-1", "ABC-2" }));
+            Assert.That(Keys(viewModel.RunningSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_leaves_out_a_paused_row_without_time()
+        {
+            UseMultipleTimers(true);
+            Add("ABC-1", "idle");
+            FakeSource running = Add("ABC-2", "running");
+            running.WatchTimer.Start();
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_drops_a_paused_row_once_its_time_is_back_to_zero()
+        {
+            UseMultipleTimers(true);
+            FakeSource loaded = Add("ABC-1", "loaded");
+            FakeSource running = Add("ABC-2", "running");
+            loaded.WatchTimer.TimeElapsed = System.TimeSpan.FromMinutes(5);
+            running.WatchTimer.Start();
+            viewModel.Refresh();
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-1", "ABC-2" }));
+
+            loaded.WatchTimer.Reset();
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_lists_only_the_running_row_when_multiple_timers_are_not_allowed()
+        {
+            UseMultipleTimers(false);
+            FakeSource switchedAway = Add("ABC-1", "switched away");
+            FakeSource running = Add("ABC-2", "running");
+            switchedAway.WatchTimer.TimeElapsed = System.TimeSpan.FromMinutes(5);
+            running.WatchTimer.Start();
+            viewModel.NotifyTimerStarted(running);
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_falls_back_to_the_last_one_that_ran_when_nothing_has_time()
+        {
+            UseMultipleTimers(true);
+            Add("ABC-1", "other");
+            FakeSource ran = Add("ABC-2", "ran");
+            ran.WatchTimer.Start();
+            viewModel.NotifyTimerStarted(ran);
+            ran.WatchTimer.Reset();
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_is_the_selected_row_when_none_ever_ran()
+        {
+            UseMultipleTimers(true);
+            Add("ABC-1", "first");
+            FakeSource current = Add("ABC-2", "selected");
+            current.IsCurrent = true;
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+        }
+
+
+        [Test]
+        public void TrackedSources_is_empty_when_there_are_no_rows()
+        {
+            UseMultipleTimers(true);
+
+            Assert.That(viewModel.TrackedSources, Is.Empty);
+        }
+
+
+        [Test]
+        public void TrackedSources_reads_the_current_setting_on_every_refresh()
+        {
+            UseMultipleTimers(false);
+            FakeSource paused = Add("ABC-1", "paused with time");
+            FakeSource running = Add("ABC-2", "running");
+            paused.WatchTimer.TimeElapsed = System.TimeSpan.FromMinutes(5);
+            running.WatchTimer.Start();
+            viewModel.NotifyTimerStarted(running);
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-2" }));
+
+            allowMultiple = true;
+            viewModel.Refresh();
+
+            Assert.That(Keys(viewModel.TrackedSources), Is.EqualTo(new[] { "ABC-1", "ABC-2" }));
+        }
+        #endregion
+
+
         private FakeSource Add(string key, string summary)
         {
             FakeSource source = new FakeSource(key, summary);

@@ -35,7 +35,7 @@ namespace StopWatch
 
             Issues = new IssueListViewModel(settings);
 
-            ActiveTimer = new ActiveTimerViewModel(() => Issues.Issues.Cast<ITimerSource>());
+            ActiveTimer = new ActiveTimerViewModel(() => Issues.Issues.Cast<ITimerSource>(), () => settings.AllowMultipleTimers);
         }
 
 

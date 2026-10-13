@@ -21,6 +21,17 @@
              timers running, they are all listed instead of just hinted at. -->
         <DataTemplate x:Key="TimerRow">
             <Grid Height="28">
+                <!-- A paused row is dimmed: it stays listed while it holds time
+                     not yet loaded to Jira, and should not read as counting. -->
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunning}" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <!-- stripe -->
