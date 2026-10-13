@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.13.1](https://github.com/menegrete/jirastopwatch/compare/v3.13.0...v3.13.1) (2026-10-13)
+
+### Fixed
+
+* refresh issue key in mini view rows after manual edit ([d6619b1](https://github.com/menegrete/jirastopwatch/commit/d6619b1305fffbb65b4edd0c8add0bbcab347ad9)), closes [#54](https://github.com/menegrete/jirastopwatch/issues/54)
+
 ## [3.13.0](https://github.com/menegrete/jirastopwatch/compare/v3.12.0...v3.13.0) (2026-10-13)
 
 ### Added
