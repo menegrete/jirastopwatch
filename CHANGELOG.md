@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.13.0](https://github.com/menegrete/jirastopwatch/compare/v3.12.0...v3.13.0) (2026-10-13)
+
+### Added
+
+* keep paused timers with pending time in the mini view ([795ed7a](https://github.com/menegrete/jirastopwatch/commit/795ed7aacf04f077350b2fa1705ecc474618f2ba))
+
 ## [3.12.0](https://github.com/menegrete/jirastopwatch/compare/v3.11.0...v3.12.0) (2026-10-06)
 
 ### Added
