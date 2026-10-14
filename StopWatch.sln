@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33213.308
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12224.181 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StopWatch", "source\StopWatch\StopWatch.csproj", "{B7C11B2A-F064-4BA4-BD87-954197D7FF35}"
 EndProject
@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "source", "source", "{B8EFCA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StopWatch.Plugin.Abstractions", "source\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj", "{958F1DB1-1B4A-4E2A-B774-119184E3B2CC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugin Samples", "Plugin Samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "source\Samples\HelloWorld\HelloWorld.csproj", "{FEEF9FE4-39F7-44FC-A69E-4809D5F4AE94}"
 EndProject
@@ -106,6 +106,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{B7C11B2A-F064-4BA4-BD87-954197D7FF35} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
+		{7F60E6E6-B488-4A6E-868B-796E3A42F552} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
 		{958F1DB1-1B4A-4E2A-B774-119184E3B2CC} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
 		{FEEF9FE4-39F7-44FC-A69E-4809D5F4AE94} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 		{EE40272F-F27C-4D90-8E9F-F7318545669F} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
