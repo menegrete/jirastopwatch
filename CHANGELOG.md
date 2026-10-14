@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.15.0](https://github.com/menegrete/jirastopwatch/compare/v3.14.0...v3.15.0) (2026-10-14)
+
+### Added
+
+* resize the mini view width by dragging its side edges ([94c4e9c](https://github.com/menegrete/jirastopwatch/commit/94c4e9c1c9b40f8fdbc9b79f584cced12493620e)), closes [#61](https://github.com/menegrete/jirastopwatch/issues/61)
+
 ## [3.14.0](https://github.com/menegrete/jirastopwatch/compare/v3.13.1...v3.14.0) (2026-10-14)
 
 ### Added
