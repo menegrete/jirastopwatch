@@ -1443,6 +1443,15 @@ namespace StopWatch
             if (issue == null || !issues.CanRemove)
                 return;
 
+            // Same condition that enables the row's load-time button: if the
+            // time could still be loaded, removing the row would lose it.
+            if (issue.CanPost)
+            {
+                var dialog = new ConfirmRemoveWindow(issue.IssueKey, issue.WatchTimer.TimeElapsed, issue.IsRunning) { Owner = this };
+                if (dialog.ShowDialog() != true)
+                    return;
+            }
+
             issues.Remove(issue);
             UpdateAddIssueTooltip();
             activeTimer.Refresh();
