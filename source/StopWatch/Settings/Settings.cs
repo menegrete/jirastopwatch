@@ -137,6 +137,12 @@ namespace StopWatch
         /// </summary>
         public string MiniViewLocation { get; set; }
 
+        /// <summary>
+        /// Width the user dragged the mini view to, in device-independent
+        /// units. 0 means "never resized": the window uses its default width.
+        /// </summary>
+        public int MiniViewWidth { get; set; }
+
         /// <summary>How much room each issue row takes.</summary>
         public ListDensity ListDensity { get; set; }
 
@@ -274,6 +280,8 @@ namespace StopWatch
 
             this.MiniViewLocation = Properties.Settings.Default.MiniViewLocation ?? "";
 
+            this.MiniViewWidth = Properties.Settings.Default.MiniViewWidth;
+
             this.ListDensity = (ListDensity)Properties.Settings.Default.ListDensity;
 
             this.TimeDisplayFormat = (TimeDisplayFormat)Properties.Settings.Default.TimeDisplayFormat;
@@ -328,6 +336,8 @@ namespace StopWatch
                 Properties.Settings.Default.MaxIssues = this.MaxIssues;
 
                 Properties.Settings.Default.MiniViewLocation = this.MiniViewLocation ?? "";
+
+                Properties.Settings.Default.MiniViewWidth = this.MiniViewWidth;
 
                 Properties.Settings.Default.ListDensity = (int)this.ListDensity;
 

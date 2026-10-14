@@ -81,6 +81,8 @@ namespace StopWatch
 
             InitializeComponent();
 
+            Width = DefaultPillWidth + 2 * ShadowMargin;
+
             DataContext = viewModel;
             rowsList.ItemsSource = rows;
 
@@ -113,10 +115,17 @@ namespace StopWatch
             // rows that leaves the pill.
             SyncRows(adjustPositionForRowCountChange: false);
 
+            DrawingPoint desired;
+            bool remembered = ScreenPlacement.TryParseLocation(settings.MiniViewLocation, out desired);
+
+            // The width is fitted to the screen the pill will land on, which
+            // is not known until the position is: the remembered one, or else
+            // the primary screen the fallback uses.
+            ApplyRememberedWidth((remembered ? Screen.FromPoint(desired) : Screen.PrimaryScreen).WorkingArea);
+
             DrawingSize pill = PillSize;
 
-            DrawingPoint desired;
-            if (!ScreenPlacement.TryParseLocation(settings.MiniViewLocation, out desired))
+            if (!remembered)
                 desired = ScreenPlacement.FallbackLocation(pill);
 
             MovePillTo(ScreenPlacement.EnsureOnScreen(desired, pill));
@@ -480,6 +489,114 @@ namespace StopWatch
         }
 
 
+        /// <summary>Sets the pill's width in device pixels, shadow margin added on top.</summary>
+        private void SetPillWidth(int pillWidthPixels)
+        {
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            Width = pillWidthPixels / scaleX + 2 * ShadowMargin;
+            UpdateLayout();
+        }
+
+
+        /// <summary>
+        /// Brings a pill width in device pixels within what fits the given
+        /// screen: no narrower than <see cref="MinPillWidth"/>, no wider than
+        /// the working area.
+        /// </summary>
+        private int ClampPillWidth(int desiredPixels, DrawingRectangle workingArea)
+        {
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            return ScreenPlacement.ClampWidth(desiredPixels, (int)Math.Ceiling(MinPillWidth * scaleX), workingArea);
+        }
+
+
+        /// <summary>
+        /// Applies the remembered width (or the default, if the user never
+        /// resized) to the screen the pill is about to appear on. Done before
+        /// the position is worked out, because that depends on the pill's
+        /// final size.
+        /// </summary>
+        private void ApplyRememberedWidth(DrawingRectangle workingArea)
+        {
+            double scaleX;
+            double scaleY;
+            GetScale(out scaleX, out scaleY);
+
+            double units = settings.MiniViewWidth > 0 ? settings.MiniViewWidth : DefaultPillWidth;
+
+            SetPillWidth(ClampPillWidth((int)Math.Ceiling(units * scaleX), workingArea));
+        }
+
+
+        private void grip_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            resizeStartMouseX = System.Windows.Forms.Control.MousePosition.X;
+            resizeStartLocation = PillLocation;
+            resizeStartWidth = PillSize.Width;
+        }
+
+
+        private void gripRight_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+        {
+            int moved = System.Windows.Forms.Control.MousePosition.X - resizeStartMouseX;
+
+            ResizePill(resizeStartWidth + moved, keepRightEdge: false);
+        }
+
+
+        private void gripLeft_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+        {
+            int moved = System.Windows.Forms.Control.MousePosition.X - resizeStartMouseX;
+
+            ResizePill(resizeStartWidth - moved, keepRightEdge: true);
+        }
+
+
+        private void grip_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            settings.MiniViewWidth = (int)Math.Round(Width - 2 * ShadowMargin);
+
+            // Dragging the left edge moves the window as well as widening it.
+            RememberLocation();
+        }
+
+
+        /// <summary>
+        /// Resizes the pill to <paramref name="desiredWidth"/> (device pixels,
+        /// before limits), keeping the edge the user is not dragging where it
+        /// was when the drag started. Measured from where the drag started
+        /// rather than step by step, so hitting a limit and coming back does
+        /// not leave the edge out of step with the mouse.
+        /// </summary>
+        private void ResizePill(int desiredWidth, bool keepRightEdge)
+        {
+            DrawingRectangle workingArea = Screen.FromPoint(resizeStartLocation).WorkingArea;
+
+            SetPillWidth(ClampPillWidth(desiredWidth, workingArea));
+
+            DrawingSize size = PillSize;
+            int x = keepRightEdge
+                ? resizeStartLocation.X + resizeStartWidth - size.Width
+                : resizeStartLocation.X;
+
+            // Widening towards a screen edge may need the other edge to give
+            // way. The top-left is brought onto the screen first, because
+            // EnsureOnScreen treats a position on no screen as "forgotten"
+            // and would send the pill to the fallback corner.
+            DrawingPoint desired = new DrawingPoint(
+                Math.Min(Math.Max(x, workingArea.Left), workingArea.Right - 1),
+                resizeStartLocation.Y);
+
+            MovePillTo(ScreenPlacement.EnsureOnScreen(desired, size, new[] { workingArea }, workingArea));
+        }
+
+
         private void SnapAndRemember()
         {
             DrawingPoint location = PillLocation;
@@ -509,6 +626,29 @@ namespace StopWatch
         /// clipped.
         /// </summary>
         private const double ShadowMargin = 6;
+
+        /// <summary>
+        /// Width of the visible pill, in device-independent units, until the
+        /// user drags it to something else. Also what a saved width of 0
+        /// ("never resized") stands for.
+        /// </summary>
+        private const double DefaultPillWidth = 340;
+
+        /// <summary>
+        /// Narrowest the pill can be dragged, in device-independent units:
+        /// enough for the key, the clock, the pause button and the restore
+        /// button that floats over the top-right corner.
+        /// </summary>
+        private const double MinPillWidth = 340;
+
+        /// <summary>Mouse X, in screen pixels, when the current width drag started.</summary>
+        private int resizeStartMouseX;
+
+        /// <summary>Pill location, in device pixels, when the current width drag started.</summary>
+        private DrawingPoint resizeStartLocation;
+
+        /// <summary>Pill width, in device pixels, when the current width drag started.</summary>
+        private int resizeStartWidth;
 
         /// <summary>How close to an edge counts as "dropped on it", in pixels.</summary>
         private const int SnapThreshold = 20;

@@ -290,6 +290,18 @@ namespace StopWatch.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int MiniViewWidth {
+            get {
+                return ((int)(this["MiniViewWidth"]));
+            }
+            set {
+                this["MiniViewWidth"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public int ListDensity {
             get {
                 return ((int)(this["ListDensity"]));

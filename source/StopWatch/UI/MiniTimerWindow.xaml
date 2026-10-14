@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:StopWatch"
         x:ClassModifier="internal"
-        Width="352" Height="40"
+        Height="40"
         SizeToContent="Height"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -158,46 +158,85 @@
         </DataTemplate>
     </Window.Resources>
 
-    <!-- Margin leaves room for the shadow to fall outside the pill. -->
-    <Border Margin="6"
-            Background="{DynamicResource Surface}"
-            BorderBrush="{DynamicResource Border}"
-            BorderThickness="1"
-            CornerRadius="10">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Direction="270" Opacity="0.45" Color="Black" />
-        </Border.Effect>
+    <Grid>
+        <!-- Margin leaves room for the shadow to fall outside the pill. -->
+        <Border Margin="6"
+                Background="{DynamicResource Surface}"
+                BorderBrush="{DynamicResource Border}"
+                BorderThickness="1"
+                CornerRadius="10">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="1" Direction="270" Opacity="0.45" Color="Black" />
+            </Border.Effect>
 
-        <Grid>
-            <ItemsControl x:Name="rowsList"
-                          Margin="0,0,32,0"
-                          ItemTemplate="{StaticResource TimerRow}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <Grid>
+                <ItemsControl x:Name="rowsList"
+                              Margin="0,0,32,0"
+                              ItemTemplate="{StaticResource TimerRow}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
 
-            <!-- Independent of the row list on purpose: with several timers
-                 shown there is exactly one way back to the full window, not
-                 one per row. Floats over the top-right corner instead of
-                 taking a column, so it stays put whether there is one row or
-                 several. -->
-            <Button x:Name="btnRestore"
-                    Style="{StaticResource GlyphButton}"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="0,2,4,0"
-                    ToolTip="Back to the full window"
-                    Click="btnRestore_Click">
-                <!-- arrow out of a box, pointing up-right -->
-                <Path Stroke="{DynamicResource Text}"
-                      StrokeThickness="1.4"
-                      StrokeStartLineCap="Round"
-                      StrokeEndLineCap="Round"
-                      Data="M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2" />
-            </Button>
-        </Grid>
-    </Border>
+                <!-- Independent of the row list on purpose: with several timers
+                     shown there is exactly one way back to the full window, not
+                     one per row. Floats over the top-right corner instead of
+                     taking a column, so it stays put whether there is one row or
+                     several. -->
+                <Button x:Name="btnRestore"
+                        Style="{StaticResource GlyphButton}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,2,4,0"
+                        ToolTip="Back to the full window"
+                        Click="btnRestore_Click">
+                    <!-- arrow out of a box, pointing up-right -->
+                    <Path Stroke="{DynamicResource Text}"
+                          StrokeThickness="1.4"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Data="M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Width grips: one per side edge, on top of the pill. They are 8
+             wide - the 6 of shadow margin plus 2 of the pill - so they sit
+             where nothing else is and never reach the restore button. The
+             fill is near-transparent rather than Transparent: a fully
+             transparent pixel of a layered (AllowsTransparency) window is
+             click-through at the OS level, so the grip would never see the
+             mouse. A Thumb also marks mouse-down as handled, so grabbing one
+             neither drags the window nor counts as the background
+             double click that goes back to the full window. -->
+        <Thumb x:Name="gripLeft"
+               HorizontalAlignment="Left"
+               Width="8"
+               Cursor="SizeWE"
+               DragStarted="grip_DragStarted"
+               DragDelta="gripLeft_DragDelta"
+               DragCompleted="grip_DragCompleted">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="#01000000" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+
+        <Thumb x:Name="gripRight"
+               HorizontalAlignment="Right"
+               Width="8"
+               Cursor="SizeWE"
+               DragStarted="grip_DragStarted"
+               DragDelta="gripRight_DragDelta"
+               DragCompleted="grip_DragCompleted">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="#01000000" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+    </Grid>
 </Window>
