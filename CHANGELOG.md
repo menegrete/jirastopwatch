@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.14.0](https://github.com/menegrete/jirastopwatch/compare/v3.13.1...v3.14.0) (2026-10-14)
+
+### Added
+
+* confirm before removing a row with time pending to load ([fd8efd4](https://github.com/menegrete/jirastopwatch/commit/fd8efd4f1079eaa6abf7e04766c3175f1aa4dbd1)), closes [#55](https://github.com/menegrete/jirastopwatch/issues/55)
+
 ## [3.13.1](https://github.com/menegrete/jirastopwatch/compare/v3.13.0...v3.13.1) (2026-10-13)
 
 ### Fixed
