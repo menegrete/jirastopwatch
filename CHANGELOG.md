@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.15.1](https://github.com/menegrete/jirastopwatch/compare/v3.15.0...v3.15.1) (2026-11-25)
+
+### Fixed
+
+* restore debug logging lost in the WPF migration ([b76c7fb](https://github.com/menegrete/jirastopwatch/commit/b76c7fbd9afef08e5e461dafc54df9567421ac37))
+
 ## [3.15.0](https://github.com/menegrete/jirastopwatch/compare/v3.14.0...v3.15.0) (2026-10-14)
 
 ### Added
