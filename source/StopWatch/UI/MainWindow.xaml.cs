@@ -1525,6 +1525,7 @@ namespace StopWatch
             settings.Save();
 
             restClientFactory.BaseUrl = settings.JiraBaseUrl;
+            Logging.Logger.Instance.Enabled = settings.LoggingEnabled;
 
             if (settings.Theme != themeBefore)
             {

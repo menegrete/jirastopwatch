@@ -65,6 +65,9 @@ namespace StopWatch
             Theme.Current = Theme.ForMode(settings.Theme);
             ThemeBrushes.ApplyToApplication();
 
+            Logging.Logger.Instance.LogfilePath = LogPath;
+            Logging.Logger.Instance.Enabled = settings.LoggingEnabled;
+
             var composition = new AppComposition(settings);
 
             window = new MainWindow(settings, composition);
