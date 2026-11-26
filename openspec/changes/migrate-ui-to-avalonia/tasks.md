@@ -7,42 +7,46 @@
 - [x] 1.3 En la misma spike, guardar y leer un valor con `ApplicationSettingsBase` en Linux y en Windows. Verificar que persiste y anotar la ruta de `user.config` (Decisión 5 del design)
 - [x] 1.4 En la misma spike, guardar y leer un secreto con libsecret en Mint. Verificar con `secret-tool search` que quedó en el llavero
 
-## 2. Núcleo portable
+## 2. Shell Avalonia: app, bandeja y ventana principal
 
-- [ ] 2.1 Crear `source/StopWatch.Core` (`net10.0`), agregarlo a `StopWatch.sln` y mover `Model/`, `Jira/`, `Settings/`, `Logging/` y la lógica pura de `Update/`. `dotnet build StopWatch.sln` debe pasar sin advertencias CA1416
-- [ ] 2.2 Mover `ScreenPlacement` al núcleo sin depender de `System.Windows.Forms.Screen` (recibe rectángulos) y verificar que `ScreenPlacementTest` pasa
-- [ ] 2.3 Pasar `StopWatchTest` a `net10.0`, marcar con `[Platform("Win")]` los tests que usan Win32 y verificar que `dotnet test` pasa en Windows y en WSL o Linux
+La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecutar después de cada grupo. El paso a `net10.0` y la verificación en Linux ocurren en el grupo 7, cuando ya no quedan dependencias de Windows.
 
-## 3. Servicios de plataforma
+- [x] 2.1 Cambiar `StopWatch.csproj` a Avalonia (versión fijada en `Directory.Packages.props`), quitar `UseWPF`, `UseWindowsForms` y `MaterialDesignThemes`, mantener `net10.0-windows` por ahora y conservar `AssemblyName=StopWatch`. Reemplazar `System.Windows.Forms.Screen` por `Screens` de Avalonia. `dotnet build StopWatch.sln` debe pasar
+- [x] 2.2 Portar `Theme.cs` / `ThemeBrushes.cs` a recursos por `ThemeVariant` sobre Fluent. Verificar que el cambio de tema en caliente aplica a todas las ventanas abiertas (spec `ui-theming`)
+- [ ] 2.3 Portar `App.xaml(.cs)` y el `TrayIcon` con su menú. Verificar en Windows que `Tray` esconde la ventana y que un clic en el ícono la restaura (spec `minimize-behavior`)
+- [ ] 2.4 Portar `MainWindow` y los estilos de `Styles.xaml` que usa (triggers → pseudo-clases). Verificar manualmente en Windows, en ambos temas, agregar, reordenar, quitar, iniciar y pausar issues, y la transición de color (specs `issue-list`, `ui-theming`)
+- [ ] 2.5 Verificar en Windows que se cumple `main-window-placement`: posición y maximizado recordados, y reubicación si el monitor ya no existe
 
-- [ ] 3.1 Definir `ISecretStore` en el núcleo. Implementar la variante Windows con `ProtectedData` y agregar un test que descifre un blob generado por el `DPApi.cs` actual
-- [ ] 3.2 Implementar `ISecretStore` para Linux con libsecret, sin fallback a texto plano. Agregar un test solo de Linux que guarde, lea y borre un secreto, y que falle de forma controlada sin llavero (spec `platform-support`)
-- [ ] 3.3 Implementar la selección de servicios por plataforma al arrancar y eliminar `DPApi.cs`. Verificar que en Windows la app actual sigue conectándose a Jira con el token ya guardado
+## 3. Ventanas secundarias
 
-## 4. Shell Avalonia: app, bandeja y ventana principal
+- [x] 3.1 Portar `SettingsWindow`. Fuera de Windows debe mostrar `Mini View` y `Tray`, sin `Taskbar Widget` ni selector de monitor. Agregar el test que trata `Taskbar Widget` como `Mini View` fuera de Windows (specs `minimize-behavior`, `taskbar-widget-view`)
+- [x] 3.2 Portar `WorklogWindow` con el `TimePicker` de Avalonia y verificar que la carga de worklog con hora de inicio funciona igual que en 3.x (spec `worklog-start-time`)
+- [x] 3.3 Portar `EditTimeWindow` y `ConfirmRemoveWindow`, y verificarlas manualmente en ambos temas
 
-- [ ] 4.1 Cambiar `StopWatch.csproj` a `net10.0` con Avalonia (versión fijada en `Directory.Packages.props`), quitar `UseWPF`, `UseWindowsForms` y `MaterialDesignThemes`, y conservar `AssemblyName=StopWatch`. El proyecto debe compilar con una ventana vacía en Windows y Linux
-- [ ] 4.2 Portar `Theme.cs` / `ThemeBrushes.cs` a recursos por `ThemeVariant` sobre Fluent. Verificar que el cambio de tema en caliente aplica a todas las ventanas abiertas (spec `ui-theming`)
-- [ ] 4.3 Portar `App.xaml(.cs)` y el `TrayIcon` con su menú. Verificar en Windows y Linux que `Tray` esconde la ventana y que un clic en el ícono la restaura (spec `minimize-behavior`)
-- [ ] 4.4 Portar `MainWindow` y los estilos de `Styles.xaml` que usa (triggers → pseudo-clases). Verificar manualmente en ambos temas y plataformas agregar, reordenar, quitar, iniciar y pausar issues, y la transición de color (spec `issue-list`, `ui-theming`)
-- [ ] 4.5 Verificar que `main-window-placement` se cumple en Linux: posición y maximizado recordados, y reubicación si el monitor ya no existe
+## 4. Vista mini y widget de taskbar
 
-## 5. Ventanas secundarias
+- [ ] 4.1 Portar `MiniTimerWindow`: arrastre, alineación a bordes, redimensionado horizontal, crecimiento lejos del borde y "siempre encima". Verificar cada escenario de `mini-timer-view` en Windows. El pegado a bordes no debe releer `Position` justo después de asignarla (Decisión 4 del design)
+- [ ] 4.2 Portar `TaskbarWidgetWindow` a Avalonia manteniendo `TaskbarInterop` solo para Windows (lo usa por HWND). Verificar en Windows los escenarios de `taskbar-widget-view` (auto-hide, multi-monitor, pantalla completa)
 
-- [ ] 5.1 Portar `SettingsWindow`. En Linux debe mostrar `Mini View` y `Tray`, sin `Taskbar Widget` ni selector de monitor. Agregar el test que trata `Taskbar Widget` como `Mini View` fuera de Windows (specs `minimize-behavior`, `taskbar-widget-view`)
-- [ ] 5.2 Portar `WorklogWindow` con el `TimePicker` de Avalonia y verificar que la carga de worklog con hora de inicio funciona igual que en 3.x (spec `worklog-start-time`)
-- [ ] 5.3 Portar `EditTimeWindow` y `ConfirmRemoveWindow`, y verificarlas manualmente en ambos temas
+## 5. Contrato de plugins 2.0
 
-## 6. Vista mini y widget de taskbar
+- [x] 5.1 Pasar `StopWatch.Plugin.Abstractions` a `net10.0` con tipos de Avalonia en `IPluginHost` y `ContractVersion = 2.0`. Actualizar `PluginLoaderTest` con los escenarios de `plugin-contract` (un 1.2 rechazado con ambas versiones visibles)
+- [ ] 5.2 Reescribir `HelloWorld`, `HelloSqlite` y `SplitTime` en Avalonia con `contractVersion` 2.0. Verificar que el test de integración de samples los carga y que la ventana de `HelloWorld` se abre con el tema activo
+- [ ] 5.3 Commitear el cambio de contrato con footer `BREAKING CHANGE:`, que explica cómo recompilar un plugin, y verificar con `git log` que el mensaje lo incluye
 
-- [ ] 6.1 Portar `MiniTimerWindow`: arrastre, alineación a bordes, redimensionado horizontal, crecimiento lejos del borde y "siempre encima". Verificar cada escenario de `mini-timer-view` en Windows y en Mint. El pegado a bordes no debe releer `Position` justo después de asignarla (Decisión 4 del design)
-- [ ] 6.2 Portar `TaskbarWidgetWindow` a Avalonia manteniendo `TaskbarInterop` solo para Windows (lo usa por HWND). Verificar en Windows los escenarios de `taskbar-widget-view` (auto-hide, multi-monitor, pantalla completa)
+## 6. Núcleo portable
 
-## 7. Contrato de plugins 2.0
+- [ ] 6.1 Crear `source/StopWatch.Core` (`net10.0`), agregarlo a `StopWatch.sln` y mover `Model/`, `Jira/`, `Settings/`, `Logging/`, los helpers puros y la lógica pura de `Update/`. `dotnet build StopWatch.sln` debe pasar sin advertencias CA1416
+- [ ] 6.2 Mover `ScreenPlacement` al núcleo sin depender de ninguna API de pantallas (recibe rectángulos) y sin depender de que exista una pantalla principal. Verificar que `ScreenPlacementTest` pasa
+- [ ] 6.3 Pasar `StopWatchTest` a `net10.0`, marcar con `[Platform("Win")]` los tests que usan Win32 y verificar que `dotnet test` pasa en Windows y en WSL
 
-- [ ] 7.1 Pasar `StopWatch.Plugin.Abstractions` a `net10.0` con tipos de Avalonia en `IPluginHost` y `ContractVersion = 2.0`. Actualizar `PluginLoaderTest` con los escenarios de `plugin-contract` (un 1.2 rechazado con ambas versiones visibles)
-- [ ] 7.2 Reescribir `HelloWorld`, `HelloSqlite` y `SplitTime` en Avalonia con `contractVersion` 2.0. Verificar que el test de integración de samples los carga y que en Linux la ventana de `HelloWorld` se abre con el tema activo
-- [ ] 7.3 Commitear el cambio de contrato con footer `BREAKING CHANGE:`, que explica cómo recompilar un plugin, y verificar con `git log` que el mensaje lo incluye
+## 7. Servicios de plataforma y paso a Linux
+
+- [ ] 7.1 Definir `ISecretStore` en el núcleo. Implementar la variante Windows con `ProtectedData` y agregar un test que descifre un blob generado por el `DPApi.cs` actual
+- [ ] 7.2 Implementar `ISecretStore` para Linux con libsecret, asíncrono y sin fallback a texto plano. Agregar un test solo de Linux que guarde, lea y borre un secreto, y que falle de forma controlada sin llavero (spec `platform-support`)
+- [ ] 7.3 Implementar la selección de servicios por plataforma al arrancar y eliminar `DPApi.cs`. Verificar que en Windows la app sigue conectándose a Jira con el token ya guardado
+- [ ] 7.4 Pasar `StopWatch.csproj` a `net10.0`, con el código solo de Windows protegido por `OperatingSystem.IsWindows()`. `dotnet build` debe pasar sin advertencias CA1416 y `dotnet publish -r linux-x64` debe generar un ejecutable
+- [ ] 7.5 Verificar en Linux Mint lo que los grupos 2 a 5 verificaron en Windows: bandeja, ventana principal y su posición, ventanas secundarias, vista mini, cambio de tema y ventana de `HelloWorld`
 
 ## 8. Auto-update y release multiplataforma
 

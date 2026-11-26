@@ -1,6 +1,6 @@
 using System;
-using System.Windows;
-using System.Windows.Threading;
+using Avalonia.Controls;
+using Avalonia.Threading;
 
 namespace StopWatch.Plugin
 {
@@ -11,12 +11,13 @@ namespace StopWatch.Plugin
         Version ContractVersion { get; }
 
         /// <summary>
-        /// The main window, for use as the <see cref="Window.Owner"/> of the
-        /// plugin's own windows.
+        /// The main window, for use as the owner of the plugin's own windows
+        /// (<c>window.ShowDialog(MainWindow)</c> or <c>window.Show(MainWindow)</c>).
+        /// An Avalonia window: contract 2.0 replaced the WPF types of 1.x.
         /// </summary>
         Window MainWindow { get; }
 
-        /// <summary>The UI dispatcher.</summary>
+        /// <summary>The UI dispatcher (<see cref="Dispatcher.UIThread"/>).</summary>
         Dispatcher Dispatcher { get; }
 
         /// <summary>

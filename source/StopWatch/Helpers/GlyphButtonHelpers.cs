@@ -21,14 +21,14 @@
  */
 
 using System;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
-using System.Windows.Threading;
+using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Media;
+using Avalonia.Threading;
 
 namespace StopWatch
 {
-    /// <summary>Shared behaviour for the small glyph-only icon buttons (<c>GlyphButton</c> style), used by both the main window's row templates and the mini view's.</summary>
+    /// <summary>Shared behaviour for the small glyph-only icon buttons (<c>glyph</c> class), used by both the main window's row templates and the mini view's.</summary>
     static public class GlyphButtonHelpers
     {
         /// <summary>
@@ -42,8 +42,12 @@ namespace StopWatch
             if (glyph == null)
                 return;
 
+            Geometry check = button.FindResource("GlyphCheck") as Geometry;
+            if (check == null)
+                return;
+
             Geometry original = glyph.Data;
-            glyph.Data = (Geometry)button.FindResource("GlyphCheck");
+            glyph.Data = check;
 
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             timer.Tick += (s, e) =>

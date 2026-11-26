@@ -5,8 +5,7 @@
        (e_sqlite3.dll). If this loads and runs on a machine, plugins with
        private dependencies work there. Not shipped with the application. -->
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>HelloSqlite</RootNamespace>
     <AssemblyName>HelloSqlite</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -26,6 +25,23 @@
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- The host's Avalonia is the one used at runtime: ExcludeAssets="runtime"
+         keeps the plugin folder free of a second copy (a second copy would
+         make Window a different type from the host's). In a plugin repository
+         this is the same reference, with the host's Avalonia version. -->
+    <PackageReference Include="Avalonia" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <!-- CopyLocalLockFileAssemblies also copies the packages Avalonia depends on
+       (ExcludeAssets above only covers Avalonia itself). The host has them all.
+       Matched by package id, so check this list when Avalonia's dependencies change. -->
+  <Target Name="LeaveAvaloniaToTheHost" AfterTargets="ResolveLockFileCopyLocalFiles">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="$([System.String]::Copy('%(ReferenceCopyLocalPaths.NuGetPackageId)').StartsWith('Avalonia')) Or $([System.String]::Copy('%(ReferenceCopyLocalPaths.NuGetPackageId)').StartsWith('MicroCom'))" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Content Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />

@@ -8,7 +8,7 @@ namespace SplitTime
     /// <summary>Asks the user how to share the time. Returns null when they cancel.</summary>
     public interface ISplitPrompt
     {
-        SplitPlan Ask(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes);
+        Task<SplitPlan> AskAsync(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes);
     }
 
 
@@ -57,7 +57,7 @@ namespace SplitTime
             if (subtasks.Count == 0)
                 return InsteadOfResult.Declined();
 
-            SplitPlan plan = prompt.Ask(request.IssueKey, subtasks, total);
+            SplitPlan plan = await prompt.AskAsync(request.IssueKey, subtasks, total);
             if (plan == null)
                 return InsteadOfResult.Cancelled();
 

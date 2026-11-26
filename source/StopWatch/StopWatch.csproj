@@ -1,32 +1,29 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <!-- Still -windows: the Win32 interop (Taskbar*, NativeMethods, DPApi) and
+         Microsoft.Win32 use remain until the platform services are split out.
+         See openspec change "migrate-ui-to-avalonia", tasks 6 and 7. -->
     <TargetFramework>net10.0-windows</TargetFramework>
-    <!-- Deliberately and permanently on, even though the UI is WPF: the tray
-         icon (System.Windows.Forms.NotifyIcon) and screen enumeration
-         (System.Windows.Forms.Screen, used by ScreenPlacement) have no WPF
-         equivalent. See openspec design "migrate-ui-to-wpf", Non-Goals. -->
-    <UseWindowsForms>true</UseWindowsForms>
-    <UseWPF>true</UseWPF>
     <RootNamespace>StopWatch</RootNamespace>
     <AssemblyName>StopWatch</AssemblyName>
     <ApplicationIcon>stopwatchicon.ico</ApplicationIcon>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- WPF's ThemeMode API is still experimental and emits WPF0001, which
-         TreatWarningsAsErrors would turn into a build failure. -->
-    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <!-- Bindings in the ported XAML are still reflection-based; compiled
+         bindings need x:DataType everywhere. -->
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="RestSharp" />
-    <!-- MIT-licensed (unlike Extended WPF Toolkit, which is Xceed's
-         non-commercial-only Community License) - brought in solely for its
-         TimePicker, since WPF has no built-in one. Its resource dictionaries
-         are merged locally around just that control (see WorklogWindow.xaml)
-         rather than app-wide, so they don't override this app's own theme. -->
-    <PackageReference Include="MaterialDesignThemes" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="Microsoft.Win32.SystemEvents" />
+    <PackageReference Include="System.Formats.Nrbf" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,9 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Also the ApplicationIcon above, but the windows need it as a resource
-         so that XAML can reference it by pack URI. -->
-    <Resource Include="stopwatchicon.ico" />
+    <!-- Also the ApplicationIcon above; Avalonia reads it as an avares:// asset
+         for the window and tray icons. -->
+    <AvaloniaResource Include="stopwatchicon.ico" />
   </ItemGroup>
 
 </Project>

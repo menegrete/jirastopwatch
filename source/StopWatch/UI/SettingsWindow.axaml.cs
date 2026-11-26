@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -20,19 +20,14 @@
  * limitations under the License.
  */
 
-using StopWatch.Logging;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Navigation;
-using Screen = System.Windows.Forms.Screen;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform;
+using StopWatch.Logging;
 
 namespace StopWatch
 {
@@ -41,37 +36,45 @@ namespace StopWatch
     /// density.
     ///
     /// The settings object is only written when the dialog is accepted, which
-    /// is what makes Cancel mean cancel.
+    /// is what makes Cancel mean cancel. The caller reads the result with
+    /// <c>await ShowDialog&lt;bool?&gt;(owner)</c>: true when accepted.
     /// </summary>
     internal partial class SettingsWindow : Window
     {
         #region public methods
+        public SettingsWindow()
+        {
+            // Designer / previewer only: the real window is built with settings.
+            InitializeComponent();
+        }
+
+
         public SettingsWindow(Settings settings)
+            : this()
         {
             if (settings == null)
                 throw new ArgumentNullException("settings");
 
             this.settings = settings;
 
-            InitializeComponent();
+            Opened += SettingsWindow_Opened;
+            lnkApiToken.PointerPressed += (s, e) => AppInfo.OpenUrl("https://id.atlassian.com/manage/api-tokens");
+            lnkLogFolder.PointerPressed += (s, e) => OpenLogFolder();
+            tbMaxIssues.AddHandler(TextInputEvent, Digits_TextInput, RoutingStrategies.Tunnel);
+            tbMaxConcurrentTimers.AddHandler(TextInputEvent, Digits_TextInput, RoutingStrategies.Tunnel);
 
-            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
-
-            // Mono for MacOSX and Linux do not implement the notify icon, so
-            // the feature (and Mini View entry via minimize, which shares
-            // this control) is hidden where it does not exist.
-            gridMinimizeBehavior.Visibility = CrossPlatformHelpers.IsWindowsEnvironment()
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            // The minimize control exists wherever the tray does (spec
+            // minimize-behavior): Windows and Linux. Taskbar Widget and its
+            // monitor selector are Windows-only (spec taskbar-widget-view).
+            gridMinimizeBehavior.IsVisible = OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
 
             tbJiraBaseUrl.Text = settings.JiraBaseUrl;
             tbUsername.Text = settings.Username;
-            tbApiToken.Password = settings.ApiToken;
+            tbApiToken.Text = settings.ApiToken;
 
             cbAlwaysOnTop.IsChecked = settings.AlwaysOnTop;
             cbAllowMultipleTimers.IsChecked = settings.AllowMultipleTimers;
             tbMaxConcurrentTimers.Text = settings.MaxConcurrentTimers.ToString();
-            gridMaxConcurrentTimers.IsEnabled = settings.AllowMultipleTimers;
             cbIncludeProjectName.IsChecked = settings.IncludeProjectName;
             cbLoggingEnabled.IsChecked = settings.LoggingEnabled;
             cbCheckForUpdates.IsChecked = settings.CheckForUpdates;
@@ -92,11 +95,9 @@ namespace StopWatch
                 new Choice<WorklogCommentSetting>("Post only as a comment", WorklogCommentSetting.CommentOnly),
                 new Choice<WorklogCommentSetting>("Post as both worklog and comment", WorklogCommentSetting.WorklogAndComment));
 
-            // Qualified: Window has a ThemeMode property of its own, which
-            // would otherwise shadow this enum inside a Window subclass.
             Fill(cbTheme, settings.Theme,
-                new Choice<ThemeMode>("Dark", StopWatch.ThemeMode.Dark),
-                new Choice<ThemeMode>("Light", StopWatch.ThemeMode.Light));
+                new Choice<ThemeMode>("Dark", ThemeMode.Dark),
+                new Choice<ThemeMode>("Light", ThemeMode.Light));
 
             Fill(cbListDensity, settings.ListDensity,
                 new Choice<ListDensity>("Compact", ListDensity.Compact),
@@ -106,17 +107,25 @@ namespace StopWatch
                 new Choice<TimeDisplayFormat>("Jira (2h 15m)", TimeDisplayFormat.Jira),
                 new Choice<TimeDisplayFormat>("Clock (2:15)", TimeDisplayFormat.Clock));
 
-            Fill(cbMinimizeBehavior, settings.MinimizeBehavior,
-                new Choice<MinimizeBehavior>("Mini View", MinimizeBehavior.MiniView),
-                new Choice<MinimizeBehavior>("Tray", MinimizeBehavior.Tray),
-                new Choice<MinimizeBehavior>("Taskbar Widget", MinimizeBehavior.TaskbarWidget));
+            // A Taskbar Widget setting that roamed in from Windows shows (and
+            // behaves) as Mini View here.
+            initialMinimizeBehavior = MinimizeBehaviors.Effective(settings.MinimizeBehavior, OperatingSystem.IsWindows());
+            Fill(cbMinimizeBehavior, initialMinimizeBehavior,
+                MinimizeBehaviors.Available(OperatingSystem.IsWindows())
+                    .Select(b => new Choice<MinimizeBehavior>(MinimizeBehaviorText(b), b))
+                    .ToArray());
 
             PopulateTaskbarWidgetMonitors();
             ApplyMinimizeBehaviorGating();
 
+            cbMinimizeBehavior.SelectionChanged += (s, e) => ApplyMinimizeBehaviorGating();
+            cbAllowMultipleTimers.IsCheckedChanged += (s, e) => ApplyMinimizeBehaviorGating();
+
             tbStartTransitions.Text = settings.StartTransitions;
 
             tbMaxIssues.Text = settings.MaxIssues.ToString();
+            tbMaxIssues.TextChanged += (s, e) => tbMaxIssues.Classes.Set("invalid", !IsInRange(tbMaxIssues.Text, MinIssues, MaxIssues));
+            tbMaxConcurrentTimers.TextChanged += (s, e) => tbMaxConcurrentTimers.Classes.Set("invalid", !IsInRange(tbMaxConcurrentTimers.Text, MinConcurrentTimers, MaxConcurrentTimersLimit));
         }
         #endregion
 
@@ -126,7 +135,7 @@ namespace StopWatch
         {
             settings.JiraBaseUrl = tbJiraBaseUrl.Text;
             settings.Username = tbUsername.Text;
-            settings.ApiToken = tbApiToken.Password;
+            settings.ApiToken = tbApiToken.Text;
 
             settings.AlwaysOnTop = cbAlwaysOnTop.IsChecked == true;
             settings.AllowMultipleTimers = cbAllowMultipleTimers.IsChecked == true;
@@ -142,18 +151,33 @@ namespace StopWatch
             settings.Theme = Selected<ThemeMode>(cbTheme);
             settings.ListDensity = Selected<ListDensity>(cbListDensity);
             settings.TimeDisplayFormat = Selected<TimeDisplayFormat>(cbTimeDisplayFormat);
-            settings.MinimizeBehavior = Selected<MinimizeBehavior>(cbMinimizeBehavior);
+
+            // Off Windows, leave a stored Taskbar Widget alone unless the user
+            // picked something else (or turned on multiple timers, which it
+            // excludes): it is what the setting means when it roams back.
+            MinimizeBehavior minimizeBehavior = Selected<MinimizeBehavior>(cbMinimizeBehavior);
+            if (minimizeBehavior != initialMinimizeBehavior || settings.AllowMultipleTimers)
+                settings.MinimizeBehavior = minimizeBehavior;
 
             RadioButton selectedMonitor = panelTaskbarWidgetMonitors.Children
                 .OfType<RadioButton>()
                 .FirstOrDefault(r => r.IsChecked == true);
-            settings.TaskbarWidgetMonitor = selectedMonitor != null ? (int)selectedMonitor.Tag : 0;
+            if (selectedMonitor != null)
+                settings.TaskbarWidgetMonitor = (int)selectedMonitor.Tag;
+            else if (OperatingSystem.IsWindows())
+                settings.TaskbarWidgetMonitor = 0;
 
             settings.StartTransitions = tbStartTransitions.Text;
 
             settings.MaxIssues = ParsedMaxIssues;
 
-            DialogResult = true;
+            Close(true);
+        }
+
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            Close(false);
         }
 
 
@@ -163,28 +187,22 @@ namespace StopWatch
         /// list forced the inner ScrollViewer to scroll even on an ordinary
         /// monitor; the real limit is only ever the screen itself.
         /// </summary>
-        private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
+        private void SettingsWindow_Opened(object sender, EventArgs e)
         {
-            var handle = new WindowInteropHelper(this).Handle;
-            var workingArea = Screen.FromHandle(handle).WorkingArea;
+            if (OperatingSystem.IsWindows())
+                NativeMethods.SetTitleBarDarkMode(this, StopWatch.Theme.Current.Mode == ThemeMode.Dark);
 
-            MaxHeight = Math.Max(workingArea.Height - 40, 300);
+            Screen screen = Screens.ScreenFromWindow(this);
+            if (screen != null)
+                MaxHeight = Math.Max(screen.WorkingArea.Height / screen.Scaling - 40, 300);
         }
 
 
-        private void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
-        {
-            AppInfo.OpenUrl(e.Uri.ToString());
-            e.Handled = true;
-        }
-
-
-        private void OpenLogFolder_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        private static void OpenLogFolder()
         {
             string folder = Path.GetDirectoryName(Logger.Instance.LogfilePath);
 
-            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
-            e.Handled = true;
+            AppInfo.OpenUrl(folder);
         }
 
 
@@ -192,28 +210,9 @@ namespace StopWatch
         /// Keeps the field to digits, which is what the NumericUpDown did for
         /// free.
         /// </summary>
-        private void Digits_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void Digits_TextInput(object sender, TextInputEventArgs e)
         {
-            e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
-        }
-
-
-        private void tbMaxIssues_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            int parsed;
-            bool valid = int.TryParse(tbMaxIssues.Text, out parsed)
-                && parsed >= MinIssues
-                && parsed <= MaxIssues;
-
-            if (valid)
-                // ClearValue, not Style = null: assigning null pins the local
-                // value to "no style" and permanently opts the control out of
-                // the implicit dark TextBox style, rather than reverting to
-                // it. Every other place in this codebase that clears a
-                // validation style has the same fix.
-                tbMaxIssues.ClearValue(StyleProperty);
-            else
-                tbMaxIssues.Style = (Style)FindResource("InvalidInput");
+            e.Handled = string.IsNullOrEmpty(e.Text) || !e.Text.All(c => c >= '0' && c <= '9');
         }
 
 
@@ -226,32 +225,6 @@ namespace StopWatch
         private void MaxIssuesDown_Click(object sender, RoutedEventArgs e)
         {
             StepMaxIssues(-1);
-        }
-
-
-        private void cbAllowMultipleTimers_Toggled(object sender, RoutedEventArgs e)
-        {
-            gridMaxConcurrentTimers.IsEnabled = cbAllowMultipleTimers.IsChecked == true;
-        }
-
-
-        private void cbMinimizeBehavior_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ApplyMinimizeBehaviorGating();
-        }
-
-
-        private void tbMaxConcurrentTimers_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            int parsed;
-            bool valid = int.TryParse(tbMaxConcurrentTimers.Text, out parsed)
-                && parsed >= MinConcurrentTimers
-                && parsed <= MaxConcurrentTimersLimit;
-
-            if (valid)
-                tbMaxConcurrentTimers.ClearValue(StyleProperty);
-            else
-                tbMaxConcurrentTimers.Style = (Style)FindResource("InvalidInput");
         }
 
 
@@ -269,6 +242,13 @@ namespace StopWatch
 
 
         #region private methods
+        private static bool IsInRange(string text, int min, int max)
+        {
+            int parsed;
+            return int.TryParse(text, out parsed) && parsed >= min && parsed <= max;
+        }
+
+
         /// <summary>
         /// The value the field holds, clamped to the range the NumericUpDown
         /// used to enforce, so that an out-of-range entry cannot be saved.
@@ -326,26 +306,39 @@ namespace StopWatch
         }
 
 
+        private static string MinimizeBehaviorText(MinimizeBehavior behavior)
+        {
+            switch (behavior)
+            {
+                case MinimizeBehavior.Tray:
+                    return "Tray";
+                case MinimizeBehavior.TaskbarWidget:
+                    return "Taskbar Widget";
+                default:
+                    return "Mini View";
+            }
+        }
+
+
         /// <summary>
         /// One radio button per connected monitor (primary first, then
         /// secondaries ordered left-to-right/top-to-bottom - the same order
         /// <see cref="TaskbarInterop.GetSecondaryTrays"/> resolves monitor
         /// indices in): the widget shows on exactly one monitor, never
-        /// several at once.
+        /// several at once. Windows only; elsewhere there is no widget.
         /// </summary>
         private void PopulateTaskbarWidgetMonitors()
         {
             panelTaskbarWidgetMonitors.Children.Clear();
 
+            if (!OperatingSystem.IsWindows())
+                return;
+
             AddMonitorRadioButton(0, "Primary monitor");
 
-            List<Screen> secondaries = Screen.AllScreens
-                .Where(s => !s.Primary)
-                .OrderBy(s => s.Bounds.Left)
-                .ThenBy(s => s.Bounds.Top)
-                .ToList();
-
-            for (int i = 0; i < secondaries.Count; i++)
+            // The primary is one of the screens; the rest are the secondaries.
+            int secondaries = Math.Max(ScreenAreas.Current().WorkingAreas.Count - 1, 0);
+            for (int i = 0; i < secondaries; i++)
                 AddMonitorRadioButton(i + 1, string.Format("Monitor {0}", i + 2));
         }
 
@@ -358,7 +351,7 @@ namespace StopWatch
                 GroupName = "TaskbarWidgetMonitor",
                 Tag = index,
                 IsChecked = settings.TaskbarWidgetMonitor == index,
-                Margin = new Thickness(0, 0, 0, 4)
+                Margin = new Avalonia.Thickness(0, 0, 0, 4)
             });
         }
 
@@ -367,13 +360,13 @@ namespace StopWatch
         /// The taskbar widget only ever shows a single active timer, so it is
         /// mutually exclusive with allowing multiple timers at once: see the
         /// minimize-behavior spec, "Taskbar Widget es excluyente con permitir
-        /// múltiples timers".
+        /// multiples timers".
         /// </summary>
         private void ApplyMinimizeBehaviorGating()
         {
             bool taskbarWidgetSelected = Selected<MinimizeBehavior>(cbMinimizeBehavior) == MinimizeBehavior.TaskbarWidget;
 
-            gridTaskbarWidgetMonitors.Visibility = taskbarWidgetSelected ? Visibility.Visible : Visibility.Collapsed;
+            gridTaskbarWidgetMonitors.IsVisible = taskbarWidgetSelected && OperatingSystem.IsWindows();
 
             // Disabling the checkbox alone leaves whatever it was already
             // checked to - and OK reads IsChecked regardless of IsEnabled -
@@ -417,9 +410,8 @@ namespace StopWatch
             /// <summary>
             /// Defensive fallback: ItemTemplate is what actually renders a
             /// choice, but anything that falls back to displaying the object
-            /// itself (a tooltip, automation, and previously the combo box's
-            /// own face before ItemTemplate replaced DisplayMemberPath here)
-            /// should still say the friendly text, not the generic type name.
+            /// itself (automation, a tooltip) should still say the friendly
+            /// text, not the generic type name.
             /// </summary>
             public override string ToString()
             {
@@ -431,6 +423,7 @@ namespace StopWatch
 
         #region private members
         private readonly Settings settings;
+        private readonly MinimizeBehavior initialMinimizeBehavior;
 
         private const int MinIssues = 1;
         private const int MaxIssues = 40;

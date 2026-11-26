@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace StopWatch
 {
@@ -36,6 +35,8 @@ namespace StopWatch
     ///
     /// The geometry functions take the screen rectangles as arguments so that
     /// the disconnected-monitor case can be tested without a second monitor.
+    /// They know nothing about any screen API: <see cref="ScreenAreas"/> feeds
+    /// them from Avalonia's Screens.
     /// </summary>
     internal static class ScreenPlacement
     {
@@ -100,14 +101,35 @@ namespace StopWatch
         }
 
 
-        /// <summary>Same as EnsureOnScreen, against the screens attached right now.</summary>
-        public static Point EnsureOnScreen(Point desired, Size size)
+        /// <summary>
+        /// The working area a point belongs to: the one that contains it, or
+        /// else the closest one (a point on the taskbar, or in a gap between
+        /// screens, still belongs somewhere). With no working areas at all the
+        /// primary one is returned, so callers never have to ask whether a
+        /// screen exists.
+        /// </summary>
+        public static Rectangle NearestArea(Point point, IEnumerable<Rectangle> workingAreas, Rectangle primaryWorkingArea)
         {
-            return EnsureOnScreen(
-                desired,
-                size,
-                Screen.AllScreens.Select(s => s.WorkingArea),
-                Screen.PrimaryScreen.WorkingArea);
+            List<Rectangle> areas = (workingAreas ?? Enumerable.Empty<Rectangle>()).ToList();
+            if (areas.Count == 0)
+                return primaryWorkingArea;
+
+            Rectangle containing = areas.FirstOrDefault(a => a.Contains(point));
+            if (!containing.IsEmpty)
+                return containing;
+
+            return areas
+                .OrderBy(a => DistanceSquared(point, a))
+                .First();
+        }
+
+
+        private static long DistanceSquared(Point point, Rectangle area)
+        {
+            long dx = Math.Max(Math.Max(area.Left - point.X, 0), point.X - (area.Right - 1));
+            long dy = Math.Max(Math.Max(area.Top - point.Y, 0), point.Y - (area.Bottom - 1));
+
+            return dx * dx + dy * dy;
         }
 
 
@@ -120,12 +142,6 @@ namespace StopWatch
                     primaryWorkingArea.Top + FallbackMargin),
                 size,
                 primaryWorkingArea);
-        }
-
-
-        public static Point FallbackLocation(Size size)
-        {
-            return FallbackLocation(size, Screen.PrimaryScreen.WorkingArea);
         }
 
 
@@ -147,13 +163,6 @@ namespace StopWatch
                 return widest;
 
             return desired < minimum ? minimum : desired;
-        }
-
-
-        /// <summary>Same as ClampWidth, against the primary screen.</summary>
-        public static int ClampWidth(int desired, int minimum)
-        {
-            return ClampWidth(desired, minimum, Screen.PrimaryScreen.WorkingArea);
         }
 
 

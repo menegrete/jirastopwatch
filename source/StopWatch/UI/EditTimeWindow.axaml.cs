@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -21,7 +21,8 @@
  */
 
 using System;
-using System.Windows;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace StopWatch
 {
@@ -29,6 +30,8 @@ namespace StopWatch
     /// Replaces EditTimeForm: sets a row's elapsed time to a value typed in
     /// Jira notation or clock notation (whichever - both are always
     /// accepted), and says so when the value does not parse.
+    ///
+    /// Closes with true when accepted, false when cancelled.
     /// </summary>
     internal partial class EditTimeWindow : Window
     {
@@ -39,15 +42,30 @@ namespace StopWatch
 
 
         #region public methods
-        public EditTimeWindow(TimeSpan time)
+        public EditTimeWindow()
         {
+            // Designer / previewer only.
             InitializeComponent();
+        }
 
+
+        public EditTimeWindow(TimeSpan time)
+            : this()
+        {
             Time = time;
             tbTime.Text = JiraTimeHelpers.TimeSpanToDisplayTime(Time);
 
-            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
-            Loaded += (s, e) => { tbTime.SelectAll(); tbTime.Focus(); };
+            // Set after the initial text, so loading the value is not a "change".
+            tbTime.TextChanged += (s, e) => tbTime.Classes.Set("invalid", false);
+
+            Opened += (s, e) =>
+            {
+                if (OperatingSystem.IsWindows())
+                    NativeMethods.SetTitleBarDarkMode(this, StopWatch.Theme.Current.Mode == ThemeMode.Dark);
+
+                tbTime.SelectAll();
+                tbTime.Focus();
+            };
         }
         #endregion
 
@@ -61,23 +79,19 @@ namespace StopWatch
             {
                 // The dialog deliberately stays open: the value has to be
                 // fixed, and the field says which value that is.
-                tbTime.Style = (Style)FindResource("InvalidInput");
+                tbTime.Classes.Set("invalid", true);
                 tbTime.Focus();
                 return;
             }
 
             Time = parsed.Value;
-            DialogResult = true;
+            Close(true);
         }
 
 
-        private void tbTime_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-            // ClearValue, not Style = null: assigning null pins the field to
-            // "no style" rather than reverting to the implicit dark TextBox
-            // style, which is why the field would stay looking unstyled even
-            // once the complaint was actually gone.
-            tbTime.ClearValue(StyleProperty);
+            Close(false);
         }
         #endregion
     }

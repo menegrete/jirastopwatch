@@ -175,8 +175,7 @@ namespace StopWatch
 
         /// <summary>
         /// Which single monitor (0 = primary, 1+ = secondary, in the same
-        /// order <see cref="System.Windows.Forms.Screen.AllScreens"/> would
-        /// once sorted by position) shows the taskbar widget when
+        /// order Avalonia's <c>Screens.All</c> would, once sorted by position) shows the taskbar widget when
         /// <see cref="MinimizeBehavior"/> is <see cref="MinimizeBehavior.TaskbarWidget"/>.
         /// Falls back to the primary monitor (0) if that monitor is not
         /// currently connected. See the taskbar-widget-view spec, "El

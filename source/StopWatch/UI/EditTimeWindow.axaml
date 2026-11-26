@@ -1,16 +1,13 @@
 <Window x:Class="StopWatch.EditTimeWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:ClassModifier="internal"
         Title="Edit Timer"
-        Background="{DynamicResource Background}"
         SizeToContent="WidthAndHeight"
-        ResizeMode="NoResize"
+        CanResize="False"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display"
-        FontFamily="Segoe UI"
         FontSize="12">
 
     <StackPanel Margin="16" Width="240">
@@ -18,20 +15,19 @@
 
         <TextBox x:Name="tbTime"
                  Margin="0,8,0,0"
-                 TextAlignment="Right"
-                 TextChanged="tbTime_TextChanged" />
+                 TextAlignment="Right" />
 
         <TextBlock Margin="0,6,0,0"
-                   Style="{StaticResource MutedText}"
-                   TextWrapping="Wrap">
-            Supported formats:<LineBreak />2h 15m, 2.25h and 2:15
-        </TextBlock>
+                   Classes="muted"
+                   TextWrapping="Wrap"
+                   Text="Supported formats:&#10;2h 15m, 2.25h and 2:15" />
 
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right"
+                    Spacing="8"
                     Margin="0,16,0,0">
             <Button Content="OK" IsDefault="True" Click="btnOk_Click" />
-            <Button Content="Cancel" Margin="8,0,0,0" IsCancel="True" />
+            <Button Content="Cancel" IsCancel="True" Click="btnCancel_Click" />
         </StackPanel>
     </StackPanel>
 </Window>

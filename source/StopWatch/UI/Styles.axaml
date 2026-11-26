@@ -1,0 +1,333 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:StopWatch">
+
+    <!--
+        The application's base styles, on top of FluentTheme.
+
+        Colours: every colour is a DynamicResource whose key is a Theme
+        property name (Background, Surface, Text, TimerRunning, ...). The
+        palette lives in the Dark/Light ThemeDictionaries that ThemeBrushes
+        installs, and the same class overrides Fluent's own control-state
+        resources (ButtonBackgroundPointerOver, CheckBoxCheck..., ScrollBar...,
+        ToolTip..., MenuFlyout...) with palette colours. That is why this file
+        does not re-template Button, CheckBox, RadioButton, ComboBox, ScrollBar,
+        ToolTip or the menus: Fluent's templates already draw them with the
+        palette, including hover/pressed/disabled. Switching theme sets
+        Application.RequestedThemeVariant and every window follows.
+
+        What is here is the app's own layout of those controls (sizes, margins,
+        cursors) and its named styles, which are style classes: write
+        Classes="glyph", not Style="{StaticResource GlyphButton}".
+
+        WPF style key -> Avalonia
+            MutedText        TextBlock.muted
+            DangerBoldText   TextBlock.danger-bold
+            SectionHeader    TextBlock.section-header
+            Divider          Border.divider
+            InvalidInput     TextBox.invalid
+            GlyphButton      Button.glyph
+            StepperButton    RepeatButton.stepper
+            GlyphPath        Path.glyph-stroke
+            GlyphFill        Path.glyph-fill
+            StatusIcon       TemplatedControl with Theme="{StaticResource StatusIcon}"
+            GroupBox         Border.group-box (header: a TextBlock.section-header)
+            Hyperlink        TextBlock.link (or HyperlinkButton)
+            PasswordBox      TextBox with PasswordChar="*"
+            WhenTrue         IsVisible="{Binding X}"
+            WhenFalse        IsVisible="{Binding X, Converter={x:Static BoolConverters.Not}}"
+            NotEmpty, StartStopTooltip    same keys, StaticResource
+            Glyph* geometries             same keys, StreamGeometry
+    -->
+
+    <Styles.Resources>
+        <local:NotEmptyToBoolConverter x:Key="NotEmpty" />
+        <local:StartStopTooltipConverter x:Key="StartStopTooltip" />
+
+        <!--
+            Drawn as vectors rather than loaded as bitmaps. A vector takes its
+            colour from the theme, so one geometry serves both themes and
+            scales with DPI.
+        -->
+        <StreamGeometry x:Key="GlyphPlay">M 0,0 L 10,5.5 L 0,11 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphPause">M 0,0 H 3.5 V 11 H 0 Z M 6,0 H 9.5 V 11 H 6 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphAdd">M 5.5,0 V 11 M 0,5.5 H 11</StreamGeometry>
+        <StreamGeometry x:Key="GlyphRemove">M 1,1 L 10,10 M 10,1 L 1,10</StreamGeometry>
+        <StreamGeometry x:Key="GlyphReset">M 1,6 A 5,5 0 1 0 6,1 M 6,1 L 3.5,1 M 6,1 L 6,3.5</StreamGeometry>
+        <StreamGeometry x:Key="GlyphPost">M 5.5,8 V 1 M 2,4.5 L 5.5,1 L 9,4.5 M 0.5,10.5 H 10.5</StreamGeometry>
+        <StreamGeometry x:Key="GlyphOpenBrowser">M 4,0 H 11 V 7 M 11,0 L 4.5,6.5 M 8,9 V 11 H 0 V 3 H 2</StreamGeometry>
+        <StreamGeometry x:Key="GlyphMiniView">M 0,1 H 11 V 10 H 0 Z M 6,6 H 10 V 9.5 H 6 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphSettingsBars">M 0,2.5 H 2.5 M 6.5,2.5 H 11 M 0,8.5 H 5 M 9,8.5 H 11</StreamGeometry>
+        <StreamGeometry x:Key="GlyphTriangleUp">M 0,4 L 4,0 L 8,4 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphTriangleDown">M 0,0 L 8,0 L 4,4 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphCopy">M 3,0 H 10 V 7 H 3 Z M 0,3 H 7 V 10 H 0 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphCheck">M 1,6 L 4.5,9.5 L 10,2</StreamGeometry>
+        <StreamGeometry x:Key="GlyphStatusHalf">M 6,3 A 3,3 0 0 1 6,9 Z</StreamGeometry>
+        <StreamGeometry x:Key="GlyphStatusCheck">M 3.5,6.2 L 5.3,8 L 8.5,4.3</StreamGeometry>
+
+        <!--
+            The Jira status category of a row (DataContext with StatusCategory
+            and StatusName). Shape tells the categories apart, colour only
+            reinforces it: an empty ring for to-do, a half-filled ring for in
+            progress, a filled disc with a check for done. The control keeps its
+            12x12 size while there is no status (none of the three shows), so
+            the summary beside it doesn't shift when the status arrives.
+            WPF's DataTriggers become one IsVisible binding per category.
+        -->
+        <ControlTheme x:Key="StatusIcon" TargetType="TemplatedControl">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ToolTip.Tip" Value="{Binding StatusName}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel Background="Transparent">
+                        <Panel IsVisible="{Binding StatusCategory, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static local:IssueStatusCategory.ToDo}}">
+                            <Ellipse Stroke="{DynamicResource StatusToDo}" StrokeThickness="1.5" />
+                        </Panel>
+                        <Panel IsVisible="{Binding StatusCategory, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static local:IssueStatusCategory.InProgress}}">
+                            <Ellipse Stroke="{DynamicResource StatusInProgress}" StrokeThickness="1.5" />
+                            <Path Data="{StaticResource GlyphStatusHalf}" Fill="{DynamicResource StatusInProgress}" />
+                        </Panel>
+                        <Panel IsVisible="{Binding StatusCategory, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static local:IssueStatusCategory.Done}}">
+                            <Ellipse Stroke="{DynamicResource StatusDone}" Fill="{DynamicResource StatusDone}" StrokeThickness="1.5" />
+                            <Path Data="{StaticResource GlyphStatusCheck}"
+                                  Stroke="{DynamicResource Surface}"
+                                  StrokeThickness="1.6"
+                                  StrokeLineCap="Round"
+                                  StrokeJoin="Round" />
+                        </Panel>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </Styles.Resources>
+
+    <!-- ==================== window ==================== -->
+
+    <!-- Foreground is inherited by the TextBlocks inside, which is why there
+         is no global TextBlock colour. -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+
+    <!-- ==================== text ==================== -->
+
+    <Style Selector="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    </Style>
+
+    <Style Selector="TextBlock.danger-bold">
+        <Setter Property="Foreground" Value="{DynamicResource Danger}" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style Selector="TextBlock.section-header">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,10,0,4" />
+    </Style>
+
+    <!-- A TextBlock that behaves as a link (WPF Hyperlink). -->
+    <Style Selector="TextBlock.link">
+        <Setter Property="Foreground" Value="{DynamicResource Link}" />
+        <Setter Property="TextDecorations" Value="Underline" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="TextBlock.link:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+
+    <!-- A thin horizontal rule, as the forms did with lblDivider. -->
+    <Style Selector="Border.divider">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Border}" />
+        <Setter Property="Margin" Value="0,6" />
+    </Style>
+
+    <!-- WPF GroupBox has no Avalonia equivalent: a Border carries the frame,
+         its header is a TextBlock.section-header inside it. -->
+    <Style Selector="Border.group-box">
+        <Setter Property="BorderBrush" Value="{DynamicResource Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Margin" Value="0,6" />
+    </Style>
+
+    <!-- ==================== text input ==================== -->
+
+    <!-- Colours (background, border, focus, disabled, placeholder) come from
+         the TextControl* keys ThemeBrushes overrides. A read-only box looks
+         disabled, as before. -->
+    <Style Selector="TextBox">
+        <Setter Property="CaretBrush" Value="{DynamicResource Text}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource SurfaceActive}" />
+        <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Text}" />
+        <Setter Property="Padding" Value="3,2" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox[IsReadOnly=True] /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDisabled}" />
+    </Style>
+
+    <!--
+        Marks a field whose content does not parse. The edit-time dialog used a
+        red background for this; keeping it as a class means the signal is a
+        theme colour rather than a literal red. The rules repeat for hover and
+        focus because Fluent sets the box's colours per state in its template.
+    -->
+    <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource DangerSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Danger}" />
+    </Style>
+    <Style Selector="TextBox.invalid:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource DangerSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Danger}" />
+    </Style>
+    <Style Selector="TextBox.invalid:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource DangerSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Danger}" />
+    </Style>
+
+    <!-- ==================== buttons ==================== -->
+
+    <Style Selector="Button">
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinWidth" Value="75" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button:disabled">
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <!--
+        Flat, borderless icon button. Hover and pressed come from the theme
+        (ButtonBackgroundPointerOver / Pressed are ButtonHover / ButtonPressed
+        in the palette). Shared with the mini view, which is where this style
+        started. Disabled is dimmed rather than given the disabled surface.
+    -->
+    <Style Selector="Button.glyph">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="Button.glyph:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="Button.glyph:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!--
+        One half of a numeric field's up/down stepper. RepeatButton rather than
+        Button: holding it down keeps incrementing, which is the one thing a
+        plain button can't do. (Avalonia's NumericUpDown has its own spinner;
+        use this only where the stepper is composed by hand.)
+    -->
+    <Style Selector="RepeatButton.stepper">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="11" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="RepeatButton.stepper:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <Style Selector="HyperlinkButton">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="0" />
+    </Style>
+
+    <!-- ==================== toggles ==================== -->
+
+    <!-- The glyphs are Fluent's, coloured by the CheckBox*/RadioButton* keys
+         (box in the background colour, tick in the text colour, border takes
+         the text colour on hover) - so they are not light squares on a dark
+         theme. -->
+    <Style Selector="CheckBox">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="CheckBox:disabled">
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <Style Selector="RadioButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="RadioButton:disabled">
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <!-- ==================== combo box ==================== -->
+
+    <Style Selector="ComboBox">
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="Padding" Value="6,3" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Padding" Value="5,3" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+
+    <!-- ==================== tooltips, menus, separators ==================== -->
+
+    <Style Selector="ToolTip">
+        <Setter Property="Padding" Value="6,3" />
+    </Style>
+
+    <Style Selector="MenuItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="10,5" />
+    </Style>
+
+    <Style Selector="Separator">
+        <Setter Property="Background" Value="{DynamicResource Border}" />
+    </Style>
+
+    <!-- ==================== glyphs ==================== -->
+
+    <!-- A stroked glyph inside a Button.glyph. -->
+    <Style Selector="Path.glyph-stroke">
+        <Setter Property="Stroke" Value="{DynamicResource Text}" />
+        <Setter Property="StrokeThickness" Value="1.4" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- A filled glyph, for the shapes that read better solid. -->
+    <Style Selector="Path.glyph-fill">
+        <Setter Property="Fill" Value="{DynamicResource Text}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+</Styles>

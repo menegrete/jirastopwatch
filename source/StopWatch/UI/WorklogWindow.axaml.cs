@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -21,9 +21,9 @@
  */
 
 using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace StopWatch
 {
@@ -46,7 +46,9 @@ namespace StopWatch
 
     /// <summary>
     /// Replaces WorklogForm: the comment, the start time and what to do with
-    /// the remaining estimate.
+    /// the remaining estimate. Shown with <c>await ShowDialog(owner)</c>;
+    /// <see cref="Result"/> says which button closed it (closing the window
+    /// any other way is a cancel).
     /// </summary>
     internal partial class WorklogWindow : Window
     {
@@ -56,7 +58,7 @@ namespace StopWatch
 
         public string Comment
         {
-            get { return tbComment.Text; }
+            get { return tbComment.Text ?? ""; }
         }
 
 
@@ -91,22 +93,43 @@ namespace StopWatch
 
 
         #region public methods
+        public WorklogWindow()
+        {
+            // Designer / previewer only.
+            InitializeComponent();
+        }
+
+
         public WorklogWindow(DateTimeOffset startTime, TimeSpan timeElapsed, string comment, EstimateUpdateMethods estimateUpdateMethod, string estimateUpdateValue)
+            : this()
         {
             this.timeElapsed = timeElapsed;
 
-            InitializeComponent();
-
-            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
-
             Result = WorklogResult.Cancel;
+
+            // Plain Enter is a newline in the comment, so submitting from it
+            // needs Ctrl; the estimate fields submit on plain Enter. Tunnel,
+            // so the TextBox has not consumed the key first.
+            tbComment.AddHandler(KeyDownEvent, tbComment_KeyDown, RoutingStrategies.Tunnel);
+            tbSetTo.AddHandler(KeyDownEvent, EstimateValue_KeyDown, RoutingStrategies.Tunnel);
+            tbReduceBy.AddHandler(KeyDownEvent, EstimateValue_KeyDown, RoutingStrategies.Tunnel);
+
+            tbSetTo.TextChanged += EstimateValue_TextChanged;
+            tbReduceBy.TextChanged += EstimateValue_TextChanged;
+            tbSetTo.LostFocus += EstimateValue_LostFocus;
+            tbReduceBy.LostFocus += EstimateValue_LostFocus;
+
+            rdEstimateAdjustAuto.IsCheckedChanged += estimateUpdateMethod_Changed;
+            rdEstimateAdjustLeave.IsCheckedChanged += estimateUpdateMethod_Changed;
+            rdEstimateAdjustSetTo.IsCheckedChanged += estimateUpdateMethod_Changed;
+            rdEstimateAdjustManualDecrease.IsCheckedChanged += estimateUpdateMethod_Changed;
 
             if (!string.IsNullOrEmpty(comment))
             {
                 // Two blank lines above whatever was saved earlier, with the
                 // caret at the top, so the new note goes first.
                 tbComment.Text = string.Format("{0}{0}{1}", Environment.NewLine, comment);
-                tbComment.SelectionStart = 0;
+                tbComment.CaretIndex = 0;
             }
 
             // Read LocalDateTime once and fill both fields from the same value:
@@ -114,7 +137,7 @@ namespace StopWatch
             // shift the time zone.
             DateTime local = startTime.LocalDateTime;
             dpStartDate.SelectedDate = local.Date;
-            tpStartTime.SelectedTime = local;
+            tpStartTime.SelectedTime = local.TimeOfDay;
 
             switch (estimateUpdateMethod)
             {
@@ -136,7 +159,13 @@ namespace StopWatch
 
             RemainingEstimateUpdated();
 
-            Loaded += (s, e) => tbComment.Focus();
+            Opened += (s, e) =>
+            {
+                if (OperatingSystem.IsWindows())
+                    NativeMethods.SetTitleBarDarkMode(this, StopWatch.Theme.Current.Mode == ThemeMode.Dark);
+
+                tbComment.Focus();
+            };
         }
 
 
@@ -157,9 +186,7 @@ namespace StopWatch
         #region private eventhandlers
         private void tbComment_KeyDown(object sender, KeyEventArgs e)
         {
-            // The comment field takes plain Enter as a newline, so submitting
-            // from it needs the modifier.
-            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
+            if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.Control)
             {
                 Submit();
                 e.Handled = true;
@@ -179,11 +206,8 @@ namespace StopWatch
 
         private void EstimateValue_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // ClearValue, not Style = null: assigning null pins the field to
-            // "no style" rather than reverting to the implicit dark TextBox
-            // style, so typing would clear the complaint but leave the field
-            // looking unstyled.
-            ((TextBox)sender).ClearValue(StyleProperty);
+            // Typing clears the complaint.
+            ((TextBox)sender).Classes.Set("invalid", false);
         }
 
 
@@ -213,9 +237,9 @@ namespace StopWatch
             tbReduceBy.IsEnabled = estimateUpdateMethod == EstimateUpdateMethods.ManualDecrease;
 
             if (!tbSetTo.IsEnabled)
-                tbSetTo.ClearValue(StyleProperty);
+                tbSetTo.Classes.Set("invalid", false);
             if (!tbReduceBy.IsEnabled)
-                tbReduceBy.ClearValue(StyleProperty);
+                tbReduceBy.Classes.Set("invalid", false);
         }
 
 
@@ -230,7 +254,14 @@ namespace StopWatch
             // Nothing is posted, so nothing needs to validate: whatever is in
             // the estimate fields is kept as typed, as it was before.
             Result = WorklogResult.SaveForLater;
-            DialogResult = true;
+            Close();
+        }
+
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            Result = WorklogResult.Cancel;
+            Close();
         }
         #endregion
 
@@ -242,7 +273,7 @@ namespace StopWatch
                 return;
 
             Result = WorklogResult.Post;
-            DialogResult = true;
+            Close();
         }
 
 
@@ -254,7 +285,7 @@ namespace StopWatch
 
         private TimeSpan StartTimeOfDay
         {
-            get { return tpStartTime.SelectedTime?.TimeOfDay ?? DateTime.Now.TimeOfDay; }
+            get { return tpStartTime.SelectedTime ?? DateTime.Now.TimeOfDay; }
         }
 
 
@@ -317,10 +348,7 @@ namespace StopWatch
             bool valid = !string.IsNullOrWhiteSpace(field.Text)
                 && JiraTimeHelpers.JiraTimeToTimeSpan(field.Text) != null;
 
-            if (valid)
-                field.ClearValue(StyleProperty);
-            else
-                field.Style = (Style)FindResource("InvalidInput");
+            field.Classes.Set("invalid", !valid);
 
             if (!valid && focusIfInvalid)
             {

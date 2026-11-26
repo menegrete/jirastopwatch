@@ -21,7 +21,8 @@
  */
 
 using System;
-using System.Windows;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace StopWatch
 {
@@ -29,21 +30,36 @@ namespace StopWatch
     /// Asks for confirmation before a row that still has time not loaded to
     /// Jira is removed. Cancel is both the default (Enter) and the escape
     /// (Esc) button, so neither key discards the time.
+    ///
+    /// Closes with true to confirm the removal, false to cancel.
     /// </summary>
     internal partial class ConfirmRemoveWindow : Window
     {
         #region public methods
-        public ConfirmRemoveWindow(string issueKey, TimeSpan pendingTime, bool running)
+        public ConfirmRemoveWindow()
         {
+            // Designer / previewer only.
             InitializeComponent();
+        }
 
+
+        public ConfirmRemoveWindow(string issueKey, TimeSpan pendingTime, bool running)
+            : this()
+        {
             string time = JiraTimeHelpers.TimeSpanToDisplayTime(pendingTime);
             tbMessage.Text = string.IsNullOrEmpty(issueKey)
                 ? $"This row has {time} that hasn't been loaded to Jira. Remove it anyway?"
                 : $"{issueKey} has {time} that hasn't been loaded to Jira. Remove it anyway?";
-            tbRunning.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+            tbRunning.IsVisible = running;
 
-            SourceInitialized += (s, e) => NativeMethods.SetTitleBarDarkMode(this, Theme.Current.Mode == StopWatch.ThemeMode.Dark);
+            Opened += (s, e) =>
+            {
+                if (OperatingSystem.IsWindows())
+                    NativeMethods.SetTitleBarDarkMode(this, StopWatch.Theme.Current.Mode == ThemeMode.Dark);
+
+                // Enter must land on Cancel, never on Remove.
+                btnCancel.Focus();
+            };
         }
         #endregion
 
@@ -51,7 +67,13 @@ namespace StopWatch
         #region private eventhandlers
         private void btnRemove_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            Close(true);
+        }
+
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            Close(false);
         }
         #endregion
     }

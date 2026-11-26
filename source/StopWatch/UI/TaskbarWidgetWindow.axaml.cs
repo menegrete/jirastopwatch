@@ -28,19 +28,19 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Threading;
+using System.Runtime.Versioning;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform;
+using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Microsoft.Win32;
-using DrawingPoint = System.Drawing.Point;
 using DrawingRectangle = System.Drawing.Rectangle;
 using DrawingSize = System.Drawing.Size;
-using Screen = System.Windows.Forms.Screen;
 
 namespace StopWatch
 {
@@ -49,7 +49,13 @@ namespace StopWatch
     /// anchored to the free space of the Windows taskbar and following its
     /// real position, auto-hide state and animation. See the
     /// taskbar-widget-view spec.
+    ///
+    /// Windows only. The window is positioned and clipped through its HWND
+    /// (<see cref="TaskbarInterop"/>), in raw device pixels, so none of the
+    /// DIP bookkeeping the mini view needs applies here. Callers reach it
+    /// only behind <c>OperatingSystem.IsWindows()</c>.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     internal partial class TaskbarWidgetWindow : Window
     {
         #region public events
@@ -77,7 +83,15 @@ namespace StopWatch
 
 
         #region public methods
+        /// <summary>Designer / XAML loader only.</summary>
+        public TaskbarWidgetWindow()
+        {
+            InitializeComponent();
+        }
+
+
         public TaskbarWidgetWindow(ActiveTimerViewModel viewModel, Settings settings, Func<IntPtr> resolveTray)
+            : this()
         {
             if (viewModel == null)
                 throw new ArgumentNullException("viewModel");
@@ -90,18 +104,16 @@ namespace StopWatch
             this.settings = settings;
             this.resolveTray = resolveTray;
 
-            InitializeComponent();
-
             DataContext = viewModel;
 
-            contentTicker = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
-            contentTicker.Interval = TimeSpan.FromSeconds(1);
+            contentTicker = new DispatcherTimer(DispatcherPriority.Normal) { Interval = TimeSpan.FromSeconds(1) };
             contentTicker.Tick += (s, e) => viewModel.Refresh();
 
-            positionTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
-            positionTimer.Interval = TimeSpan.FromMilliseconds(500);
+            positionTimer = new DispatcherTimer(DispatcherPriority.Normal) { Interval = TimeSpan.FromMilliseconds(500) };
             positionTimer.Tick += (s, e) => UpdatePosition();
 
+
+            Opened += TaskbarWidgetWindow_Opened;
             Closed += TaskbarWidgetWindow_Closed;
         }
 
@@ -110,7 +122,18 @@ namespace StopWatch
         public void ShowAt()
         {
             viewModel.Refresh();
+
+            // The first frame must not appear wherever the window happens to
+            // start: it goes off every screen until UpdatePosition places it.
+            if (!IsVisible)
+                Position = new PixelPoint(OffScreenPx, OffScreenPx);
+
             Show();
+
+            // Showing may have given the window an owner of Avalonia's
+            // choosing; the taskbar is put back as owner by UpdatePosition.
+            ownerTray = IntPtr.Zero;
+
             contentTicker.Start();
             positionTimer.Start();
             UpdatePosition();
@@ -135,12 +158,21 @@ namespace StopWatch
 
 
         #region private eventhandlers
-        protected override void OnSourceInitialized(EventArgs e)
+        /// <summary>
+        /// Raised on every Show, not only the first: the window style is
+        /// (re)applied each time, the foreground hook installed once.
+        /// </summary>
+        private void TaskbarWidgetWindow_Opened(object sender, EventArgs e)
         {
-            base.OnSourceInitialized(e);
+            hwnd = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+            if (hwnd == IntPtr.Zero)
+                return;
 
-            hwnd = new WindowInteropHelper(this).Handle;
             TaskbarInterop.ApplyToolWindowStyle(hwnd);
+
+            if (fgHook != IntPtr.Zero)
+                return;
+
 
             // Re-checks position/visibility (fullscreen state in particular)
             // promptly when the foreground window changes, instead of only on
@@ -151,12 +183,13 @@ namespace StopWatch
                     return;
 
                 updateQueued = true;
-                Dispatcher.BeginInvoke(new Action(UpdatePosition));
+                Dispatcher.UIThread.Post(UpdatePosition);
             };
             fgHook = TaskbarInterop.SetWinEventHook(
                 TaskbarInterop.EVENT_SYSTEM_FOREGROUND, TaskbarInterop.EVENT_SYSTEM_FOREGROUND,
                 IntPtr.Zero, fgProc, 0, 0, TaskbarInterop.WINEVENT_OUTOFCONTEXT);
         }
+
 
 
         private void TaskbarWidgetWindow_Closed(object sender, EventArgs e)
@@ -181,9 +214,9 @@ namespace StopWatch
         }
 
 
-        private void Pill_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Pill_PointerPressed(object sender, PointerPressedEventArgs e)
         {
-            if (e.ClickCount == 2)
+            if (e.ClickCount == 2 && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
                 RaiseRestoreRequested();
         }
 
@@ -194,11 +227,22 @@ namespace StopWatch
         }
 
 
-        /// <summary>Rebuilds the Monitor submenu from the currently connected monitors each time it opens, so it never shows a monitor that has since been disconnected (or misses one just plugged in).</summary>
-        private void WidgetMenu_Opened(object sender, RoutedEventArgs e)
+        private void WidgetMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ContextMenu menu = (ContextMenu)sender;
+            PrepareMenu();
+        }
 
+
+        /// <summary>
+        /// Rebuilds the Monitor submenu from the currently connected monitors
+        /// each time the menu opens, so it never shows a monitor that has
+        /// since been disconnected (or misses one just plugged in). Called
+        /// from both Opening and Opened: Avalonia raises Opening only for a
+        /// menu opened by the pointer, not for one opened from code, and the
+        /// rebuild is the same either way.
+        /// </summary>
+        private void PrepareMenu()
+        {
             // Suspend the widget's own periodic EnsureTopmost while the menu
             // is open: re-asserting the WIDGET's topmost status (positionTimer
             // ticks every 500ms, plus the foreground/location hooks) puts it
@@ -208,30 +252,28 @@ namespace StopWatch
             // its tooltip/volume popup, worked around the same way there.
             contextMenuOpen = true;
 
-            // The Monitor entry is always the ContextMenu's first item - see
-            // the XAML. Found via the tree rather than a named field: a
-            // resource-scoped element does not get one from InitializeComponent.
-            menuMonitor = (MenuItem)menu.Items[0];
             menuMonitor.Items.Clear();
 
             AddMonitorMenuItem(0, "Primary monitor");
 
-            List<Screen> secondaries = Screen.AllScreens
-                .Where(s => !s.Primary)
-                .OrderBy(s => s.Bounds.Left)
-                .ThenBy(s => s.Bounds.Top)
-                .ToList();
-
-            for (int i = 0; i < secondaries.Count; i++)
+            int secondaries = Screens.All.Count(s => !s.IsPrimary);
+            for (int i = 0; i < secondaries; i++)
                 AddMonitorMenuItem(i + 1, string.Format("Monitor {0}", i + 2));
+        }
 
-            // The real Windows taskbar is itself always-on-top, and a WPF
-            // Popup does not automatically become topmost just because the
-            // control that owns it is - this gives the menu's own popup one
-            // explicit nudge above it, on top of no longer being displaced by
-            // the widget's own re-assertions. Deferred one dispatcher pass so
-            // the popup's HwndSource already exists by the time this runs.
-            Dispatcher.BeginInvoke(new Action(() => EnsureTopmostPopup(menu)));
+
+        private void WidgetMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            PrepareMenu();
+
+            // The real Windows taskbar is itself always-on-top, and a popup
+            // does not automatically become topmost just because the control
+            // that owns it is - this gives the menu's own popup one explicit
+            // nudge above it, on top of no longer being displaced by the
+            // widget's own re-assertions. Deferred one dispatcher pass so the
+            // popup's window already exists by the time this runs.
+            Control menu = (Control)sender;
+            Dispatcher.UIThread.Post(() => EnsureTopmostPopup(menu));
         }
 
 
@@ -246,28 +288,29 @@ namespace StopWatch
         private void MonitorSubmenu_Opened(object sender, RoutedEventArgs e)
         {
             MenuItem monitorItem = (MenuItem)sender;
-            Dispatcher.BeginInvoke(new Action(() => EnsureTopmostPopup(monitorItem)));
+            Dispatcher.UIThread.Post(() =>
+            {
+                Control first = monitorItem.Items.OfType<Control>().FirstOrDefault();
+                EnsureTopmostPopup(first ?? monitorItem);
+            });
         }
 
 
         /// <summary>
-        /// Forces the Win32 window backing a popup (a ContextMenu or an open
-        /// submenu) above the real taskbar. <paramref name="withinPopup"/> is
-        /// any element that ends up inside that popup's own visual tree -
-        /// the popup control itself for a ContextMenu, one of its generated
-        /// item containers for a submenu, since a submenu's Popup has no
-        /// element of its own to query before its items exist.
+        /// Forces the Win32 window backing a popup (the context menu, or an
+        /// open submenu) above the real taskbar. <paramref name="withinPopup"/>
+        /// is any control inside that popup. A popup drawn inside this window
+        /// needs no nudge: it is not a window of its own.
         /// </summary>
-        private static void EnsureTopmostPopup(DependencyObject withinPopup)
+        private void EnsureTopmostPopup(Control withinPopup)
         {
-            DependencyObject target = withinPopup;
-            if (target is MenuItem menuItem && menuItem.Items.Count > 0)
-                target = menuItem.ItemContainerGenerator.ContainerFromIndex(0) as DependencyObject ?? target;
+            TopLevel popup = TopLevel.GetTopLevel(withinPopup);
+            if (popup == null || ReferenceEquals(popup, this))
+                return;
 
-            Visual visual = target as Visual;
-            HwndSource source = visual == null ? null : PresentationSource.FromVisual(visual) as HwndSource;
-            if (source != null)
-                TaskbarInterop.EnsureTopmost(source.Handle);
+            IntPtr handle = popup.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+            if (handle != IntPtr.Zero)
+                TaskbarInterop.EnsureTopmost(handle);
         }
 
 
@@ -276,7 +319,8 @@ namespace StopWatch
             MenuItem item = new MenuItem
             {
                 Header = label,
-                IsCheckable = true,
+                ToggleType = MenuItemToggleType.Radio,
+                GroupName = "monitor",
                 IsChecked = settings.TaskbarWidgetMonitor == index,
                 Tag = index
             };
@@ -289,8 +333,7 @@ namespace StopWatch
         /// <summary>
         /// Single-select: picking one monitor always checks it and unchecks
         /// every other entry, regardless of which way this particular click
-        /// toggled it - a plain <c>IsCheckable</c> MenuItem has no built-in
-        /// "radio group" the way RadioButton does.
+        /// toggled it.
         /// </summary>
         private void MonitorMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -340,6 +383,9 @@ namespace StopWatch
         /// <summary>Minimum gap from full height still counted as "fully settled".</summary>
         private const int SettledThresholdPx = 2;
 
+        /// <summary>Where the window waits before its first placement: outside every screen.</summary>
+        private const int OffScreenPx = -20000;
+
         private void UpdatePosition()
         {
             updateQueued = false;
@@ -350,7 +396,7 @@ namespace StopWatch
             // Pinned while the context menu is open: moving/clipping/
             // re-topmost-ing the widget out from under an open popup is what
             // pushes that popup behind the widget (and transitively behind
-            // the real taskbar) - see WidgetMenu_Opened. WidgetMenu_Closed
+            // the real taskbar) - see PrepareMenu. WidgetMenu_Closed
             // runs one last update immediately after clearing this.
             if (contextMenuOpen)
                 return;
@@ -403,7 +449,7 @@ namespace StopWatch
 
             if (visiblePx <= HiddenThresholdPx)
             {
-                if (Visibility == Visibility.Visible && autoHide && lastSizePx.Width > 0)
+                if (IsVisible && autoHide && lastSizePx.Width > 0)
                 {
                     StartRide(lastLeftPx, lastTopPx, BelowEdgeTopPx(monitorRectRaw.Bottom), down: true, monitorRectRaw.Bottom);
                     return;
@@ -419,7 +465,7 @@ namespace StopWatch
                 // Mid-slide. Visible = the taskbar just started hiding: ride
                 // down in sync. Not visible = a reveal is in progress: wait
                 // for it to settle, handled below once it does.
-                if (Visibility == Visibility.Visible && autoHide && lastSizePx.Width > 0)
+                if (IsVisible && autoHide && lastSizePx.Width > 0)
                 {
                     double hiddenPhase = TaskbarPlacement.GetHiddenPhase(visiblePx, trayHeightPx);
                     StartRide(lastLeftPx, lastTopPx, BelowEdgeTopPx(monitorRectRaw.Bottom), down: true, monitorRectRaw.Bottom, hiddenPhase);
@@ -463,7 +509,7 @@ namespace StopWatch
                 return;
             }
 
-            DrawingSize sizePx = new DrawingSize((int)Math.Ceiling(ActualWidth * dpiScale), (int)Math.Ceiling(ActualHeight * dpiScale));
+            DrawingSize sizePx = MeasureSizePx(dpiScale);
 
             if (barWasHidden && autoHide)
             {
@@ -483,8 +529,7 @@ namespace StopWatch
             lastTopPx = placed.Value.PositionPx.Y;
             lastSizePx = sizePx;
 
-            if (Visibility != Visibility.Visible)
-                Visibility = Visibility.Visible;
+            ShowWidget(tray);
             TaskbarInterop.EnsureTopmost(hwnd);
         }
 
@@ -497,13 +542,39 @@ namespace StopWatch
         /// </summary>
         private TaskbarPlacement.PlacementResult? TryFit(DrawingRectangle trayRect, int bandHeightPx, TaskbarPlacement.AnchorPoints anchors, bool leftAligned, bool withSummary, double dpiScale)
         {
-            txtSummary.Visibility = withSummary ? Visibility.Visible : Visibility.Collapsed;
-            UpdateLayout();
+            txtSummary.IsVisible = withSummary;
 
-            DrawingSize sizePx = new DrawingSize((int)Math.Ceiling(ActualWidth * dpiScale), (int)Math.Ceiling(ActualHeight * dpiScale));
+            DrawingSize sizePx = MeasureSizePx(dpiScale, layoutWindow: false);
 
             TaskbarPlacement.PlacementResult result = TaskbarPlacement.ComputePosition(trayRect, bandHeightPx, anchors, leftAligned, sizePx, sizePx.Width);
             return result.Fits ? (TaskbarPlacement.PlacementResult?)result : null;
+        }
+
+
+        /// <summary>
+        /// The pill's size in device pixels, measured from the pill itself:
+        /// while the window is hidden Avalonia does not lay a window out, so
+        /// its own size would read as nothing. With <paramref name="layoutWindow"/>
+        /// a shown window is laid out now as well, so it has already taken the
+        /// size the caller is about to position and clip for; a trial fit
+        /// (<see cref="TryFit"/>) leaves the window alone, so that trying the
+        /// wide layout never resizes it for a moment.
+        /// </summary>
+        private DrawingSize MeasureSizePx(double dpiScale, bool layoutWindow = true)
+        {
+            // Avalonia queues a layout invalidation rather than passing it up
+            // the tree, so a measure of the pill alone would answer from its
+            // cache. Invalidating the whole pill makes the answer current.
+            foreach (Layoutable element in pill.GetSelfAndVisualDescendants().OfType<Layoutable>())
+                element.InvalidateMeasure();
+
+            pill.Measure(Size.Infinity);
+            Size desired = pill.DesiredSize;
+
+            if (layoutWindow && IsVisible)
+                UpdateLayout();
+
+            return new DrawingSize((int)Math.Ceiling(desired.Width * dpiScale), (int)Math.Ceiling(desired.Height * dpiScale));
         }
 
 
@@ -516,8 +587,26 @@ namespace StopWatch
 
         private void HideWidget()
         {
-            if (Visibility != Visibility.Hidden)
-                Visibility = Visibility.Hidden;
+            if (IsVisible)
+                Hide();
+        }
+
+
+        /// <summary>
+        /// Shows the widget if it is hidden. Showing may drop the taskbar
+        /// ownership (the window is shown without an owner of its own), so it
+        /// is set again right away.
+        /// </summary>
+        private void ShowWidget(IntPtr tray)
+        {
+            if (IsVisible)
+                return;
+
+            Show();
+
+            hwnd = TryGetPlatformHandle()?.Handle ?? hwnd;
+            TaskbarInterop.SetOwner(hwnd, tray);
+            ownerTray = tray;
         }
 
 
@@ -635,7 +724,7 @@ namespace StopWatch
                     return;
 
                 updateQueued = true;
-                Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(UpdatePosition));
+                Dispatcher.UIThread.Post(UpdatePosition, DispatcherPriority.Send);
             });
 
             trayLocHook = TaskbarInterop.SetWinEventHook(
@@ -678,12 +767,11 @@ namespace StopWatch
             int startTopPx = TaskbarPlacement.Interpolate(fromTopPx, toTopPx, eased0);
             TaskbarInterop.MoveWindowTo(hwnd, leftPx, startTopPx);
             TaskbarInterop.ClipWindowBottom(hwnd, lastSizePx.Width, lastSizePx.Height, monitorBottomPx - startTopPx);
-            if (Visibility != Visibility.Visible)
-                Visibility = Visibility.Visible;
+            ShowWidget(ownerTray);
             TaskbarInterop.EnsureTopmost(hwnd);
 
             rideTimer?.Stop();
-            rideTimer = new DispatcherTimer(DispatcherPriority.Render, Dispatcher) { Interval = TimeSpan.FromMilliseconds(10) };
+            rideTimer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(10) };
             rideTimer.Tick += (s, e) =>
             {
                 double t = Math.Min(1.0, startPhase + stopwatch.ElapsedMilliseconds / durationMs * (1 - startPhase));
@@ -700,7 +788,7 @@ namespace StopWatch
                     if (down)
                     {
                         barWasHidden = true;
-                        Visibility = Visibility.Hidden;
+                        Hide();
                     }
                 }
             };
@@ -719,7 +807,6 @@ namespace StopWatch
         #region private members
         private readonly ActiveTimerViewModel viewModel;
         private readonly Settings settings;
-        private MenuItem menuMonitor;
         private readonly Func<IntPtr> resolveTray;
         private readonly DispatcherTimer contentTicker;
         private readonly DispatcherTimer positionTimer;

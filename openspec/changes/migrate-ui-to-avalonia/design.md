@@ -35,6 +35,8 @@ Se usa la última versión estable 12.x al empezar, fijada en `Directory.Package
 ### 2. Un núcleo `net10.0` sin dependencias de UI
 Nuevo proyecto `StopWatch.Core` (`net10.0`) con `Model/`, `Jira/`, `Settings/`, la lógica de `Update/` (selección de asset, semver, checksum, descarga) y `ScreenPlacement` (geometría pura). `StopWatch` (Avalonia) referencia al núcleo. La mayoría de los tests pasan a probar el núcleo y corren en ambas plataformas.
 
+El núcleo usa tipos de `StopWatch.Plugin.Abstractions` (`IJiraApi`, `TimeLoad*`), así que solo puede ser `net10.0` cuando el contrato 2.0 deja de depender de WPF. Por eso el orden es: primero la UI a Avalonia sobre `net10.0-windows`, después el contrato 2.0 y al final el núcleo y el paso a `net10.0`. Así la app se puede ejecutar después de cada grupo de tareas.
+
 Alternativa descartada: dejar todo en un proyecto con `#if`. Es más difícil de leer y no permite que CA1416 marque las fugas de APIs de Windows al núcleo.
 
 ### 3. Servicios de plataforma detrás de interfaces
