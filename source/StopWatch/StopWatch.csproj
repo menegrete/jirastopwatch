@@ -2,10 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- Still -windows: the Win32 interop (Taskbar*, NativeMethods, DPApi) and
-         Microsoft.Win32 use remain until the platform services are split out.
-         See openspec change "migrate-ui-to-avalonia", tasks 6 and 7. -->
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>StopWatch</RootNamespace>
     <AssemblyName>StopWatch</AssemblyName>
     <ApplicationIcon>stopwatchicon.ico</ApplicationIcon>
@@ -24,6 +21,7 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="Microsoft.Win32.SystemEvents" />
     <PackageReference Include="System.Formats.Nrbf" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 
   <ItemGroup>

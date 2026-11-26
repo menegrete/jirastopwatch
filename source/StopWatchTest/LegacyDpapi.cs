@@ -17,12 +17,15 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace StopWatch
+namespace StopWatchTest
 {
     /// <summary>
-    /// Encrypts and decrypts data using DPAPI functions.
+    /// Verbatim copy of the DPAPI wrapper the app used before ISecretStore (only the
+    /// namespace and class name changed). It stands in for "a token saved by an earlier
+    /// version" in WindowsSecretStoreTest; a DPAPI blob is user- and machine-specific, so
+    /// it cannot be a fixture and has to be produced at test time by this code.
     /// </summary>
-    public class DPAPI
+    internal class LegacyDpapi
     {
         // Wrapper for DPAPI CryptProtectData function.
         [DllImport( "crypt32.dll",

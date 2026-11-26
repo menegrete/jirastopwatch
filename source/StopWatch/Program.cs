@@ -42,9 +42,7 @@ namespace StopWatch
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
                 App.ReportException("Unhandled UI Exception", e.ExceptionObject as Exception);
 
-            // Platform secret store for Settings (task 7.1 replaces this with ISecretStore).
-            Settings.ProtectSecret = DPAPI.Encrypt;
-            Settings.UnprotectSecret = DPAPI.Decrypt;
+            Settings.SecretStore = CreateSecretStore();
 
             if (!App.ClaimSingleInstance())
             {
@@ -54,6 +52,23 @@ namespace StopWatch
             }
 
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+
+
+        /// <summary>
+        /// The platform's secret store: DPAPI over the blob in user.config on
+        /// Windows (existing tokens keep working), libsecret on Linux. There is
+        /// no other platform and no plain-text fallback.
+        /// </summary>
+        private static ISecretStore CreateSecretStore()
+        {
+            if (OperatingSystem.IsWindows())
+                return new WindowsSecretStore(Settings.ReadApiTokenBlob, Settings.WriteApiTokenBlob);
+
+            if (OperatingSystem.IsLinux())
+                return new LinuxSecretStore();
+
+            throw new PlatformNotSupportedException("Jira StopWatch runs on Windows and Linux only.");
         }
 
 

@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -176,7 +177,7 @@ namespace StopWatch
                 return;
             }
 
-            if (inTaskbarWidget)
+            if (OperatingSystem.IsWindows() && inTaskbarWidget)
             {
                 ExitTaskbarWidget();
                 return;
@@ -298,7 +299,7 @@ namespace StopWatch
             }
             else if (IsJiraEnabled)
             {
-                AuthenticateJira(settings.Username, settings.ApiToken);
+                LoadApiTokenAndAuthenticateAsync().FireAndForget();
             }
 
             ticker.Start();
@@ -340,7 +341,7 @@ namespace StopWatch
                 miniView = null;
             }
 
-            if (taskbarWidget != null)
+            if (OperatingSystem.IsWindows() && taskbarWidget != null)
             {
                 taskbarWidget.ClosedByApp = true;
                 taskbarWidget.Close();
@@ -354,7 +355,7 @@ namespace StopWatch
             // never while the app is running, never by force-closing it. See
             // the auto-update spec, "La actualización se aplica sin
             // interrumpir una sesión en curso".
-            if (pendingUpdate != null)
+            if (pendingUpdate != null && OperatingSystem.IsWindows())
                 UpdateApplier.ApplyOnExit(pendingUpdate, AppContext.BaseDirectory);
         }
 
@@ -366,6 +367,11 @@ namespace StopWatch
         /// </summary>
         private async Task CheckForUpdatesAsync()
         {
+            // The release assets and the apply helper are Windows-only until
+            // Linux gets its own (change migrate-ui-to-avalonia, group 8).
+            if (!OperatingSystem.IsWindows())
+                return;
+
             string stagingBaseDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "StopWatch", "updates");
@@ -969,6 +975,7 @@ namespace StopWatch
 
 
         /// <summary>Takes the taskbar widget down and brings this window back as it was.</summary>
+        [SupportedOSPlatform("windows")]
         private void ExitTaskbarWidget()
         {
             if (!inTaskbarWidget)
@@ -984,6 +991,7 @@ namespace StopWatch
 
 
         /// <summary>Creates the widget window on first use.</summary>
+        [SupportedOSPlatform("windows")]
         private void EnsureTaskbarWidget()
         {
             if (taskbarWidget != null)
@@ -1005,6 +1013,7 @@ namespace StopWatch
         /// plumbing - the very next poll just starts resolving to the
         /// primary taskbar instead.
         /// </summary>
+        [SupportedOSPlatform("windows")]
         private IntPtr ResolveTargetTray()
         {
             int configured = settings.TaskbarWidgetMonitor;
@@ -1019,6 +1028,7 @@ namespace StopWatch
         }
 
 
+        [SupportedOSPlatform("windows")]
         private void TaskbarWidget_RestoreRequested(object sender, EventArgs e)
         {
             ExitTaskbarWidget();
@@ -1036,6 +1046,7 @@ namespace StopWatch
         /// taskbar (an Explorer restart) rather than by the app - recreate it
         /// so the feature survives that transient.
         /// </summary>
+        [SupportedOSPlatform("windows")]
         private void TaskbarWidget_Died(object sender, EventArgs e)
         {
             taskbarWidget = null;
@@ -1077,6 +1088,29 @@ namespace StopWatch
         private bool IsJiraEnabled
         {
             get { return !string.IsNullOrEmpty(settings.JiraBaseUrl); }
+        }
+
+
+        /// <summary>
+        /// Startup connection: the token comes from the secret store, which
+        /// may block (a locked keyring), so it is awaited, not waited on. If it
+        /// cannot be read the user is told and the connection is attempted
+        /// without a token, which leaves the window in its "not connected" state.
+        /// </summary>
+        private async Task LoadApiTokenAndAuthenticateAsync()
+        {
+            lblConnectionStatus.Text = "Connecting...";
+
+            try
+            {
+                await settings.LoadApiTokenAsync();
+            }
+            catch (SecretStoreException ex)
+            {
+                ShowMessage(ex.Message, "Jira API token");
+            }
+
+            AuthenticateJira(settings.Username, settings.ApiToken);
         }
 
 
@@ -1650,11 +1684,26 @@ namespace StopWatch
             ListDensity densityBefore = settings.ListDensity;
             TimeDisplayFormat timeDisplayFormatBefore = settings.TimeDisplayFormat;
 
+            string apiTokenBefore = settings.ApiToken;
+
             var dialog = new SettingsWindow(settings);
             if (await dialog.ShowDialog<bool?>(this) != true)
                 return;
 
             settings.Save();
+
+            if (settings.ApiToken != apiTokenBefore)
+            {
+                try
+                {
+                    await settings.SaveApiTokenAsync();
+                }
+                catch (SecretStoreException ex)
+                {
+                    // The token is still in memory, so this session keeps working.
+                    ShowMessage(ex.Message, "Jira API token");
+                }
+            }
 
             restClientFactory.BaseUrl = settings.JiraBaseUrl;
             Logging.Logger.Instance.Enabled = settings.LoggingEnabled;

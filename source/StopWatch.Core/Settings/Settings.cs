@@ -26,6 +26,7 @@ using System.Configuration;
 using System.Formats.Nrbf;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using StopWatch.Logging;
 
 namespace StopWatch
@@ -202,19 +203,60 @@ namespace StopWatch
 
         #region secret protection
         /// <summary>
-        /// Seam for the platform's secret store, set once by the app at startup
-        /// (on Windows: DPAPI, via DPAPI.Encrypt / DPAPI.Decrypt). Turns the
-        /// plain API token into the string kept in user.config and back.
-        /// Replaced by a proper ISecretStore in migrate-ui-to-avalonia task 7.1.
+        /// The platform's secret store, set once by the app at startup
+        /// (DPAPI blob in user.config on Windows, the keyring on Linux). The
+        /// API token lives only there and in <see cref="ApiToken"/>; it is
+        /// read and written by <see cref="LoadApiTokenAsync"/> and
+        /// <see cref="SaveApiTokenAsync"/>, never by <see cref="Load"/> or
+        /// <see cref="Save"/>, because a keyring can block for a long time.
         /// </summary>
-        public static Func<string, string> ProtectSecret { get; set; }
-        public static Func<string, string> UnprotectSecret { get; set; }
+        public static ISecretStore SecretStore { get; set; }
 
-        private static string Protect(string plain) =>
-            (ProtectSecret ?? throw new InvalidOperationException("Settings.ProtectSecret has not been set."))(plain);
+        private static ISecretStore RequireSecretStore() =>
+            SecretStore ?? throw new InvalidOperationException("Settings.SecretStore has not been set.");
 
-        private static string Unprotect(string stored) =>
-            (UnprotectSecret ?? throw new InvalidOperationException("Settings.UnprotectSecret has not been set."))(stored);
+        /// <summary>
+        /// Fills <see cref="ApiToken"/> from the secret store ("" if none is
+        /// stored). Throws <see cref="SecretStoreException"/>; the token then stays "".
+        /// </summary>
+        public async Task LoadApiTokenAsync()
+        {
+            this.ApiToken = "";
+            this.ApiToken = await RequireSecretStore().GetAsync(SecretKeys.JiraApiToken).ConfigureAwait(false) ?? "";
+        }
+
+        /// <summary>
+        /// Stores <see cref="ApiToken"/> in the secret store, or removes it
+        /// when empty. Throws <see cref="SecretStoreException"/>.
+        /// </summary>
+        public async Task SaveApiTokenAsync()
+        {
+            string token = this.ApiToken;
+            if (string.IsNullOrEmpty(token))
+                await RequireSecretStore().DeleteAsync(SecretKeys.JiraApiToken).ConfigureAwait(false);
+            else
+                await RequireSecretStore().SetAsync(SecretKeys.JiraApiToken, token).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// The raw value of the user.config ApiToken property. Only the
+        /// Windows secret store keeps its (DPAPI-protected) blob there, so
+        /// tokens saved by earlier versions stay readable.
+        /// </summary>
+        public static string ReadApiTokenBlob()
+        {
+            lock (Instance._writeLock)
+                return Properties.Settings.Default.ApiToken ?? "";
+        }
+
+        public static void WriteApiTokenBlob(string blob)
+        {
+            lock (Instance._writeLock)
+            {
+                Properties.Settings.Default.ApiToken = blob ?? "";
+                Properties.Settings.Default.Save();
+            }
+        }
         #endregion
 
 
@@ -274,10 +316,7 @@ namespace StopWatch
             }
             this.IssueCount = Properties.Settings.Default.IssueCount;
             this.Username = Properties.Settings.Default.Username;
-            if (Properties.Settings.Default.ApiToken != "")
-                this.ApiToken = Unprotect(Properties.Settings.Default.ApiToken);
-            else
-                this.ApiToken = "";
+            this.ApiToken = ""; // comes from the secret store, see LoadApiTokenAsync
             this.FirstRun = Properties.Settings.Default.FirstRun;
             this.SaveTimerState = (SaveTimerSetting)Properties.Settings.Default.SaveTimerState;
             this.Theme = (ThemeMode)Properties.Settings.Default.Theme;
@@ -330,11 +369,6 @@ namespace StopWatch
                 Properties.Settings.Default.IncludeProjectName = this.IncludeProjectName;
 
                 Properties.Settings.Default.Username = this.Username;
-                if (this.ApiToken != "")
-                    Properties.Settings.Default.ApiToken = Protect(this.ApiToken);
-                else
-                    Properties.Settings.Default.ApiToken = "";
-
                 Properties.Settings.Default.FirstRun = this.FirstRun;
                 Properties.Settings.Default.SaveTimerState = (int)this.SaveTimerState;
                 Properties.Settings.Default.Theme = (int)this.Theme;

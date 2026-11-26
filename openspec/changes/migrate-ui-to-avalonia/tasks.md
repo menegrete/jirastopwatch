@@ -42,10 +42,10 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 
 ## 7. Servicios de plataforma y paso a Linux
 
-- [ ] 7.1 Definir `ISecretStore` en el núcleo. Implementar la variante Windows con `ProtectedData` y agregar un test que descifre un blob generado por el `DPApi.cs` actual
-- [ ] 7.2 Implementar `ISecretStore` para Linux con libsecret, asíncrono y sin fallback a texto plano. Agregar un test solo de Linux que guarde, lea y borre un secreto, y que falle de forma controlada sin llavero (spec `platform-support`)
-- [ ] 7.3 Implementar la selección de servicios por plataforma al arrancar y eliminar `DPApi.cs`. Verificar que en Windows la app sigue conectándose a Jira con el token ya guardado
-- [ ] 7.4 Pasar `StopWatch.csproj` a `net10.0`, con el código solo de Windows protegido por `OperatingSystem.IsWindows()`. `dotnet build` debe pasar sin advertencias CA1416 y `dotnet publish -r linux-x64` debe generar un ejecutable
+- [x] 7.1 Definir `ISecretStore` en el núcleo. Implementar la variante Windows con `ProtectedData` y agregar un test que descifre un blob generado por el `DPApi.cs` actual
+- [x] 7.2 Implementar `ISecretStore` para Linux con libsecret, asíncrono y sin fallback a texto plano. Agregar un test solo de Linux que guarde, lea y borre un secreto, y que falle de forma controlada sin llavero (spec `platform-support`)
+- [x] 7.3 Implementar la selección de servicios por plataforma al arrancar y eliminar `DPApi.cs`. Verificar que en Windows la app sigue conectándose a Jira con el token ya guardado
+- [x] 7.4 Pasar `StopWatch.csproj` a `net10.0`, con el código solo de Windows protegido por `OperatingSystem.IsWindows()`. `dotnet build` debe pasar sin advertencias CA1416 y `dotnet publish -r linux-x64` debe generar un ejecutable
 - [ ] 7.5 Verificar en Linux Mint lo que los grupos 2 a 5 verificaron en Windows: bandeja, ventana principal y su posición, ventanas secundarias, vista mini, cambio de tema y ventana de `HelloWorld`
 
 ## 8. Auto-update y release multiplataforma
