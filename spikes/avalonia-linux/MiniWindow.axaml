@@ -1,0 +1,10 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AvaloniaSpike.MiniWindow"
+        Width="260" Height="48" CanResize="False" ShowInTaskbar="False"
+        WindowDecorations="None" Topmost="True" Title="Mini">
+  <Border x:Name="Root" Background="#222" BorderBrush="#888" BorderThickness="1">
+    <TextBlock x:Name="TimerText" Text="ABC-123 00:00:00" Foreground="White" FontSize="16"
+               HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Border>
+</Window>

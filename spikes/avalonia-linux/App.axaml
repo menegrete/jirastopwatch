@@ -1,0 +1,21 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AvaloniaSpike.App"
+             RequestedThemeVariant="Default">
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <TrayIcon Icon="avares://avalonia-spike/Assets/tray.png" ToolTipText="Avalonia spike" Clicked="OnTrayClicked">
+        <TrayIcon.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Show control window" Click="OnShowControl" />
+            <NativeMenuItem Header="Toggle mini" Click="OnToggleMini" />
+            <NativeMenuItem Header="Exit" Click="OnExit" />
+          </NativeMenu>
+        </TrayIcon.Menu>
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
+</Application>

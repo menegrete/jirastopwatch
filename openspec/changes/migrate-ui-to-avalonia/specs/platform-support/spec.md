@@ -8,12 +8,7 @@ Define en qué sistemas operativos corre la aplicación y qué garantiza en cada
 
 ### Requirement: Plataformas soportadas
 
-La aplicación SHALL correr en Windows 10 y Windows 11 x64, en Ubuntu 24.04 LTS o posterior x64 y en Linux Mint 22 o posterior x64, con la misma funcionalidad en todas, salvo las excepciones que cada capability declara para una plataforma en particular.
-
-#### Scenario: Arranque en Ubuntu
-
-- **WHEN** el usuario ejecuta la aplicación en Ubuntu 24.04 LTS con la sesión por defecto
-- **THEN** la ventana principal se muestra y el usuario puede agregar issues, iniciar timers y cargar worklogs igual que en Windows
+La aplicación SHALL correr en Windows 10 y Windows 11 x64 y en Linux Mint 22 o posterior x64 con el escritorio Cinnamon, con la misma funcionalidad en todas, salvo las excepciones que cada capability declara para una plataforma en particular. Otras distribuciones de Linux no están soportadas.
 
 #### Scenario: Arranque en Linux Mint
 
@@ -22,11 +17,11 @@ La aplicación SHALL correr en Windows 10 y Windows 11 x64, en Ubuntu 24.04 LTS 
 
 ### Requirement: En Linux la aplicación usa X11
 
-En Linux, la aplicación SHALL presentar sus ventanas a través de X11. En una sesión Wayland, SHALL hacerlo a través de la capa de compatibilidad XWayland, de modo que la posición de las ventanas que la aplicación elige y la condición de "siempre encima" se respeten igual que en una sesión X11.
+En Linux, la aplicación SHALL presentar sus ventanas a través de X11, de modo que la posición de las ventanas que la aplicación elige y la condición de "siempre encima" se respeten igual que en Windows.
 
-#### Scenario: Sesión Wayland en Ubuntu
+#### Scenario: Vista mini en Linux Mint
 
-- **WHEN** el usuario activa la vista mini en una sesión Wayland de Ubuntu y la suelta cerca del borde derecho de la pantalla
+- **WHEN** el usuario activa la vista mini en Linux Mint y la suelta cerca del borde derecho de la pantalla
 - **THEN** la vista mini se alinea a ese borde y permanece encima de las ventanas de otras aplicaciones
 
 #### Scenario: Posición recordada en Linux

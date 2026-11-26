@@ -2,13 +2,13 @@
 
 ## Why
 
-Jira StopWatch solo corre en Windows porque toda su interfaz está hecha en WPF y WinForms, que no existen en Linux. Hay usuarios que trabajan en Ubuntu y Linux Mint y hoy no pueden usarla. El modelo y la capa Jira ya no dependen de la UI, así que lo único que bloquea la portabilidad es la capa visual y un puñado de APIs nativas de Windows.
+Jira StopWatch solo corre en Windows porque toda su interfaz está hecha en WPF y WinForms, que no existen en Linux. Hay usuarios que trabajan en Linux Mint y hoy no pueden usarla. El modelo y la capa Jira ya no dependen de la UI, así que lo único que bloquea la portabilidad es la capa visual y un puñado de APIs nativas de Windows.
 
 ## What Changes
 
 - Reemplazar WPF y WinForms por Avalonia UI en todas las ventanas (principal, vista mini, settings, worklog, edición de tiempo, confirmación) y en el ícono de bandeja, en Windows y en Linux. Ya no hay dos frameworks de UI en el mismo proceso.
 - Separar el modelo, la capa Jira, los settings y la lógica de actualización en un núcleo que compila sin dependencias de Windows.
-- Soportar Linux x64 (Ubuntu 24.04 LTS o posterior y Linux Mint 22 o posterior). La app corre sobre X11, o sobre XWayland en sesiones Wayland, para conservar el posicionamiento y el "siempre encima" de la vista mini.
+- Soportar Linux Mint 22 o posterior (x64, escritorio Cinnamon). La app corre sobre X11, para conservar el posicionamiento y el "siempre encima" de la vista mini. Otras distribuciones, Ubuntu incluido, quedan fuera de alcance: pueden funcionar, pero no se prueban ni se soportan.
 - Guardar el token de Jira en el llavero del sistema (Secret Service) en Linux. En Windows se mantiene DPAPI, así que el token ya guardado sigue siendo legible.
 - El widget de la barra de tareas queda disponible solo en Windows. En Linux, Configuración ofrece las opciones de minimizado `Mini View` y `Tray`.
 - Publicar en cada release dos artifacts de Linux (self-contained y framework-dependent, `.tar.gz`) con sus checksums, sin cambiar los nombres de los artifacts de Windows.
