@@ -11,6 +11,12 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [3.16.0](https://github.com/menegrete/jirastopwatch/compare/v3.15.1...v3.16.0) (2026-11-26)
+
+### Added
+
+* show each issue's Jira status as an icon in the main window and mini view ([7fad2d0](https://github.com/menegrete/jirastopwatch/commit/7fad2d0dc1689c548dab0d8986a455ceb5edaa65))
+
 ## [3.15.1](https://github.com/menegrete/jirastopwatch/compare/v3.15.0...v3.15.1) (2026-11-25)
 
 ### Fixed
