@@ -68,6 +68,8 @@ namespace StopWatch
                 // that no longer matches what's in the box.
                 Summary = "";
                 ParentKey = "";
+                StatusName = "";
+                StatusCategory = IssueStatusCategory.None;
             }
         }
 
@@ -118,6 +120,40 @@ namespace StopWatch
         public bool HasParent
         {
             get { return !string.IsNullOrEmpty(parentKey); }
+        }
+
+
+        /// <summary>
+        /// The Jira status name, as Jira spells it. Empty while unresolved -
+        /// never null, same as <see cref="Summary"/>.
+        /// </summary>
+        public string StatusName
+        {
+            get { return statusName; }
+            set
+            {
+                string newValue = value ?? "";
+                if (statusName == newValue)
+                    return;
+
+                statusName = newValue;
+                Raise("StatusName");
+            }
+        }
+
+
+        /// <summary>The category of <see cref="StatusName"/>; None while unresolved.</summary>
+        public IssueStatusCategory StatusCategory
+        {
+            get { return statusCategory; }
+            set
+            {
+                if (statusCategory == value)
+                    return;
+
+                statusCategory = value;
+                Raise("StatusCategory");
+            }
         }
 
 
@@ -421,6 +457,8 @@ namespace StopWatch
         private string issueKey = "";
         private string summary = "";
         private string parentKey = "";
+        private string statusName = "";
+        private IssueStatusCategory statusCategory = IssueStatusCategory.None;
         private string comment;
         private EstimateUpdateMethods estimateUpdateMethod = EstimateUpdateMethods.Auto;
         private string estimateUpdateValue;

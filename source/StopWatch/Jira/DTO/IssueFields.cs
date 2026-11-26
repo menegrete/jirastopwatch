@@ -60,5 +60,16 @@ namespace StopWatch
     internal class StatusFields
     {
         public string Name { get; set; }
+        public StatusCategoryFields StatusCategory { get; set; }
+    }
+
+    /// <summary>
+    /// One of Jira's three fixed status categories. <see cref="Key"/> is the
+    /// stable identifier ("new", "indeterminate", "done"); the display name
+    /// and colour name can vary per instance.
+    /// </summary>
+    internal class StatusCategoryFields
+    {
+        public string Key { get; set; }
     }
 }

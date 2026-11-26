@@ -96,7 +96,9 @@ namespace StopWatch
                 return new IssueSummaryResult
                 {
                     Summary = addProjectName ? issue.Project.Name + ": " + summary : summary,
-                    ParentKey = parentKey ?? ""
+                    ParentKey = parentKey ?? "",
+                    StatusName = issue.Status?.Name ?? "",
+                    StatusCategory = ToStatusCategory(issue.Status)
                 };
             }
             catch (RequestDeniedException)
@@ -106,6 +108,26 @@ namespace StopWatch
             catch (UsernameAndApiTokenNotSetException)
             {
                 return new IssueSummaryResult();
+            }
+        }
+
+        /// <summary>
+        /// Maps Jira's status category key. A status whose category is missing
+        /// or unknown still is a status, so it reads as to-do rather than none.
+        /// </summary>
+        private static IssueStatusCategory ToStatusCategory(StatusFields status)
+        {
+            if (string.IsNullOrEmpty(status?.Name))
+                return IssueStatusCategory.None;
+
+            switch (status.StatusCategory?.Key)
+            {
+                case "indeterminate":
+                    return IssueStatusCategory.InProgress;
+                case "done":
+                    return IssueStatusCategory.Done;
+                default:
+                    return IssueStatusCategory.ToDo;
             }
         }
 

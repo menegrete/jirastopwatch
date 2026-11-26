@@ -87,6 +87,10 @@ namespace StopWatch
             Set(target, "DangerSurface", theme.DangerSurface);
             Set(target, "TimerRunning", theme.TimerRunning);
 
+            Set(target, "StatusToDo", theme.StatusToDo);
+            Set(target, "StatusInProgress", theme.StatusInProgress);
+            Set(target, "StatusDone", theme.StatusDone);
+
             Set(target, "ButtonHover", theme.ButtonHover);
             Set(target, "ButtonPressed", theme.ButtonPressed);
         }

@@ -528,6 +528,72 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <!--
+        The Jira status category of a row (DataContext with StatusCategory and
+        StatusName). Shape tells the categories apart, colour only reinforces
+        it: an empty ring for to-do, a half-filled ring for in progress, a
+        filled disc with a check for done. Hidden rather than collapsed while
+        there is no status, so the summary beside it doesn't shift when the
+        status arrives.
+    -->
+    <Geometry x:Key="GlyphStatusHalf">M 6,3 A 3,3 0 0 1 6,9 Z</Geometry>
+    <Geometry x:Key="GlyphStatusCheck">M 3.5,6.2 L 5.3,8 L 8.5,4.3</Geometry>
+
+    <Style x:Key="StatusIcon" TargetType="Control">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Visibility" Value="Hidden" />
+        <Setter Property="ToolTip" Value="{Binding StatusName}" />
+        <Setter Property="Foreground" Value="{DynamicResource StatusToDo}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Control">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="ring"
+                                 Stroke="{TemplateBinding Foreground}"
+                                 StrokeThickness="1.5" />
+                        <Path x:Name="half"
+                              Data="{StaticResource GlyphStatusHalf}"
+                              Fill="{TemplateBinding Foreground}"
+                              Visibility="Collapsed" />
+                        <Path x:Name="check"
+                              Data="{StaticResource GlyphStatusCheck}"
+                              Stroke="{DynamicResource Surface}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding StatusCategory}" Value="InProgress">
+                            <Setter TargetName="half" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding StatusCategory}" Value="Done">
+                            <Setter TargetName="ring" Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Setter TargetName="check" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding StatusCategory}" Value="ToDo">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusCategory}" Value="InProgress">
+                <Setter Property="Visibility" Value="Visible" />
+                <Setter Property="Foreground" Value="{DynamicResource StatusInProgress}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusCategory}" Value="Done">
+                <Setter Property="Visibility" Value="Visible" />
+                <Setter Property="Foreground" Value="{DynamicResource StatusDone}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ==================== context menu ==================== -->
 
     <!--

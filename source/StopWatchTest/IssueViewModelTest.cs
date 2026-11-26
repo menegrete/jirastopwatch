@@ -117,6 +117,40 @@ namespace StopWatchTest
 
 
         [Test]
+        public void StatusName_NotifiesWhenItChanges()
+        {
+            model.StatusName = "Code Review";
+
+            Assert.That(model.StatusName, Is.EqualTo("Code Review"));
+            Assert.That(changed, Contains.Item("StatusName"));
+        }
+
+
+        [Test]
+        public void StatusCategory_NotifiesWhenItChanges()
+        {
+            model.StatusCategory = IssueStatusCategory.Done;
+
+            Assert.That(model.StatusCategory, Is.EqualTo(IssueStatusCategory.Done));
+            Assert.That(changed, Contains.Item("StatusCategory"));
+        }
+
+
+        [Test]
+        public void IssueKey_ChangingIt_DropsTheOldStatus()
+        {
+            model.IssueKey = "TST-1";
+            model.StatusName = "Done";
+            model.StatusCategory = IssueStatusCategory.Done;
+
+            model.IssueKey = "TST-2";
+
+            Assert.That(model.StatusName, Is.EqualTo(""));
+            Assert.That(model.StatusCategory, Is.EqualTo(IssueStatusCategory.None));
+        }
+
+
+        [Test]
         public void ParentKey_DropsWhenTheKeyChangesToSomethingElse()
         {
             model.IssueKey = "TST-1";

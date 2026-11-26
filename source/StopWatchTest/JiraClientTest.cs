@@ -115,6 +115,59 @@ namespace StopWatchTest
 
             Assert.That(result.Summary, Is.EqualTo(""));
             Assert.That(result.ParentKey, Is.EqualTo(""));
+            Assert.That(result.StatusName, Is.EqualTo(""));
+            Assert.That(result.StatusCategory, Is.EqualTo(IssueStatusCategory.None));
+        }
+
+
+        // The expected category goes in by name: IssueStatusCategory is
+        // internal, so a public test method can't take it as a parameter.
+        [TestCase("new", "ToDo")]
+        [TestCase("indeterminate", "InProgress")]
+        [TestCase("done", "Done")]
+        [TestCase("something-else", "ToDo")]
+        [TestCase(null, "ToDo")]
+        [Description("GetIssueSummary: It returns the status name and maps its category key, reading an unknown or missing category as to-do")]
+        public void GetIssueSummary_It_Returns_Status_Name_And_Category(string categoryKey, string expectedName)
+        {
+            IssueStatusCategory expected = Enum.Parse<IssueStatusCategory>(expectedName);
+
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields
+                {
+                    Summary = "The long dark tea-time of the soul",
+                    Status = new StatusFields
+                    {
+                        Name = "Code Review",
+                        StatusCategory = categoryKey == null ? null : new StatusCategoryFields { Key = categoryKey }
+                    }
+                }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.StatusName, Is.EqualTo("Code Review"));
+            Assert.That(result.StatusCategory, Is.EqualTo(expected));
+        }
+
+
+        [Test, Description("GetIssueSummary: When the issue comes back without a status, there is no status to show")]
+        public void GetIssueSummary_WithoutStatus_It_Returns_No_Status()
+        {
+            Issue returnData = new Issue
+            {
+                Fields = new IssueFields { Summary = "The long dark tea-time of the soul" }
+            };
+
+            jiraApiRequesterMock.Setup(m => m.DoAuthenticatedRequest<Issue>(It.IsAny<RestRequest>())).Returns(returnData);
+
+            IssueSummaryResult result = jiraClient.GetIssueSummary("DG-42", false);
+
+            Assert.That(result.StatusName, Is.EqualTo(""));
+            Assert.That(result.StatusCategory, Is.EqualTo(IssueStatusCategory.None));
         }
 
 
