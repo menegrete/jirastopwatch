@@ -24,7 +24,7 @@ Jira StopWatch solo corre en Windows porque toda su interfaz está hecha en WPF 
 
 ### Modified Capabilities
 - `plugin-contract`: los servicios del host exponen tipos de Avalonia y el contrato pasa a 2.0, incompatible con 1.x.
-- `automated-releases`: cada release, estable o beta, adjunta además los artifacts de Linux, y los tests corren en ambas plataformas.
+- `automated-releases`: cada release, estable o beta, adjunta además los artifacts de Linux, los tests corren en ambas plataformas, y el release también se dispara con cambios en el núcleo y en el contrato de plugins.
 - `auto-update`: la descarga elige el artifact según la plataforma además de la variante, y la actualización desde la versión WPF conserva settings, token e issues.
 - `minimize-behavior`: el control de minimizado existe también en Linux, sin la opción `Taskbar Widget`.
 - `taskbar-widget-view`: el widget queda limitado a Windows.

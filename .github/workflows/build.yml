@@ -143,6 +143,8 @@ jobs:
           filters: |
             app:
               - 'source/StopWatch/**'
+              - 'source/StopWatch.Core/**'
+              - 'source/StopWatch.Plugin.Abstractions/**'
 
       - if: steps.changed-files.outputs.app == 'true'
         id: setup-dotnet

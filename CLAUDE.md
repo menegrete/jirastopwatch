@@ -61,7 +61,7 @@ Before starting a new change (`openspec new change ...`), check the current bran
 
 ## Changelog and versioning
 
-Both are automated by `semantic-release` (`release.config.js`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.
+Both are automated by `semantic-release` (`release.config.js`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**`, `source/StopWatch.Core/**` or `source/StopWatch.Plugin.Abstractions/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.
 
 Pushes to an `rc*` branch publish `X.Y.Z-rc.N` GitHub pre-releases through the same job (`releases/latest` ignores them, and the auto-updater only offers them to users who turn on "Subscribe to beta releases" in Settings; `StopWatch.Core/Update/SemanticVersion.cs` orders versions per semver, prerelease suffix included). Keep only one `rc*` branch active at a time, since the `-rc.N` counter is shared. `release.config.js` only lists the `changelog` and `git` plugins on `main`, so nothing is committed back to an `rc*` branch (avoiding version/changelog conflicts when merging it to `main`); and `scripts/set-assembly-version.js` writes the `-rc.N` suffix only into `AssemblyInformationalVersion`, since `AssemblyVersion`/`AssemblyFileVersion` must be numeric.
 

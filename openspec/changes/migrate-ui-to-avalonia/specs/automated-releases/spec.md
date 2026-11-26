@@ -72,6 +72,30 @@ versión completa, incluyendo el sufijo `-rc.N`, en el nombre del archivo.
   `JiraStopWatch-v4.0.0-rc.1-linux-x64-framework-dependent.tar.gz` y los
   cuatro archivos `.sha256` correspondientes
 
+### Requirement: El disparo del release se limita a cambios de código de la app
+
+El proceso de release SHALL evaluarse únicamente para pushes a `main` o a una
+rama `rc*` que incluyan al menos un archivo modificado bajo
+`source/StopWatch/**`, `source/StopWatch.Core/**` o
+`source/StopWatch.Plugin.Abstractions/**`.
+
+#### Scenario: El push toca código de la app
+- **WHEN** un push a `main` o a una rama `rc*` incluye un commit que modifica
+  un archivo bajo `source/StopWatch/`
+- **THEN** el proceso de release se evalúa para ese push
+
+#### Scenario: El push solo toca el núcleo o el contrato de plugins
+- **WHEN** un push a `main` o a una rama `rc*` solo modifica archivos bajo
+  `source/StopWatch.Core/` o `source/StopWatch.Plugin.Abstractions/`
+- **THEN** el proceso de release se evalúa para ese push
+
+#### Scenario: El push solo toca archivos no relacionados
+- **WHEN** un push a `main` o a una rama `rc*` solo modifica archivos fuera de
+  `source/StopWatch/`, `source/StopWatch.Core/` y
+  `source/StopWatch.Plugin.Abstractions/` (por ejemplo, `openspec/`,
+  `CLAUDE.md`, o `.github/`)
+- **THEN** el proceso de release no se evalúa y no se produce ningún release
+
 ## ADDED Requirements
 
 ### Requirement: Los tests corren en Windows y en Linux
