@@ -54,6 +54,7 @@
                         <ColumnDefinition Width="4" />
                         <ColumnDefinition Width="109" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
@@ -132,9 +133,14 @@
                         <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphOpenBrowser}" />
                     </Button>
 
+                    <!-- Jira status category; name in the tooltip. -->
+                    <Control Grid.Column="3"
+                             Style="{StaticResource StatusIcon}"
+                             Margin="6,0,0,0" />
+
                     <!-- Up to two lines, then trimmed at the end of the second.
                          The row is as tall as this ends up being. -->
-                    <TextBlock Grid.Column="3"
+                    <TextBlock Grid.Column="4"
                                Text="{Binding Summary}"
                                ToolTip="{Binding Summary}"
                                Margin="8,0"
@@ -158,7 +164,7 @@
                          somewhere to move to (see the IsFirst/IsLast
                          triggers below). -->
                     <Button x:Name="btnMoveUp"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="18" Height="18"
                             HorizontalAlignment="Right"
@@ -170,7 +176,7 @@
                     </Button>
 
                     <Button x:Name="btnMoveDown"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="18" Height="18"
                             HorizontalAlignment="Right"
@@ -181,7 +187,7 @@
                         <Path Style="{StaticResource GlyphFill}" Width="9" Height="4.5" Data="{StaticResource GlyphTriangleDown}" />
                     </Button>
 
-                    <Button Grid.Column="4"
+                    <Button Grid.Column="5"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
                             Click="btnStartStop_Click">
@@ -203,7 +209,7 @@
                         </Grid>
                     </Button>
 
-                    <local:ThemeAnimatedBorder Grid.Column="5"
+                    <local:ThemeAnimatedBorder Grid.Column="6"
                                                IsActive="{Binding IsRunning}"
                                                ActiveColor="TimerRunning"
                                                InactiveColor="SurfaceDisabled"
@@ -221,7 +227,7 @@
                                    TextAlignment="Right" />
                     </local:ThemeAnimatedBorder>
 
-                    <Button Grid.Column="6"
+                    <Button Grid.Column="7"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
                             IsEnabled="{Binding CanPost}"
@@ -238,7 +244,7 @@
                         </Grid>
                     </Button>
 
-                    <Button Grid.Column="7"
+                    <Button Grid.Column="8"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
                             IsEnabled="{Binding CanReset}"
@@ -247,7 +253,7 @@
                         <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphReset}" />
                     </Button>
 
-                    <Button Grid.Column="8"
+                    <Button Grid.Column="9"
                             x:Name="btnRemove"
                             Style="{StaticResource GlyphButton}"
                             Width="24" Height="24"
@@ -299,6 +305,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4" />
                         <ColumnDefinition Width="123" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="0" />
                         <ColumnDefinition Width="Auto" />
@@ -378,9 +385,14 @@
                         <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphOpenBrowser}" />
                     </Button>
 
+                    <!-- Jira status category; name in the tooltip. -->
+                    <Control Grid.Column="3"
+                             Style="{StaticResource StatusIcon}"
+                             Margin="6,0,0,0" />
+
                     <!-- Up to two lines, then trimmed at the end of the second.
                          The row is as tall as this ends up being. -->
-                    <TextBlock Grid.Column="3"
+                    <TextBlock Grid.Column="4"
                                Text="{Binding Summary}"
                                ToolTip="{Binding Summary}"
                                Margin="8,0"
@@ -399,7 +411,7 @@
                          btnCopyKey - 20px icon here, 24px-then-2px margin)
                          instead of stacked. -->
                     <Button x:Name="btnMoveUp"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="20" Height="20"
                             HorizontalAlignment="Right"
@@ -411,7 +423,7 @@
                     </Button>
 
                     <Button x:Name="btnMoveDown"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Style="{StaticResource GlyphButton}"
                             Width="20" Height="20"
                             HorizontalAlignment="Right"
@@ -422,7 +434,7 @@
                         <Path Style="{StaticResource GlyphFill}" Width="10" Height="5" Data="{StaticResource GlyphTriangleDown}" />
                     </Button>
 
-                    <Button Grid.Column="4"
+                    <Button Grid.Column="5"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"
                             Click="btnStartStop_Click">
@@ -444,7 +456,7 @@
                         </Grid>
                     </Button>
 
-                    <local:ThemeAnimatedBorder Grid.Column="5"
+                    <local:ThemeAnimatedBorder Grid.Column="6"
                                                IsActive="{Binding IsRunning}"
                                                ActiveColor="TimerRunning"
                                                InactiveColor="SurfaceDisabled"
@@ -462,7 +474,7 @@
                                    TextAlignment="Right" />
                     </local:ThemeAnimatedBorder>
 
-                    <Button Grid.Column="6"
+                    <Button Grid.Column="7"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"
                             IsEnabled="{Binding CanPost}"
@@ -479,7 +491,7 @@
                         </Grid>
                     </Button>
 
-                    <Button Grid.Column="7"
+                    <Button Grid.Column="8"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"
                             IsEnabled="{Binding CanReset}"
@@ -488,7 +500,7 @@
                         <Path Style="{StaticResource GlyphPath}" Data="{StaticResource GlyphReset}" />
                     </Button>
 
-                    <Button Grid.Column="8"
+                    <Button Grid.Column="9"
                             x:Name="btnRemove"
                             Style="{StaticResource GlyphButton}"
                             Width="28" Height="28"

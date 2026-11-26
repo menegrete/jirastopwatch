@@ -54,6 +54,26 @@ namespace StopWatch
 
         /// <summary>The parent issue's key, or empty when there is none.</summary>
         public string ParentKey { get; set; } = "";
+
+        /// <summary>The status name as Jira returns it, or empty when there is none.</summary>
+        public string StatusName { get; set; } = "";
+
+        /// <summary>The category of <see cref="StatusName"/>; <see cref="IssueStatusCategory.None"/> when there is no status.</summary>
+        public IssueStatusCategory StatusCategory { get; set; } = IssueStatusCategory.None;
+    }
+
+
+    /// <summary>
+    /// Jira's status category, typed so that neither the UI nor the tests
+    /// depend on Jira's own "new"/"indeterminate"/"done" keys.
+    /// </summary>
+    internal enum IssueStatusCategory
+    {
+        /// <summary>No status resolved - nothing to show.</summary>
+        None,
+        ToDo,
+        InProgress,
+        Done
     }
 
 

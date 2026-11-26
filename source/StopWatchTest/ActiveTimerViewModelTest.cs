@@ -49,6 +49,10 @@ namespace StopWatchTest
 
             public string Summary { get; private set; }
 
+            public string StatusName { get; set; } = "";
+
+            public IssueStatusCategory StatusCategory { get; set; }
+
             public bool IsCurrent { get; set; }
 
             public WatchTimer WatchTimer { get; private set; }

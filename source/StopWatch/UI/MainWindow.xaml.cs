@@ -1068,40 +1068,47 @@ namespace StopWatch
             {
                 issue.Summary = result.Summary;
                 issue.ParentKey = result.ParentKey;
+                issue.StatusName = result.StatusName;
+                issue.StatusCategory = result.StatusCategory;
             }
         }
 
 
-        private void ChangeIssueState(string issueKey)
+        private void ChangeIssueState(IssueViewModel issue)
         {
             if (string.IsNullOrWhiteSpace(settings.StartTransitions))
                 return;
 
-            ChangeIssueStateAsync(issueKey).FireAndForget();
+            ChangeIssueStateAsync(issue).FireAndForget();
         }
 
 
-        private async Task ChangeIssueStateAsync(string issueKey)
+        private async Task ChangeIssueStateAsync(IssueViewModel issue)
         {
+            string issueKey = issue.IssueKey;
             string[] startTransitions = settings.StartTransitions
                 .Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(l => l.Trim().ToLower()).ToArray();
 
-            await Task.Run(() =>
+            bool transitioned = await Task.Run(() =>
             {
                 AvailableTransitions available = jiraClient.GetAvailableTransitions(issueKey);
                 if (available == null || available.Transitions.Count() == 0)
-                    return;
+                    return false;
 
                 foreach (Transition t in available.Transitions)
                 {
                     if (startTransitions.Any(t.Name.ToLower().Contains))
-                    {
-                        jiraClient.DoTransition(issueKey, t.Id);
-                        return;
-                    }
+                        return jiraClient.DoTransition(issueKey, t.Id);
                 }
+
+                return false;
             });
+
+            // Show the new status now rather than on the next 30-second tick -
+            // unless the row was pointed at another key in the meantime.
+            if (transitioned && issue.IssueKey == issueKey)
+                UpdateSummary(issue);
         }
         #endregion
 
@@ -1739,7 +1746,7 @@ namespace StopWatch
         #region private methods
         private void issues_TimerStarted(object sender, IssueViewModel issue)
         {
-            ChangeIssueState(issue.IssueKey);
+            ChangeIssueState(issue);
 
             if (!settings.AllowMultipleTimers)
             {

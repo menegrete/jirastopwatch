@@ -38,6 +38,11 @@ namespace StopWatch
 
         string Summary { get; }
 
+        /// <summary>The Jira status name, or empty while unresolved.</summary>
+        string StatusName { get; }
+
+        IssueStatusCategory StatusCategory { get; }
+
         /// <summary>Whether this is the row selected in the main window.</summary>
         bool IsCurrent { get; }
 

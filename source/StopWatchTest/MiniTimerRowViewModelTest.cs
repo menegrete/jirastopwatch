@@ -36,6 +36,10 @@ namespace StopWatchTest
 
             public string Summary { get; set; } = "";
 
+            public string StatusName { get; set; } = "";
+
+            public IssueStatusCategory StatusCategory { get; set; }
+
             public bool IsCurrent { get; set; }
 
             public WatchTimer WatchTimer { get; } = new WatchTimer();
@@ -59,6 +63,25 @@ namespace StopWatchTest
 
             Assert.That(raised, Does.Contain("IssueKey"));
             Assert.That(row.IssueKey, Is.EqualTo("XYZ-2"));
+        }
+
+
+        [Test]
+        public void Refresh_PicksUpStatusResolvedAfterRowWasBuilt()
+        {
+            var source = new FakeSource { IssueKey = "ABC-1" };
+            var row = new MiniTimerRowViewModel(source);
+            var raised = new List<string>();
+            row.PropertyChanged += (s, e) => raised.Add(e.PropertyName);
+
+            source.StatusName = "Code Review";
+            source.StatusCategory = IssueStatusCategory.InProgress;
+            row.Refresh();
+
+            Assert.That(raised, Does.Contain("StatusName"));
+            Assert.That(raised, Does.Contain("StatusCategory"));
+            Assert.That(row.StatusName, Is.EqualTo("Code Review"));
+            Assert.That(row.StatusCategory, Is.EqualTo(IssueStatusCategory.InProgress));
         }
     }
 }

@@ -31,7 +31,7 @@ Alternativa descartada: mapear por `statusCategory.colorName`. Jira puede cambia
 
 ### `IssueViewModel` expone `StatusName` y `StatusCategory`
 
-Los dos campos se asignan en `UpdateSummaryAsync`, en el mismo bloque que `Summary` y `ParentKey`, así que el caso `null` (request rechazada) conserva el estado anterior sin código nuevo. Con un resultado vacío, `StatusCategory` queda en `None` y el ícono se oculta. `MiniTimerRowViewModel` reenvía ambos, como ya hace con `Summary`, y reenvía también su notificación de cambio.
+Los dos campos se asignan en `UpdateSummaryAsync`, en el mismo bloque que `Summary` y `ParentKey`, así que el caso `null` (request rechazada) conserva el estado anterior sin código nuevo. Con un resultado vacío, `StatusCategory` queda en `None` y el ícono se oculta. `ITimerSource` suma ambos, y `MiniTimerRowViewModel` los lee de su fuente y los notifica en su `Refresh` de cada segundo, igual que hace con `Summary`. Al cambiar el key, `IssueViewModel` vacía el estado junto con el summary.
 
 ### El ícono es un `Path` por categoría en una columna de ancho fijo
 
@@ -47,7 +47,7 @@ Alternativa descartada: pill con el nombre del estado. Le quita ancho variable a
 
 ### Refresco tras la transición automática
 
-`ChangeIssueStateAsync` recibe solo el key, así que, al volver del `Task.Run` en el hilo de UI, busca la fila con ese key y llama a `UpdateSummary` si hubo un `DoTransition` exitoso. Es una request extra solo cuando hubo transición.
+`ChangeIssueState` pasa a recibir la fila en lugar de solo su key (su único llamador, `issues_TimerStarted`, ya la tiene). Al volver del `Task.Run` en el hilo de UI, llama a `UpdateSummary` si `DoTransition` tuvo éxito y la fila sigue con el mismo key. Es una request extra solo cuando hubo transición.
 
 ## Risks / Trade-offs
 

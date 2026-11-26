@@ -37,6 +37,8 @@
                     <!-- stripe -->
                     <ColumnDefinition Width="Auto" />
                     <!-- key -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- status -->
                     <ColumnDefinition Width="*" MinWidth="0" />
                     <!-- summary -->
                     <ColumnDefinition Width="Auto" />
@@ -122,9 +124,14 @@
                     </Button>
                 </Grid>
 
+                <!-- Jira status category; name in the tooltip. -->
+                <Control Grid.Column="2"
+                         Style="{StaticResource StatusIcon}"
+                         Margin="8,0,0,0" />
+
                 <!-- The pill is narrow by design, so the full text lives in the
                      tooltip; only the key and the clock are guaranteed room. -->
-                <TextBlock Grid.Column="2"
+                <TextBlock Grid.Column="3"
                            Text="{Binding Summary}"
                            ToolTip="{Binding Summary}"
                            Foreground="{DynamicResource TextMuted}"
@@ -132,7 +139,7 @@
                            Margin="8,0,8,0"
                            VerticalAlignment="Center" />
 
-                <TextBlock Grid.Column="3"
+                <TextBlock Grid.Column="4"
                            Text="{Binding ElapsedText}"
                            Foreground="{DynamicResource Text}"
                            FontFamily="Consolas, Courier New, monospace"
@@ -140,7 +147,7 @@
                            Margin="0,0,4,0"
                            VerticalAlignment="Center" />
 
-                <Button Grid.Column="4"
+                <Button Grid.Column="5"
                         Style="{StaticResource GlyphButton}"
                         Click="RowToggle_Click">
                     <Grid>

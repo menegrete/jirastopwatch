@@ -54,6 +54,16 @@ namespace StopWatch
             get { return source.Summary ?? ""; }
         }
 
+        public string StatusName
+        {
+            get { return source.StatusName ?? ""; }
+        }
+
+        public IssueStatusCategory StatusCategory
+        {
+            get { return source.StatusCategory; }
+        }
+
         public bool IsRunning
         {
             get { return source.WatchTimer.Running; }
@@ -101,6 +111,11 @@ namespace StopWatch
             // never notice it arrive, leaving the open-in-browser button
             // permanently disabled.
             Raise("Summary");
+
+            // The status resolves together with the summary, and can change
+            // afterwards when the issue moves in Jira.
+            Raise("StatusName");
+            Raise("StatusCategory");
         }
         #endregion
 

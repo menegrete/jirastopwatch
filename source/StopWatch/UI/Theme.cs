@@ -64,6 +64,13 @@ namespace StopWatch
         public Color DangerSurface { get; private set; }
         public Color TimerRunning { get; private set; }
 
+        // Jira status category icons. Drawn on every row background -
+        // Surface, SurfaceActive and TimerRunning - so each must keep at
+        // least 3:1 against all three.
+        public Color StatusToDo { get; private set; }
+        public Color StatusInProgress { get; private set; }
+        public Color StatusDone { get; private set; }
+
         // Button interaction states, derived from the surface colours
         public Color ButtonHover { get; private set; }
         public Color ButtonPressed { get; private set; }
@@ -94,6 +101,10 @@ namespace StopWatch
             DangerSurface = ColorFrom("#5A2A24"),
             TimerRunning = ColorFrom("#2D4A2D"),
 
+            StatusToDo = ColorFrom("#9A9A9A"),
+            StatusInProgress = ColorFrom("#4FC1FF"),
+            StatusDone = ColorFrom("#73D99B"),
+
             ButtonHover = ColorFrom("#3E3E42"),
             ButtonPressed = ColorFrom("#4A4A4F")
         };
@@ -120,6 +131,10 @@ namespace StopWatch
             Danger = ColorFrom("#B3261E"),
             DangerSurface = ColorFrom("#F9C9C4"),
             TimerRunning = ColorFrom("#CDEBCD"),
+
+            StatusToDo = ColorFrom("#5F5F5F"),
+            StatusInProgress = ColorFrom("#0B5FA5"),
+            StatusDone = ColorFrom("#12703A"),
 
             ButtonHover = ColorFrom("#E5E5E5"),
             ButtonPressed = ColorFrom("#D0D0D0")
