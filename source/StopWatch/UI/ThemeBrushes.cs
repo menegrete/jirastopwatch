@@ -302,6 +302,20 @@ namespace StopWatch
             SetStates(map, "ScrollBarButtonBorderBrush", null, null, null, null);
             SetStates(map, "ScrollBarButtonArrowForeground", "TextMuted", "Text", "Text", "TextMuted");
 
+            // Tab headers: unselected is muted, selected is the text colour with
+            // an accent pipe; the strip sits on the window background.
+            SetStates(map, "TabItemHeaderForegroundUnselected", "TextMuted", "Text", "Text", "TextMuted");
+            SetStates(map, "TabItemHeaderForegroundSelected", "Text", "Text", "Text", "TextMuted");
+            SetStates(map, "TabItemHeaderBackgroundUnselected", null, "ButtonHover", "ButtonPressed", null);
+            SetStates(map, "TabItemHeaderBackgroundSelected", null, "ButtonHover", "ButtonPressed", null);
+            map["TabItemHeaderForegroundDisabled"] = "TextMuted";
+            map["TabItemHeaderBackgroundDisabled"] = null;
+            map["TabItemHeaderSelectedPipeFill"] = "Accent";
+            map["TabItemHeaderSelectedPipeFillDisabled"] = "TextMuted";
+            map["TabControlBackground"] = null;
+            map["TabControlBorderBrush"] = "Border";
+            map["TabStripBackground"] = null;
+
             // Tooltips and menus.
             map["ToolTipBackground"] = "Surface";
             map["ToolTipBorderBrush"] = "Border";
