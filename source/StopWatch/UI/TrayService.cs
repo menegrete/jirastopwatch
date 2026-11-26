@@ -75,8 +75,8 @@ namespace StopWatch
     /// so with no plugin commands the right click behaves as before plugins
     /// existed.
     ///
-    /// Must be used on the UI thread. Not shown until <see cref="Visible"/> is
-    /// set.
+    /// Must be used on the UI thread. Shown as soon as it is created; dispose
+    /// it to remove the icon.
     /// </summary>
     internal sealed class TrayService : IDisposable
     {
@@ -90,11 +90,12 @@ namespace StopWatch
 
         public TrayService(string toolTip = DefaultToolTip)
         {
+            // Visible from creation, as in the validated spike: starting hidden
+            // and showing it later did not make the icon appear.
             trayIcon = new TrayIcon
             {
                 ToolTipText = toolTip,
-                Icon = LoadDefaultIcon(),
-                IsVisible = false
+                Icon = LoadDefaultIcon()
             };
             trayIcon.Clicked += (s, e) => Clicked?.Invoke(this, EventArgs.Empty);
 

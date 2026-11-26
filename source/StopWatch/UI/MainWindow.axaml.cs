@@ -803,10 +803,14 @@ namespace StopWatch
         }
 
 
+        /// <summary>
+        /// Removes the icon by disposing it, not by hiding it: toggling an
+        /// Avalonia TrayIcon's visibility did not bring it back reliably, so
+        /// each minimize to tray creates a fresh, visible one.
+        /// </summary>
         private void HideTrayIcon()
         {
-            if (tray != null)
-                tray.Visible = false;
+            DisposeTrayIcon();
         }
 
 
