@@ -200,6 +200,24 @@ namespace StopWatch
         #endregion
 
 
+        #region secret protection
+        /// <summary>
+        /// Seam for the platform's secret store, set once by the app at startup
+        /// (on Windows: DPAPI, via DPAPI.Encrypt / DPAPI.Decrypt). Turns the
+        /// plain API token into the string kept in user.config and back.
+        /// Replaced by a proper ISecretStore in migrate-ui-to-avalonia task 7.1.
+        /// </summary>
+        public static Func<string, string> ProtectSecret { get; set; }
+        public static Func<string, string> UnprotectSecret { get; set; }
+
+        private static string Protect(string plain) =>
+            (ProtectSecret ?? throw new InvalidOperationException("Settings.ProtectSecret has not been set."))(plain);
+
+        private static string Unprotect(string stored) =>
+            (UnprotectSecret ?? throw new InvalidOperationException("Settings.UnprotectSecret has not been set."))(stored);
+        #endregion
+
+
         #region public methods
         public bool Load()
         {
@@ -257,7 +275,7 @@ namespace StopWatch
             this.IssueCount = Properties.Settings.Default.IssueCount;
             this.Username = Properties.Settings.Default.Username;
             if (Properties.Settings.Default.ApiToken != "")
-                this.ApiToken = DPAPI.Decrypt(Properties.Settings.Default.ApiToken);
+                this.ApiToken = Unprotect(Properties.Settings.Default.ApiToken);
             else
                 this.ApiToken = "";
             this.FirstRun = Properties.Settings.Default.FirstRun;
@@ -313,7 +331,7 @@ namespace StopWatch
 
                 Properties.Settings.Default.Username = this.Username;
                 if (this.ApiToken != "")
-                    Properties.Settings.Default.ApiToken = DPAPI.Encrypt(this.ApiToken);
+                    Properties.Settings.Default.ApiToken = Protect(this.ApiToken);
                 else
                     Properties.Settings.Default.ApiToken = "";
 

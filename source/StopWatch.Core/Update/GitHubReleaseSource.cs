@@ -21,6 +21,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -106,11 +107,21 @@ namespace StopWatch.Update
 
         private static readonly HttpClient HttpClient = CreateHttpClient();
 
+        // The running app's version (the entry assembly is StopWatch.exe).
+        private static string UserAgentVersion()
+        {
+            System.Reflection.Assembly entry = System.Reflection.Assembly.GetEntryAssembly();
+            return entry?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                       .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion
+                   ?? entry?.GetName().Version?.ToString()
+                   ?? "0.0.0";
+        }
+
         private static HttpClient CreateHttpClient()
         {
             HttpClient client = new HttpClient();
             // GitHub's API rejects requests with no User-Agent.
-            client.DefaultRequestHeaders.UserAgent.ParseAdd($"JiraStopWatch/{AppInfo.Version}");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd($"JiraStopWatch/{UserAgentVersion()}");
             client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
             client.Timeout = System.TimeSpan.FromSeconds(30);
             return client;

@@ -24,13 +24,6 @@ using System.Drawing;
 
 namespace StopWatch
 {
-    public enum ThemeMode
-    {
-        Dark = 0,
-        Light = 1
-    }
-
-
     /// <summary>
     /// Semantic colour palette. Nothing in the UI should reference a literal
     /// colour or a SystemColors member - everything goes through the active theme,

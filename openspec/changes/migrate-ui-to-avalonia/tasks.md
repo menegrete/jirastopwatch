@@ -32,13 +32,13 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 
 - [x] 5.1 Pasar `StopWatch.Plugin.Abstractions` a `net10.0` con tipos de Avalonia en `IPluginHost` y `ContractVersion = 2.0`. Actualizar `PluginLoaderTest` con los escenarios de `plugin-contract` (un 1.2 rechazado con ambas versiones visibles)
 - [ ] 5.2 Reescribir `HelloWorld`, `HelloSqlite` y `SplitTime` en Avalonia con `contractVersion` 2.0. Verificar que el test de integración de samples los carga y que la ventana de `HelloWorld` se abre con el tema activo
-- [ ] 5.3 Commitear el cambio de contrato con footer `BREAKING CHANGE:`, que explica cómo recompilar un plugin, y verificar con `git log` que el mensaje lo incluye
+- [x] 5.3 Commitear el cambio de contrato con footer `BREAKING CHANGE:`, que explica cómo recompilar un plugin, y verificar con `git log` que el mensaje lo incluye
 
 ## 6. Núcleo portable
 
-- [ ] 6.1 Crear `source/StopWatch.Core` (`net10.0`), agregarlo a `StopWatch.sln` y mover `Model/`, `Jira/`, `Settings/`, `Logging/`, los helpers puros y la lógica pura de `Update/`. `dotnet build StopWatch.sln` debe pasar sin advertencias CA1416
-- [ ] 6.2 Mover `ScreenPlacement` al núcleo sin depender de ninguna API de pantallas (recibe rectángulos) y sin depender de que exista una pantalla principal. Verificar que `ScreenPlacementTest` pasa
-- [ ] 6.3 Pasar `StopWatchTest` a `net10.0`, marcar con `[Platform("Win")]` los tests que usan Win32 y verificar que `dotnet test` pasa en Windows y en WSL
+- [x] 6.1 Crear `source/StopWatch.Core` (`net10.0`), agregarlo a `StopWatch.sln` y mover `Model/`, `Jira/`, `Settings/`, `Logging/`, los helpers puros y la lógica pura de `Update/`. `dotnet build StopWatch.sln` debe pasar sin advertencias CA1416
+- [x] 6.2 Mover `ScreenPlacement` al núcleo sin depender de ninguna API de pantallas (recibe rectángulos) y sin depender de que exista una pantalla principal. Verificar que `ScreenPlacementTest` pasa
+- [x] 6.3 Pasar `StopWatchTest` a `net10.0`, marcar con `[Platform("Win")]` los tests que usan Win32 y verificar que `dotnet test` pasa en Windows y en WSL
 
 ## 7. Servicios de plataforma y paso a Linux
 

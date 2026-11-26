@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- net10.0 runs anywhere (Linux included). net10.0-windows additionally
+         references the StopWatch exe, which is still net10.0-windows (task 7.4
+         retargets it and this goes back to a single net10.0). -->
+    <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
     <RootNamespace>StopWatchTest</RootNamespace>
     <AssemblyName>StopWatchTest</AssemblyName>
     <IsPackable>false</IsPackable>
@@ -17,8 +20,18 @@
     <PackageReference Include="RestSharp" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <ProjectReference Include="..\StopWatch\StopWatch.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- Tests of code that lives in the StopWatch exe (plugin host, themes,
+         the Windows updater); compiled in the net10.0-windows build only. -->
+    <Compile Remove="PluginJiraApiTest.cs;PluginLoaderTest.cs;PluginSamplesIntegrationTest.cs;TimeLoadPluginPartsTest.cs;ThemeStatusColorsTest.cs;UpdateApplierTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StopWatch.Core\StopWatch.Core.csproj" />
     <ProjectReference Include="..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj" />
 
     <!-- Built first so the plugin integration test can load their output;

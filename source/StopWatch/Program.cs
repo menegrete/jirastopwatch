@@ -42,6 +42,10 @@ namespace StopWatch
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
                 App.ReportException("Unhandled UI Exception", e.ExceptionObject as Exception);
 
+            // Platform secret store for Settings (task 7.1 replaces this with ISecretStore).
+            Settings.ProtectSecret = DPAPI.Encrypt;
+            Settings.UnprotectSecret = DPAPI.Decrypt;
+
             if (!App.ClaimSingleInstance())
             {
                 // Somebody is already running. They have been asked to come to

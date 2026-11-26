@@ -28,7 +28,9 @@ using System.Runtime.Versioning;
 // but that's tied to GenerateAssemblyInfo, which is off here to avoid clashing
 // with the explicit attributes below. Without it, the platform-compatibility
 // analyzer (CA1416) can't tell this assembly is Windows-only.
+#if WINDOWS
 [assembly: SupportedOSPlatform("windows")]
+#endif
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information

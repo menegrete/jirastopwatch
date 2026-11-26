@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\StopWatch.Core\StopWatch.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

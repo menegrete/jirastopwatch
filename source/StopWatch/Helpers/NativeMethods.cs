@@ -73,12 +73,4 @@ namespace StopWatch
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
     }
-
-    public enum EstimateUpdateMethods
-    {
-        Auto,
-        Leave,
-        SetTo,
-        ManualDecrease
-    }
 }
