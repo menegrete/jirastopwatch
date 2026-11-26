@@ -98,6 +98,8 @@ namespace StopWatch
             activeTimer = composition.ActiveTimer;
 
             updateService = new AutoUpdateService(new GitHubReleaseSource());
+            updatePlatform = UpdatePlatforms.Current();
+            updateInstaller = UpdateInstallers.ForPlatform(updatePlatform);
 
             Title = $"Jira StopWatch v{AppInfo.Version}";
 
@@ -355,8 +357,8 @@ namespace StopWatch
             // never while the app is running, never by force-closing it. See
             // the auto-update spec, "La actualización se aplica sin
             // interrumpir una sesión en curso".
-            if (pendingUpdate != null && OperatingSystem.IsWindows())
-                UpdateApplier.ApplyOnExit(pendingUpdate, AppContext.BaseDirectory);
+            if (pendingUpdate != null)
+                updateInstaller.ApplyOnExit(pendingUpdate, AppContext.BaseDirectory);
         }
 
 
@@ -367,16 +369,11 @@ namespace StopWatch
         /// </summary>
         private async Task CheckForUpdatesAsync()
         {
-            // The release assets and the apply helper are Windows-only until
-            // Linux gets its own (change migrate-ui-to-avalonia, group 8).
-            if (!OperatingSystem.IsWindows())
-                return;
-
             string stagingBaseDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "StopWatch", "updates");
 
-            PendingUpdate update = await updateService.CheckAndStageAsync(settings.CheckForUpdates, settings.SubscribeToBetaReleases, AppInfo.Version, AppInfo.IsSelfContained, stagingBaseDir);
+            PendingUpdate update = await updateService.CheckAndStageAsync(settings.CheckForUpdates, settings.SubscribeToBetaReleases, AppInfo.Version, AppInfo.IsSelfContained, updatePlatform, stagingBaseDir);
             if (update == null)
                 return;
 
@@ -2047,6 +2044,8 @@ namespace StopWatch
         private readonly ActiveTimerViewModel activeTimer;
 
         private readonly AutoUpdateService updateService;
+        private readonly UpdatePlatform updatePlatform;
+        private readonly IUpdateInstaller updateInstaller;
         private PendingUpdate pendingUpdate;
         private DateTime lastUpdateCheckUtc;
 

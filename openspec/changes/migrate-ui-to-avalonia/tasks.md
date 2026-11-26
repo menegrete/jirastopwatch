@@ -50,11 +50,11 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 
 ## 8. Auto-update y release multiplataforma
 
-- [ ] 8.1 Agregar la plataforma a `ReleaseAssetSelector` (nombres de Windows sin cambios, sufijo `linux-x64` en Linux) y cubrirlo en `AutoUpdateServiceTest` (spec `auto-update`)
+- [x] 8.1 Agregar la plataforma a `ReleaseAssetSelector` (nombres de Windows sin cambios, sufijo `linux-x64` en Linux) y cubrirlo en `AutoUpdateServiceTest` (spec `auto-update`)
 - [ ] 8.2 Implementar `IUpdateInstaller` para Linux (extraer el `.tar.gz`, script `sh` que espera el PID, `mv`, `chmod +x`, relanzar) y verificar a mano una actualización entre dos builds locales en Mint, incluido el caso de directorio no escribible
-- [ ] 8.3 Extender `scripts/publish-release-artifacts.js` y `release.config.js` para publicar los dos `.tar.gz` de Linux y sus `.sha256`. Verificar con una ejecución local del script que los nombres coinciden con la spec `automated-releases` y que `tar -tvf` muestra `0755` en el ejecutable
+- [x] 8.3 Extender `scripts/publish-release-artifacts.js` y `release.config.js` para publicar los dos `.tar.gz` de Linux y sus `.sha256`. Verificar con una ejecución local del script que los nombres coinciden con la spec `automated-releases` y que `tar -tvf` muestra `0755` en el ejecutable
 - [ ] 8.4 Agregar `os: [windows-latest, ubuntu-latest]` a la matriz del job `build` en `.github/workflows/build.yml` y verificar en el PR que ambas corridas pasan y que `release` depende de las dos
-- [ ] 8.5 Actualizar `CLAUDE.md` (arquitectura, comandos de publish para Linux, fin de la convivencia WPF/WinForms) y verificar que los comandos documentados funcionan tal como están escritos
+- [x] 8.5 Actualizar `CLAUDE.md` (arquitectura, comandos de publish para Linux, fin de la convivencia WPF/WinForms) y verificar que los comandos documentados funcionan tal como están escritos
 
 ## 9. Beta y prueba humana en ambas plataformas
 

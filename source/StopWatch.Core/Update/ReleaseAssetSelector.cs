@@ -26,22 +26,26 @@ using System.Linq;
 namespace StopWatch.Update
 {
     /// <summary>
-    /// Names and picks the release asset matching the variant that's
-    /// currently running, following the naming convention
+    /// Names and picks the release asset matching the platform and variant
+    /// that's currently running, following the naming convention
     /// scripts/publish-release-artifacts.js uses:
-    /// JiraStopWatch-v{version}-{self-contained|framework-dependent}.{exe|zip}.
+    /// Windows: JiraStopWatch-v{version}-{self-contained|framework-dependent}.{exe|zip}
+    /// (unchanged since 3.x, so a 3.x updater still finds newer releases);
+    /// Linux: JiraStopWatch-v{version}-linux-x64-{self-contained|framework-dependent}.tar.gz.
     /// </summary>
     internal static class ReleaseAssetSelector
     {
-        public static string AssetFileName(string version, bool selfContained)
+        public static string AssetFileName(string version, bool selfContained, UpdatePlatform platform)
         {
-            return $"JiraStopWatch-v{version}-{Variant(selfContained)}.{Extension(selfContained)}";
+            return platform == UpdatePlatform.Linux
+                ? $"JiraStopWatch-v{version}-linux-x64-{Variant(selfContained)}.tar.gz"
+                : $"JiraStopWatch-v{version}-{Variant(selfContained)}.{(selfContained ? "exe" : "zip")}";
         }
 
 
-        public static string ChecksumFileName(string version, bool selfContained)
+        public static string ChecksumFileName(string version, bool selfContained, UpdatePlatform platform)
         {
-            return $"{AssetFileName(version, selfContained)}.sha256";
+            return $"{AssetFileName(version, selfContained, platform)}.sha256";
         }
 
 
@@ -53,6 +57,5 @@ namespace StopWatch.Update
 
 
         private static string Variant(bool selfContained) => selfContained ? "self-contained" : "framework-dependent";
-        private static string Extension(bool selfContained) => selfContained ? "exe" : "zip";
     }
 }

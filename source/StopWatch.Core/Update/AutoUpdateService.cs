@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Formats.Tar;
 using System.Text;
 using System.Threading.Tasks;
 using StopWatch.Logging;
@@ -63,8 +64,10 @@ namespace StopWatch.Update
         /// <paramref name="includePrereleases"/>), and it's offered only if
         /// strictly newer than <paramref name="currentVersion"/> - so there
         /// is no downgrade and no special case for leaving the beta channel.
+        /// <paramref name="platform"/> picks the asset naming scheme: Windows
+        /// stages a .exe / .zip, Linux a .tar.gz extracted with its file modes.
         /// </summary>
-        public async Task<PendingUpdate> CheckAndStageAsync(bool checkForUpdatesEnabled, bool includePrereleases, string currentVersion, bool isSelfContained, string stagingBaseDir)
+        public async Task<PendingUpdate> CheckAndStageAsync(bool checkForUpdatesEnabled, bool includePrereleases, string currentVersion, bool isSelfContained, UpdatePlatform platform, string stagingBaseDir)
         {
             if (!checkForUpdatesEnabled)
                 return null;
@@ -82,7 +85,7 @@ namespace StopWatch.Update
 
                 // The canonical text keeps a prerelease suffix ("3.8.0-rc.1"),
                 // which the asset names and the staging folder both carry.
-                return await DownloadAndStageAsync(version.ToString(), version.IsPrerelease || release.IsPrerelease, isSelfContained, stagingBaseDir, release);
+                return await DownloadAndStageAsync(version.ToString(), version.IsPrerelease || release.IsPrerelease, isSelfContained, platform, stagingBaseDir, release);
             }
             catch (Exception ex)
             {
@@ -118,10 +121,10 @@ namespace StopWatch.Update
         }
 
 
-        private async Task<PendingUpdate> DownloadAndStageAsync(string versionText, bool isPrerelease, bool isSelfContained, string stagingBaseDir, ReleaseInfo release)
+        private async Task<PendingUpdate> DownloadAndStageAsync(string versionText, bool isPrerelease, bool isSelfContained, UpdatePlatform platform, string stagingBaseDir, ReleaseInfo release)
         {
-            string assetName = ReleaseAssetSelector.AssetFileName(versionText, isSelfContained);
-            string checksumName = ReleaseAssetSelector.ChecksumFileName(versionText, isSelfContained);
+            string assetName = ReleaseAssetSelector.AssetFileName(versionText, isSelfContained, platform);
+            string checksumName = ReleaseAssetSelector.ChecksumFileName(versionText, isSelfContained, platform);
 
             ReleaseAsset asset = ReleaseAssetSelector.FindAsset(release, assetName);
             ReleaseAsset checksumAsset = ReleaseAssetSelector.FindAsset(release, checksumName);
@@ -149,6 +152,9 @@ namespace StopWatch.Update
                     Directory.Delete(versionDir, recursive: true);
                 Directory.CreateDirectory(versionDir);
 
+                if (platform == UpdatePlatform.Linux)
+                    return StageLinuxTarball(versionDir, assetName, assetBytes, versionText, isSelfContained, isPrerelease, release);
+
                 if (isSelfContained)
                 {
                     string stagedExePath = Path.Combine(versionDir, "StopWatch.exe");
@@ -173,6 +179,34 @@ namespace StopWatch.Update
             }
         }
 
+
+        /// <summary>
+        /// Extracts the Linux .tar.gz into <c>versionDir/extracted</c>.
+        /// TarFile applies each entry's Unix mode on extraction, so the
+        /// executable keeps its execute bit (the installer also re-applies
+        /// it). Self-contained and framework-dependent builds both stage as a
+        /// directory holding the <see cref="LinuxExecutableName"/> binary.
+        /// </summary>
+        private static PendingUpdate StageLinuxTarball(string versionDir, string assetName, byte[] assetBytes, string versionText, bool isSelfContained, bool isPrerelease, ReleaseInfo release)
+        {
+            string tarballPath = Path.Combine(versionDir, assetName);
+            File.WriteAllBytes(tarballPath, assetBytes);
+
+            string extractedDir = Path.Combine(versionDir, "extracted");
+            Directory.CreateDirectory(extractedDir);
+            using (FileStream file = File.OpenRead(tarballPath))
+            using (GZipStream gzip = new GZipStream(file, CompressionMode.Decompress))
+                TarFile.ExtractToDirectory(gzip, extractedDir, overwriteFiles: false);
+
+            if (!File.Exists(Path.Combine(extractedDir, LinuxExecutableName)))
+                throw new InvalidDataException($"{assetName} does not contain {LinuxExecutableName}");
+
+            return new PendingUpdate(versionText, extractedDir, isSelfContained, release.HtmlUrl, isPrerelease: isPrerelease);
+        }
+
+
+        /// <summary>The Linux build's executable, at the root of the tarball and of the install directory.</summary>
+        internal const string LinuxExecutableName = "StopWatch";
 
         private readonly IReleaseSource releaseSource;
     }

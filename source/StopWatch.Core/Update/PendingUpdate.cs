@@ -40,8 +40,9 @@ namespace StopWatch.Update
         public string Version { get; }
 
         /// <summary>
-        /// The self-contained build's staged .exe file, or the
-        /// framework-dependent build's extracted directory.
+        /// On Windows, the self-contained build's staged .exe file or the
+        /// framework-dependent build's extracted directory; on Linux, always
+        /// the extracted directory holding the StopWatch executable.
         /// </summary>
         public string StagedPath { get; }
 

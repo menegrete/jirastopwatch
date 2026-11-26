@@ -13,6 +13,13 @@
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(SelfContained)' == 'true'">
+    <!-- The self-contained release asset is the bare executable, so the
+         SkiaSharp/HarfBuzz native libraries must travel inside it (they are
+         otherwise left beside it, and the app dies at startup without them). -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
