@@ -185,8 +185,9 @@ namespace StopWatch
                 return;
             }
 
-            if (WindowState == WindowState.Minimized)
+            if (inTray || WindowState == WindowState.Minimized)
             {
+                inTray = false;
                 Show();
                 WindowState = WindowState.Normal;
                 HideTrayIcon();
@@ -607,7 +608,7 @@ namespace StopWatch
             // While the mini view or the taskbar widget is up this window is
             // hidden on purpose. The tray icon must not appear as well: two
             // stand-ins for one hidden window is one too many.
-            if (inMiniView || inTaskbarWidget)
+            if (inMiniView || inTaskbarWidget || inTray)
                 return;
 
             if (WindowState == WindowState.Minimized)
@@ -662,6 +663,10 @@ namespace StopWatch
                     break;
 
                 default:
+                    // Set before hiding: on X11, hiding a minimized window
+                    // reports it as Normal again, which would otherwise read
+                    // as a restore and take the icon straight back down.
+                    inTray = true;
                     ShowTrayIcon();
                     Hide();
                     break;
@@ -831,6 +836,8 @@ namespace StopWatch
         /// </summary>
         private void tray_Clicked(object sender, EventArgs e)
         {
+            inTray = false;
+            HideTrayIcon();
             Show();
             WindowState = WindowState.Normal;
             Activate();
@@ -2060,6 +2067,13 @@ namespace StopWatch
 
         private MiniTimerWindow miniView;
         private bool inMiniView;
+
+        /// <summary>
+        /// True while this window is hidden behind the tray icon. Window
+        /// state changes are ignored meanwhile, as for the mini view: on X11
+        /// the hidden window reports itself as Normal.
+        /// </summary>
+        private bool inTray;
 
         private TaskbarWidgetWindow taskbarWidget;
         private bool inTaskbarWidget;
