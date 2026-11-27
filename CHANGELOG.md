@@ -11,6 +11,32 @@ Entries for versions released before this file existed are not
 reconstructed here — see `git log` and the archived proposals under
 `openspec/changes/archive/` for that history.
 
+## [4.0.0](https://github.com/menegrete/jirastopwatch/compare/v3.16.0...v4.0.0) (2026-11-27)
+
+### ⚠ BREAKING CHANGES
+
+* the plugin contract is now 2.0. IPluginHost exposes an
+Avalonia Window and Dispatcher instead of the WPF ones, so plugins built
+against contract 1.x no longer load and are reported as incompatible.
+To migrate a plugin, reference StopWatch.Plugin.Abstractions 2.0, add
+Avalonia with ExcludeAssets="runtime" so the host's copy is used, port
+its windows to Avalonia and declare "contractVersion": "2.0" in
+plugin.json. See docs/plugins.md.
+
+### Added
+
+* auto-update and release artifacts for Linux ([c024a29](https://github.com/menegrete/jirastopwatch/commit/c024a29ac92aaca791eb069a62cf682c4887fe9d))
+* migrate the UI from WPF and WinForms to Avalonia ([61f32d2](https://github.com/menegrete/jirastopwatch/commit/61f32d28d5860fda7c744f04d6d239c47729d2cd))
+* run on Linux, with the Jira token in the system keyring ([9307539](https://github.com/menegrete/jirastopwatch/commit/9307539df0f23238bbf1b94e54130136a6dee765))
+* split the settings window into tabs ([27f468c](https://github.com/menegrete/jirastopwatch/commit/27f468ce2b28d91f865de71d67e74850ca8e4ab2))
+
+### Fixed
+
+* commit an edited issue key before Tab moves focus ([1d3c7aa](https://github.com/menegrete/jirastopwatch/commit/1d3c7aa97d7fe8c43747db28f8ae251312ad7eee))
+* keep the tray icon on Linux when minimizing to the tray ([6b901ae](https://github.com/menegrete/jirastopwatch/commit/6b901ae60e2f8585a0145b3e5ab8aab0fd759728))
+* point the unhandled-error dialog to GitHub issues ([7b5673b](https://github.com/menegrete/jirastopwatch/commit/7b5673bb96d24a4ae4ce9a852e1afb531d054c5c))
+* show the tray icon when minimizing to the tray ([3251cc7](https://github.com/menegrete/jirastopwatch/commit/3251cc76628df304f56452c173ee835760aeb1fb))
+
 ## [3.16.0](https://github.com/menegrete/jirastopwatch/compare/v3.15.1...v3.16.0) (2026-11-26)
 
 ### Added
