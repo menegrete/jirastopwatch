@@ -26,11 +26,15 @@ A plugin SHALL be initialized once with an `IPluginHost` after being loaded and 
 - **THEN** the host calls its initialization with a host object before requesting its commands
 
 ### Requirement: Host services for plugins
-The host object SHALL give a plugin access to the main window (for use as window owner), the UI dispatcher, a data directory private to that plugin, and a logger.
+The host object SHALL give a plugin access to the main window (for use as window owner), the UI dispatcher, a data directory private to that plugin, and a logger. The main window and the UI dispatcher SHALL be the cross-platform UI types the host itself uses, so that a plugin's windows work on every supported platform.
 
 #### Scenario: Private data directory
 - **WHEN** two plugins each ask the host for their data directory
 - **THEN** each receives a different directory, created on demand, that is not shared with the other
+
+#### Scenario: Plugin window on Linux
+- **WHEN** a plugin opens a window owned by the host's main window while the application runs on Linux
+- **THEN** the window is shown with the active theme and stays above the main window
 
 ### Requirement: Read-only issue list facade
 The host SHALL expose the issues in the list and the currently active issue to plugins as public, read-only types, and SHALL raise `IssueAdded` and `IssueRemoved` events when issues are added to or removed from the list.
@@ -64,17 +68,6 @@ A plugin SHALL contribute commands as data (id, title, icon, location) plus an a
 #### Scenario: Command described by data
 - **WHEN** a plugin returns a command with a title and location
 - **THEN** the host renders it at that location using its own styling
-
-### Requirement: Contract 1.1 is additive
-Everything added in contract 1.1 SHALL be additive, so a plugin built against 1.0 keeps loading on a host that implements 1.1 or later, while a plugin declaring 1.1 SHALL NOT load on a 1.0 host.
-
-#### Scenario: Plugin built against 1.0
-- **WHEN** a host implementing 1.1 or later loads a plugin declaring contract 1.0
-- **THEN** the plugin loads and works unchanged
-
-#### Scenario: Plugin built against 1.1 on an older host
-- **WHEN** a 1.0 host finds a plugin declaring contract 1.1
-- **THEN** the plugin is reported as not loaded because its minor is newer than the host's
 
 ### Requirement: Subtask type can be chosen by name
 A plugin SHALL be able to create a subtask of a given issue type by passing the type's name. The host SHALL match the name against the subtask types the parent's project offers, ignoring case and surrounding whitespace, and create the subtask with that type.
@@ -132,13 +125,17 @@ During a time-load handler, creating a subtask SHALL count as a write whichever 
 - **WHEN** a handler names a type the project does not offer
 - **THEN** nothing is counted
 
-### Requirement: Contract 1.2 is additive
-The contract version SHALL be 1.2. Everything added in 1.2 SHALL be additive, so a plugin built against 1.1 keeps loading on a 1.2 host, while a plugin declaring 1.2 SHALL NOT load on a 1.1 host.
+### Requirement: Contract 2.0 is a breaking version
+The contract version SHALL be 2.0. Contract 2.0 SHALL keep every capability of contract 1.2 except that the UI types exposed by the host are the cross-platform ones. A plugin declaring any 1.x contract SHALL NOT load on a 2.0 host, and a plugin declaring 2.0 SHALL NOT load on a 1.x host.
 
-#### Scenario: Plugin built against 1.1
-- **WHEN** a 1.2 host loads a plugin declaring contract 1.1
-- **THEN** the plugin loads and works unchanged, including its two-argument subtask creation and its subtask descriptions without a type
+#### Scenario: Plugin built against 1.2 on a 2.0 host
+- **WHEN** a 2.0 host finds a plugin declaring contract 1.2
+- **THEN** the plugin is reported as not loaded, its status shows both versions, and other plugins load normally
 
-#### Scenario: Plugin built against 1.2 on an older host
-- **WHEN** a 1.1 host finds a plugin declaring contract 1.2
-- **THEN** the plugin is reported as not loaded because its minor is newer than the host's
+#### Scenario: Plugin built against 2.0 on a 1.2 host
+- **WHEN** a 1.2 host finds a plugin declaring contract 2.0
+- **THEN** the plugin is reported as not loaded because its major differs from the host's
+
+#### Scenario: Capabilities kept from 1.2
+- **WHEN** a plugin built against 2.0 creates a subtask by type name, reads time tracking and adds a worklog
+- **THEN** each operation behaves as it did in contract 1.2
