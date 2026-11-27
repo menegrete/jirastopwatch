@@ -67,6 +67,9 @@ plugins.push([
   {
     prepareCmd: "node scripts/set-assembly-version.js ${nextRelease.version}",
     publishCmd: "node scripts/publish-release-artifacts.js ${nextRelease.version}",
+    // Uploads the assets to the draft release created below and publishes
+    // it. See the script for why the github plugin doesn't upload them.
+    successCmd: "node scripts/upload-release-assets.js ${nextRelease.version}",
   },
 ]);
 
@@ -83,16 +86,10 @@ if (isMain) {
 plugins.push([
   "@semantic-release/github",
   {
-    assets: [
-      { path: "release-artifacts/JiraStopWatch-v*-self-contained.exe", label: "JiraStopWatch-v${nextRelease.version}-self-contained.exe" },
-      { path: "release-artifacts/JiraStopWatch-v*-self-contained.exe.sha256", label: "JiraStopWatch-v${nextRelease.version}-self-contained.exe.sha256" },
-      { path: "release-artifacts/JiraStopWatch-v*-framework-dependent.zip", label: "JiraStopWatch-v${nextRelease.version}-framework-dependent.zip" },
-      { path: "release-artifacts/JiraStopWatch-v*-framework-dependent.zip.sha256", label: "JiraStopWatch-v${nextRelease.version}-framework-dependent.zip.sha256" },
-      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-self-contained.tar.gz", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-self-contained.tar.gz" },
-      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-self-contained.tar.gz.sha256", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-self-contained.tar.gz.sha256" },
-      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-framework-dependent.tar.gz", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-framework-dependent.tar.gz" },
-      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-framework-dependent.tar.gz.sha256", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-framework-dependent.tar.gz.sha256" },
-    ],
+    // No assets here: the release is created as a draft and
+    // scripts/upload-release-assets.js (successCmd above) uploads the
+    // files and publishes it.
+    draftRelease: true,
   },
 ]);
 
