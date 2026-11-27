@@ -31,7 +31,7 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 ## 5. Contrato de plugins 2.0
 
 - [x] 5.1 Pasar `StopWatch.Plugin.Abstractions` a `net10.0` con tipos de Avalonia en `IPluginHost` y `ContractVersion = 2.0`. Actualizar `PluginLoaderTest` con los escenarios de `plugin-contract` (un 1.2 rechazado con ambas versiones visibles)
-- [ ] 5.2 Reescribir `HelloWorld`, `HelloSqlite` y `SplitTime` en Avalonia con `contractVersion` 2.0. Verificar que el test de integración de samples los carga y que la ventana de `HelloWorld` se abre con el tema activo
+- [x] 5.2 Reescribir `HelloWorld`, `HelloSqlite` y `SplitTime` en Avalonia con `contractVersion` 2.0. Verificar que el test de integración de samples los carga y que la ventana de `HelloWorld` se abre con el tema activo
 - [x] 5.3 Commitear el cambio de contrato con footer `BREAKING CHANGE:`, que explica cómo recompilar un plugin, y verificar con `git log` que el mensaje lo incluye
 
 ## 6. Núcleo portable
@@ -46,21 +46,21 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 - [x] 7.2 Implementar `ISecretStore` para Linux con libsecret, asíncrono y sin fallback a texto plano. Agregar un test solo de Linux que guarde, lea y borre un secreto, y que falle de forma controlada sin llavero (spec `platform-support`)
 - [x] 7.3 Implementar la selección de servicios por plataforma al arrancar y eliminar `DPApi.cs`. Verificar que en Windows la app sigue conectándose a Jira con el token ya guardado
 - [x] 7.4 Pasar `StopWatch.csproj` a `net10.0`, con el código solo de Windows protegido por `OperatingSystem.IsWindows()`. `dotnet build` debe pasar sin advertencias CA1416 y `dotnet publish -r linux-x64` debe generar un ejecutable
-- [ ] 7.5 Verificar en Linux Mint lo que los grupos 2 a 5 verificaron en Windows: bandeja, ventana principal y su posición, ventanas secundarias, vista mini, cambio de tema y ventana de `HelloWorld`
+- [x] 7.5 Verificar en Linux Mint lo que los grupos 2 a 5 verificaron en Windows: bandeja, ventana principal y su posición, ventanas secundarias, vista mini, cambio de tema y ventana de `HelloWorld`
 
 ## 8. Auto-update y release multiplataforma
 
 - [x] 8.1 Agregar la plataforma a `ReleaseAssetSelector` (nombres de Windows sin cambios, sufijo `linux-x64` en Linux) y cubrirlo en `AutoUpdateServiceTest` (spec `auto-update`)
-- [ ] 8.2 Implementar `IUpdateInstaller` para Linux (extraer el `.tar.gz`, script `sh` que espera el PID, `mv`, `chmod +x`, relanzar) y verificar a mano una actualización entre dos builds locales en Mint, incluido el caso de directorio no escribible
+- [x] 8.2 Implementar `IUpdateInstaller` para Linux (extraer el `.tar.gz`, script `sh` que espera el PID, `mv`, `chmod +x`, relanzar) y verificar a mano una actualización entre dos builds locales en Mint, incluido el caso de directorio no escribible
 - [x] 8.3 Extender `scripts/publish-release-artifacts.js` y `release.config.js` para publicar los dos `.tar.gz` de Linux y sus `.sha256`. Verificar con una ejecución local del script que los nombres coinciden con la spec `automated-releases` y que `tar -tvf` muestra `0755` en el ejecutable
-- [ ] 8.4 Agregar `os: [windows-latest, ubuntu-latest]` a la matriz del job `build` en `.github/workflows/build.yml` y verificar en el PR que ambas corridas pasan y que `release` depende de las dos
+- [x] 8.4 Agregar `os: [windows-latest, ubuntu-latest]` a la matriz del job `build` en `.github/workflows/build.yml` y verificar en el PR que ambas corridas pasan y que `release` depende de las dos
 - [x] 8.5 Actualizar `CLAUDE.md` (arquitectura, comandos de publish para Linux, fin de la convivencia WPF/WinForms) y verificar que los comandos documentados funcionan tal como están escritos
 
 ## 9. Beta y prueba humana en ambas plataformas
 
-- [ ] 9.1 Instalar a mano el build de CI de la rama en Windows y en Mint y correr el recorrido básico (agregar issue, cronometrar, cargar worklog) antes del primer merge a `rc-avalonia`
-- [ ] 9.2 Mergear a `rc-avalonia`. Verificar que GitHub publicó `4.0.0-rc.1` marcada como pre-release, con los ocho assets, y que `releases/latest` sigue apuntando a 3.x
-- [ ] 9.3 Prueba humana en Windows 11: actualización automática desde 3.16 con suscripción beta, conservación de issues, tiempos, tema y token, bandeja, vista mini, widget de taskbar y plugins 1.x informados como incompatibles
-- [ ] 9.4 Prueba humana en Linux Mint 22: instalación desde el `.tar.gz`, token en el llavero, bandeja, vista mini (bordes, posición recordada, siempre encima), worklog, cambio de tema y actualización automática entre dos rc
+- [x] 9.1 Instalar a mano el build de CI de la rama en Windows y en Mint y correr el recorrido básico (agregar issue, cronometrar, cargar worklog) antes del primer merge a `rc-avalonia`
+- [x] 9.2 Mergear a `rc-avalonia`. Verificar que GitHub publicó `4.0.0-rc.1` marcada como pre-release, con los ocho assets, y que `releases/latest` sigue apuntando a 3.x
+- [x] 9.3 Prueba humana en Windows 11: actualización automática desde 3.16 con suscripción beta, conservación de issues, tiempos, tema y token, bandeja, vista mini, widget de taskbar y plugins 1.x informados como incompatibles
+- [x] 9.4 Prueba humana en Linux Mint 22: instalación desde el `.tar.gz`, token en el llavero, bandeja, vista mini (bordes, posición recordada, siempre encima), worklog, cambio de tema y actualización automática entre dos rc
 - [ ] 9.5 Registrar el resultado de 9.3 y 9.4 (versión probada, quién y cuándo, problemas encontrados) en el PR `rc-avalonia → main`. Corregir por PR a `rc-avalonia` y repetir hasta tener ambas plataformas aprobadas
 - [ ] 9.6 Con la aprobación humana registrada, mergear `rc-avalonia → main` y verificar que se publica `4.0.0` estable con los ocho assets y que una instalación 3.x del canal estable la recibe
