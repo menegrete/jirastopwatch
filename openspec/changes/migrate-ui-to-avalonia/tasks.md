@@ -13,9 +13,9 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 
 - [x] 2.1 Cambiar `StopWatch.csproj` a Avalonia (versión fijada en `Directory.Packages.props`), quitar `UseWPF`, `UseWindowsForms` y `MaterialDesignThemes`, mantener `net10.0-windows` por ahora y conservar `AssemblyName=StopWatch`. Reemplazar `System.Windows.Forms.Screen` por `Screens` de Avalonia. `dotnet build StopWatch.sln` debe pasar
 - [x] 2.2 Portar `Theme.cs` / `ThemeBrushes.cs` a recursos por `ThemeVariant` sobre Fluent. Verificar que el cambio de tema en caliente aplica a todas las ventanas abiertas (spec `ui-theming`)
-- [ ] 2.3 Portar `App.xaml(.cs)` y el `TrayIcon` con su menú. Verificar en Windows que `Tray` esconde la ventana y que un clic en el ícono la restaura (spec `minimize-behavior`)
-- [ ] 2.4 Portar `MainWindow` y los estilos de `Styles.xaml` que usa (triggers → pseudo-clases). Verificar manualmente en Windows, en ambos temas, agregar, reordenar, quitar, iniciar y pausar issues, y la transición de color (specs `issue-list`, `ui-theming`)
-- [ ] 2.5 Verificar en Windows que se cumple `main-window-placement`: posición y maximizado recordados, y reubicación si el monitor ya no existe
+- [x] 2.3 Portar `App.xaml(.cs)` y el `TrayIcon` con su menú. Verificar en Windows que `Tray` esconde la ventana y que un clic en el ícono la restaura (spec `minimize-behavior`)
+- [x] 2.4 Portar `MainWindow` y los estilos de `Styles.xaml` que usa (triggers → pseudo-clases). Verificar manualmente en Windows, en ambos temas, agregar, reordenar, quitar, iniciar y pausar issues, y la transición de color (specs `issue-list`, `ui-theming`)
+- [x] 2.5 Verificar en Windows que se cumple `main-window-placement`: posición y maximizado recordados, y reubicación si el monitor ya no existe
 
 ## 3. Ventanas secundarias
 
@@ -25,8 +25,8 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 
 ## 4. Vista mini y widget de taskbar
 
-- [ ] 4.1 Portar `MiniTimerWindow`: arrastre, alineación a bordes, redimensionado horizontal, crecimiento lejos del borde y "siempre encima". Verificar cada escenario de `mini-timer-view` en Windows. El pegado a bordes no debe releer `Position` justo después de asignarla (Decisión 4 del design)
-- [ ] 4.2 Portar `TaskbarWidgetWindow` a Avalonia manteniendo `TaskbarInterop` solo para Windows (lo usa por HWND). Verificar en Windows los escenarios de `taskbar-widget-view` (auto-hide, multi-monitor, pantalla completa)
+- [x] 4.1 Portar `MiniTimerWindow`: arrastre, alineación a bordes, redimensionado horizontal, crecimiento lejos del borde y "siempre encima". Verificar cada escenario de `mini-timer-view` en Windows. El pegado a bordes no debe releer `Position` justo después de asignarla (Decisión 4 del design)
+- [x] 4.2 Portar `TaskbarWidgetWindow` a Avalonia manteniendo `TaskbarInterop` solo para Windows (lo usa por HWND). Verificar en Windows los escenarios de `taskbar-widget-view` (auto-hide, multi-monitor, pantalla completa)
 
 ## 5. Contrato de plugins 2.0
 
