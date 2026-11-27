@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -26,16 +26,13 @@ using System.Globalization;
 namespace StopWatch
 {
     /// <summary>
-    /// The abbreviated weekday names for the themed DatePicker's calendar
-    /// popup, in the same order Calendar lays out its own day columns
-    /// (starting from DateTimeFormatInfo.FirstDayOfWeek).
+    /// The abbreviated weekday names for a calendar popup's day header, in
+    /// the same order the calendar lays out its day columns (starting from
+    /// DateTimeFormatInfo.FirstDayOfWeek).
     ///
-    /// Calendar reads its day-of-week header from a specific
-    /// ComponentResourceKey (CalendarItem.DayTitleTemplateResourceKey)
-    /// rather than through ordinary implicit-style lookup, and registering a
-    /// DataTemplate under that key did not make it appear - so this header
-    /// is drawn as ordinary static XAML instead, next to Calendar's own
-    /// managed grid rather than inside it.
+    /// Kept from the WPF version, where Calendar's header could not be
+    /// restyled and was drawn as static XAML. Avalonia's Calendar draws its
+    /// own header, so this is only needed if a window still draws one by hand.
     /// </summary>
     internal static class CalendarDayNames
     {

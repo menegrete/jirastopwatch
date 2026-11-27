@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using System.Windows;
+using Avalonia.Controls;
+using Avalonia.Layout;
 using StopWatch.Plugin;
 
 namespace HelloSqlite
@@ -35,7 +36,23 @@ namespace HelloSqlite
             string result = SqliteDemo.Run();
             host.Logger.Log("HelloSqlite query: " + result);
 
-            MessageBox.Show(host.MainWindow, result, "Hello SQLite");
+            var ok = new Button { Content = "OK", HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true };
+            var window = new Window
+            {
+                Title = "Hello SQLite",
+                Width = 360,
+                SizeToContent = SizeToContent.Height,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(16),
+                    Spacing = 16,
+                    Children = { new TextBlock { Text = result, TextWrapping = Avalonia.Media.TextWrapping.Wrap }, ok },
+                },
+            };
+            ok.Click += (s, e) => window.Close();
+            _ = window.ShowDialog(host.MainWindow);
         }
     }
 }

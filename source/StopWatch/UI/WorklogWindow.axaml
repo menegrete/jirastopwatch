@@ -1,0 +1,105 @@
+<Window x:Class="StopWatch.WorklogWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="Submit worklog"
+        SizeToContent="Height"
+        Width="420"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        FontSize="12">
+
+    <Window.Styles>
+        <!-- Fluent boxes are 32 high; the forms were compact. -->
+        <Style Selector="CheckBox, RadioButton">
+            <Setter Property="MinHeight" Value="24" />
+        </Style>
+    </Window.Styles>
+
+    <StackPanel Margin="16">
+
+        <TextBlock Text="Add a Comment to your work log (optional)" FontWeight="SemiBold" />
+
+        <TextBox x:Name="tbComment"
+                 Margin="0,6,0,0"
+                 Height="90"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalContentAlignment="Top" />
+
+        <TextBlock Text="Press CTRL-Enter to submit"
+                   Margin="0,4,0,0"
+                   Classes="muted" />
+
+        <!-- ==================== start time ==================== -->
+
+        <TextBlock Text="Start Time" Classes="section-header" />
+
+        <!-- Date as dd/MM/yyyy and time as 24-hour, whatever the system
+             language (spec worklog-start-time). The time picker is Avalonia's
+             own; its colours come from the Fluent overrides in ThemeBrushes. -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <CalendarDatePicker x:Name="dpStartDate"
+                                Width="165"
+                                SelectedDateFormat="Custom"
+                                CustomDateFormatString="dd/MM/yyyy"
+                                ToolTip.Tip="Start date of the worklog" />
+
+            <TimePicker x:Name="tpStartTime"
+                        Width="110"
+                        MinWidth="0"
+                        ClockIdentifier="24HourClock"
+                        MinuteIncrement="1"
+                        ToolTip.Tip="Start time of the worklog" />
+        </StackPanel>
+
+        <!-- ==================== remaining estimate ==================== -->
+
+        <Border Classes="group-box">
+            <StackPanel>
+                <TextBlock Text="Remaining Estimate" Classes="section-header" Margin="0,0,0,4" />
+
+                <RadioButton x:Name="rdEstimateAdjustAuto"
+                             Content="Adjust _Automatically"
+                             GroupName="estimate" />
+
+                <RadioButton x:Name="rdEstimateAdjustLeave"
+                             Content="_Leave Unchanged"
+                             GroupName="estimate" />
+
+                <Grid ColumnDefinitions="140,*" Margin="0,3">
+                    <RadioButton Grid.Column="0"
+                                 x:Name="rdEstimateAdjustSetTo"
+                                 Content="_Set To"
+                                 GroupName="estimate" />
+                    <TextBox Grid.Column="1"
+                             x:Name="tbSetTo"
+                             IsEnabled="False" />
+                </Grid>
+
+                <Grid ColumnDefinitions="140,*" Margin="0,3">
+                    <RadioButton Grid.Column="0"
+                                 x:Name="rdEstimateAdjustManualDecrease"
+                                 Content="_Reduce By"
+                                 GroupName="estimate" />
+                    <TextBox Grid.Column="1"
+                             x:Name="tbReduceBy"
+                             IsEnabled="False" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- ==================== the three ways out ==================== -->
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,12,0,0">
+            <Button Content="Su_bmit" IsDefault="True" Click="btnSubmit_Click" />
+            <Button Content="Sa_ve for later" Click="btnSaveForLater_Click" />
+            <Button Content="Cancel" IsCancel="True" Click="btnCancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AvaloniaSpike.ControlWindow"
+        Width="760" Height="720" Title="Avalonia spike - control">
+  <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="10">
+    <TextBox x:Name="EnvBox" Grid.Row="0" IsReadOnly="True" AcceptsReturn="True" Height="150" FontFamily="monospace" />
+    <WrapPanel Grid.Row="1" Margin="0,8,0,0">
+      <Button Content="Open mini" Click="OnOpenMini" Margin="2" />
+      <Button Content="Close mini" Click="OnCloseMini" Margin="2" />
+      <Button Content="Move mini to top-left" Tag="TL" Click="OnCorner" Margin="2" />
+      <Button Content="Move mini to top-right" Tag="TR" Click="OnCorner" Margin="2" />
+      <Button Content="Move mini to bottom-left" Tag="BL" Click="OnCorner" Margin="2" />
+      <Button Content="Move mini to bottom-right" Tag="BR" Click="OnCorner" Margin="2" />
+    </WrapPanel>
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,8">
+      <TextBlock Text="X" VerticalAlignment="Center" />
+      <NumericUpDown x:Name="XBox" Value="100" Minimum="-10000" Maximum="10000" Width="130" />
+      <TextBlock Text="Y" VerticalAlignment="Center" />
+      <NumericUpDown x:Name="YBox" Value="100" Minimum="-10000" Maximum="10000" Width="130" />
+      <Button Content="Move to X,Y" Click="OnMoveXY" />
+      <CheckBox x:Name="TopmostBox" Content="Topmost" IsChecked="True" IsCheckedChanged="OnTopmostChanged" />
+      <CheckBox x:Name="TranspBox" Content="Transparent + rounded" IsCheckedChanged="OnTranspChanged" />
+    </StackPanel>
+    <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,8">
+      <TextBlock Text="Settings (ApplicationSettingsBase)" FontWeight="Bold" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox x:Name="SettingBox" Width="260" PlaceholderText="LastValue" />
+        <Button Content="Save value" Click="OnSaveSetting" />
+        <Button Content="Reload" Click="OnReloadSetting" />
+        <TextBlock x:Name="SettingInfo" VerticalAlignment="Center" />
+      </StackPanel>
+    </StackPanel>
+    <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,8">
+      <TextBlock Text="Secret storage (libsecret, Linux only)" FontWeight="Bold" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox x:Name="SecretBox" Width="260" PlaceholderText="secret" />
+        <Button x:Name="StoreBtn" Content="Store secret" Click="OnStoreSecret" />
+        <Button x:Name="LookupBtn" Content="Lookup secret" Click="OnLookupSecret" />
+        <Button x:Name="ClearBtn" Content="Clear secret" Click="OnClearSecret" />
+        <TextBlock x:Name="SecretNote" VerticalAlignment="Center" />
+      </StackPanel>
+    </StackPanel>
+    <TextBox x:Name="LogBox" Grid.Row="5" IsReadOnly="True" AcceptsReturn="True" FontFamily="monospace" FontSize="12" />
+  </Grid>
+</Window>

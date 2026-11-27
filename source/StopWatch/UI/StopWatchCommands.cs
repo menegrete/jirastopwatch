@@ -20,85 +20,117 @@
  * limitations under the License.
  */
 
-using System.Windows.Input;
+using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace StopWatch
 {
     /// <summary>
-    /// The main window's keyboard shortcuts, one command per shortcut with its
+    /// A main-window shortcut: a name, a text and its gesture. The gesture is
+    /// declared here once; <see cref="Bind"/> attaches a handler to a window,
+    /// which is what WPF's CommandBinding did.
+    /// </summary>
+    internal sealed class ShortcutCommand
+    {
+        public ShortcutCommand(string text, string name, Key key, KeyModifiers modifiers)
+        {
+            Text = text;
+            Name = name;
+            Gesture = new KeyGesture(key, modifiers);
+        }
+
+
+        public string Text { get; private set; }
+
+        public string Name { get; private set; }
+
+        public KeyGesture Gesture { get; private set; }
+
+
+        /// <summary>
+        /// Wires the shortcut into <paramref name="host"/>: the gesture runs
+        /// <paramref name="execute"/> while <paramref name="canExecute"/> (if
+        /// any) allows it. Returns the command, to give to a button's Command
+        /// and to call RaiseCanExecuteChanged on.
+        ///
+        /// Key bindings are processed after the focused control has had its
+        /// chance, so a TextBox still keeps Ctrl+C/Ctrl+V for its own text.
+        /// </summary>
+        public RelayCommand Bind(Control host, System.Action execute, System.Func<bool> canExecute = null)
+        {
+            var command = new RelayCommand(execute, canExecute);
+            host.KeyBindings.Add(new KeyBinding { Gesture = Gesture, Command = command });
+            return command;
+        }
+    }
+
+
+    /// <summary>
+    /// The main window's keyboard shortcuts, one entry per shortcut with its
     /// gesture attached.
     ///
     /// These started as the thirteen shortcuts MainForm.ProcessCmdKey handled
-    /// as a chain of if statements, listed one by one in the change's
-    /// inventory.md before that method was deleted; each one here carries the
-    /// same gesture and drives the same action as the entry it came from.
-    /// Alt+Down (open the key completion list) was later removed along with
-    /// the completion list itself, once the Filter feature that fed it was
-    /// gone. MoveUp/MoveDown were added later still, for reordering rows.
+    /// as a chain of if statements; each one here carries the same gesture and
+    /// drives the same action as the entry it came from. Alt+Down (open the
+    /// key completion list) was later removed along with the completion list
+    /// itself. MoveUp/MoveDown were added later still, for reordering rows.
     /// </summary>
     internal static class StopWatchCommands
     {
         /// <summary>Ctrl+Up - select the row above.</summary>
-        public static readonly RoutedUICommand SelectPrevious =
-            Make("Select previous issue", "SelectPrevious", Key.Up, ModifierKeys.Control);
+        public static readonly ShortcutCommand SelectPrevious =
+            new ShortcutCommand("Select previous issue", "SelectPrevious", Key.Up, KeyModifiers.Control);
 
         /// <summary>Ctrl+Down - select the row below.</summary>
-        public static readonly RoutedUICommand SelectNext =
-            Make("Select next issue", "SelectNext", Key.Down, ModifierKeys.Control);
+        public static readonly ShortcutCommand SelectNext =
+            new ShortcutCommand("Select next issue", "SelectNext", Key.Down, KeyModifiers.Control);
 
         /// <summary>Ctrl+Shift+Up - move the selected row up one position.</summary>
-        public static readonly RoutedUICommand MoveUp =
-            Make("Move issue up", "MoveUp", Key.Up, ModifierKeys.Control | ModifierKeys.Shift);
+        public static readonly ShortcutCommand MoveUp =
+            new ShortcutCommand("Move issue up", "MoveUp", Key.Up, KeyModifiers.Control | KeyModifiers.Shift);
 
         /// <summary>Ctrl+Shift+Down - move the selected row down one position.</summary>
-        public static readonly RoutedUICommand MoveDown =
-            Make("Move issue down", "MoveDown", Key.Down, ModifierKeys.Control | ModifierKeys.Shift);
+        public static readonly ShortcutCommand MoveDown =
+            new ShortcutCommand("Move issue down", "MoveDown", Key.Down, KeyModifiers.Control | KeyModifiers.Shift);
 
         /// <summary>Ctrl+P - start or pause the selected row's timer.</summary>
-        public static readonly RoutedUICommand TogglePlay =
-            Make("Start/stop timer", "TogglePlay", Key.P, ModifierKeys.Control);
+        public static readonly ShortcutCommand TogglePlay =
+            new ShortcutCommand("Start/stop timer", "TogglePlay", Key.P, KeyModifiers.Control);
 
         /// <summary>Ctrl+L - post the selected row's worklog.</summary>
-        public static readonly RoutedUICommand PostWorklog =
-            Make("Post worklog", "PostWorklog", Key.L, ModifierKeys.Control);
+        public static readonly ShortcutCommand PostWorklog =
+            new ShortcutCommand("Post worklog", "PostWorklog", Key.L, KeyModifiers.Control);
 
         /// <summary>Ctrl+E - edit the selected row's elapsed time.</summary>
-        public static readonly RoutedUICommand EditTime =
-            Make("Edit time", "EditTime", Key.E, ModifierKeys.Control);
+        public static readonly ShortcutCommand EditTime =
+            new ShortcutCommand("Edit time", "EditTime", Key.E, KeyModifiers.Control);
 
         /// <summary>Ctrl+R - reset the selected row's timer.</summary>
-        public static readonly RoutedUICommand ResetTimer =
-            Make("Reset timer", "ResetTimer", Key.R, ModifierKeys.Control);
+        public static readonly ShortcutCommand ResetTimer =
+            new ShortcutCommand("Reset timer", "ResetTimer", Key.R, KeyModifiers.Control);
 
         /// <summary>Ctrl+Delete - remove the selected row.</summary>
-        public static readonly RoutedUICommand RemoveIssue =
-            Make("Remove issue row", "RemoveIssue", Key.Delete, ModifierKeys.Control);
+        public static readonly ShortcutCommand RemoveIssue =
+            new ShortcutCommand("Remove issue row", "RemoveIssue", Key.Delete, KeyModifiers.Control);
 
         /// <summary>Ctrl+I - put the focus in the selected row's key field.</summary>
-        public static readonly RoutedUICommand FocusKey =
-            Make("Focus issue key", "FocusKey", Key.I, ModifierKeys.Control);
+        public static readonly ShortcutCommand FocusKey =
+            new ShortcutCommand("Focus issue key", "FocusKey", Key.I, KeyModifiers.Control);
 
         /// <summary>Ctrl+N - add a row.</summary>
-        public static readonly RoutedUICommand AddIssue =
-            Make("Add issue row", "AddIssue", Key.N, ModifierKeys.Control);
+        public static readonly ShortcutCommand AddIssue =
+            new ShortcutCommand("Add issue row", "AddIssue", Key.N, KeyModifiers.Control);
 
         /// <summary>Ctrl+C - copy the selected row's key.</summary>
-        public static readonly RoutedUICommand CopyKey =
-            Make("Copy issue key", "CopyKey", Key.C, ModifierKeys.Control);
+        public static readonly ShortcutCommand CopyKey =
+            new ShortcutCommand("Copy issue key", "CopyKey", Key.C, KeyModifiers.Control);
 
         /// <summary>Ctrl+V - paste a key into the selected row.</summary>
-        public static readonly RoutedUICommand PasteKey =
-            Make("Paste issue key", "PasteKey", Key.V, ModifierKeys.Control);
+        public static readonly ShortcutCommand PasteKey =
+            new ShortcutCommand("Paste issue key", "PasteKey", Key.V, KeyModifiers.Control);
 
         /// <summary>Ctrl+O - open the selected issue in a browser.</summary>
-        public static readonly RoutedUICommand OpenInBrowser =
-            Make("Open issue in browser", "OpenInBrowser", Key.O, ModifierKeys.Control);
-
-
-        private static RoutedUICommand Make(string text, string name, Key key, ModifierKeys modifiers)
-        {
-            return new RoutedUICommand(text, name, typeof(StopWatchCommands),
-                new InputGestureCollection { new KeyGesture(key, modifiers) });
-        }
+        public static readonly ShortcutCommand OpenInBrowser =
+            new ShortcutCommand("Open issue in browser", "OpenInBrowser", Key.O, KeyModifiers.Control);
     }
 }

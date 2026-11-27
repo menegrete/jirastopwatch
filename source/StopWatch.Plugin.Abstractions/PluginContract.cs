@@ -9,11 +9,16 @@ namespace StopWatch.Plugin
     ///
     /// A minor bump is additive (new members, new optional capabilities); a
     /// major bump breaks existing plugins.
+    ///
+    /// 2.0 is a major bump: the host's main window and dispatcher are
+    /// Avalonia types (<c>Avalonia.Controls.Window</c>,
+    /// <c>Avalonia.Threading.Dispatcher</c>) instead of the WPF ones, so no
+    /// 1.x plugin loads. Every other capability of 1.2 is unchanged.
     /// </summary>
     public static class PluginContract
     {
         /// <summary>The contract version this assembly describes.</summary>
-        public static readonly Version ContractVersion = new Version(1, 2);
+        public static readonly Version ContractVersion = new Version(2, 0);
 
 
         /// <summary>

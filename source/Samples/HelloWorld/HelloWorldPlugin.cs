@@ -33,11 +33,9 @@ namespace HelloWorld
 
             host.Logger.Log("HelloWorld said hello");
 
-            var window = new HelloWindow(host.Issues.GetIssues().Count, file)
-            {
-                Owner = host.MainWindow,
-            };
-            window.ShowDialog();
+            // Avalonia dialogs do not block the caller: ShowDialog returns a task.
+            var window = new HelloWindow(host.Issues.GetIssues().Count, file);
+            _ = window.ShowDialog(host.MainWindow);
         }
     }
 }

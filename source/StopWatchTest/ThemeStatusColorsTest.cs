@@ -23,9 +23,9 @@
 namespace StopWatchTest
 {
     using System;
-    using System.Threading;
-    using System.Windows;
-    using System.Windows.Media;
+    using Avalonia.Controls;
+    using Avalonia.Media;
+    using Avalonia.Styling;
     using NUnit.Framework;
     using StopWatch;
 
@@ -36,19 +36,30 @@ namespace StopWatchTest
         private static readonly string[] StatusKeys = { "StatusToDo", "StatusInProgress", "StatusDone" };
 
 
-        [Test, Apartment(ApartmentState.STA)]
-        public void Apply_ReplacesStatusBrushesWhenTheThemeChanges()
+        [Test]
+        public void Install_PutsADifferentStatusBrushInEachThemeVariant()
         {
             var resources = new ResourceDictionary();
 
-            ThemeBrushes.Apply(resources, Theme.Dark);
-            Color[] dark = Array.ConvertAll(StatusKeys, k => ((SolidColorBrush)resources[k]).Color);
+            ThemeBrushes.Install(resources, Theme.Dark, ThemeVariant.Dark);
+            ThemeBrushes.Install(resources, Theme.Light, ThemeVariant.Light);
 
-            ThemeBrushes.Apply(resources, Theme.Light);
-            Color[] light = Array.ConvertAll(StatusKeys, k => ((SolidColorBrush)resources[k]).Color);
+            foreach (string key in StatusKeys)
+            {
+                Color dark = Variant(resources, ThemeVariant.Dark, key);
+                Color light = Variant(resources, ThemeVariant.Light, key);
 
-            for (int i = 0; i < StatusKeys.Length; i++)
-                Assert.That(light[i], Is.Not.EqualTo(dark[i]), StatusKeys[i]);
+                Assert.That(light, Is.Not.EqualTo(dark), key);
+                Assert.That(dark, Is.EqualTo(ThemeBrushes.ToColor(Theme.Dark.Get(key))), key);
+                Assert.That(light, Is.EqualTo(ThemeBrushes.ToColor(Theme.Light.Get(key))), key);
+            }
+        }
+
+
+        private static Color Variant(ResourceDictionary resources, ThemeVariant variant, string key)
+        {
+            var palette = (IResourceDictionary)resources.ThemeDictionaries[variant];
+            return ((SolidColorBrush)palette[key]).Color;
         }
 
 

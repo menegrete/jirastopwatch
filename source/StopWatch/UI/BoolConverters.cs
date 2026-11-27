@@ -21,46 +21,20 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
+using Avalonia.Data.Converters;
 
 namespace StopWatch
 {
-    /// <summary>Shows the element when the bound flag is true.</summary>
-    internal class BoolToVisibilityConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return BoolConverterHelpers.IsTrue(value) ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-    }
-
-
     /// <summary>
-    /// Shows the element when the bound flag is false. A separate class rather
-    /// than a subclass: hiding Convert with `new` would leave the interface
-    /// mapping pointing at the base implementation.
+    /// Value converters shared by the windows. Visibility converters are gone:
+    /// Avalonia has IsVisible (a bool), so WPF's WhenTrue/WhenFalse become
+    /// <c>IsVisible="{Binding X}"</c> and
+    /// <c>IsVisible="{Binding X, Converter={x:Static BoolConverters.Not}}"</c>.
+    /// The two below are published as the StaticResources NotEmpty and
+    /// StartStopTooltip by Styles.axaml.
     /// </summary>
-    internal class NotBoolToVisibilityConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return BoolConverterHelpers.IsTrue(value) ? Visibility.Collapsed : Visibility.Visible;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-    }
-
-
     internal static class BoolConverterHelpers
     {
         public static bool IsTrue(object value)
@@ -95,23 +69,20 @@ namespace StopWatch
     /// concurrent-timer limit, in which case it explains why the click will
     /// not do anything - same "stay enabled, tooltip is the explanation"
     /// approach as the add-issue button's tooltip.
+    ///
+    /// Bind with a MultiBinding: values are (IsRunning, AtTimerLimit).
     /// </summary>
     internal class StartStopTooltipConverter : IMultiValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(IList<object> values, Type targetType, object parameter, CultureInfo culture)
         {
-            bool isRunning = values.Length > 0 && BoolConverterHelpers.IsTrue(values[0]);
-            bool atLimit = values.Length > 1 && BoolConverterHelpers.IsTrue(values[1]);
+            bool isRunning = values.Count > 0 && BoolConverterHelpers.IsTrue(values[0]);
+            bool atLimit = values.Count > 1 && BoolConverterHelpers.IsTrue(values[1]);
 
             if (!isRunning && atLimit)
                 return "Reached the max number of simultaneous timers - pause another one first";
 
             return "Start/stop timer (CTRL-P)";
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
         }
     }
 }

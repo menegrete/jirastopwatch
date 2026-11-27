@@ -1,0 +1,15 @@
+<Application x:Class="StopWatch.App"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:ClassModifier="internal"
+             RequestedThemeVariant="Dark">
+    <Application.Styles>
+        <FluentTheme />
+        <!-- The base styles. Their colours are DynamicResource references to
+             the palette that ThemeBrushes.Install adds to Application.Resources
+             as Dark/Light theme dictionaries; the variant itself is set from
+             settings in App.OnFrameworkInitializationCompleted, and again
+             whenever the user changes it. -->
+        <StyleInclude Source="avares://StopWatch/UI/Styles.axaml" />
+    </Application.Styles>
+</Application>

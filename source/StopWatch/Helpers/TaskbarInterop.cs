@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace StopWatch
@@ -42,6 +43,7 @@ namespace StopWatch
     /// type: <see cref="TaskbarWidgetWindow"/> is the only caller, and
     /// <see cref="TaskbarPlacement"/> holds the pure geometry this feeds.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     internal static class TaskbarInterop
     {
         #region window handles
@@ -262,29 +264,31 @@ namespace StopWatch
         [DllImport("user32.dll")]
         private static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
 
-        // Per-handle, not a single shared flag: one widget window clearing its
-        // clip must not be able to consume the "clear" for a widget on a
-        // different monitor, which would leave that other one clipped/invisible.
-        private static readonly HashSet<IntPtr> ClippedWindows = new HashSet<IntPtr>();
+        // Per-handle, not a single shared value: one widget window must not
+        // be able to consume the "already clipped" state of a widget on a
+        // different monitor, which would leave that other one with a stale clip.
+        private static readonly Dictionary<IntPtr, (int Width, int Height)> ClippedWindows = new Dictionary<IntPtr, (int, int)>();
 
         /// <summary>
-        /// Clips the window to whatever currently fits above the monitor's
-        /// bottom edge, so the part that has already "slid off" during
-        /// auto-hide does not keep drawing on a monitor placed below. The
-        /// system takes ownership of the region after SetWindowRgn; it is not
-        /// released here.
+        /// Clips the window to the widget's own rectangle (<paramref name="widthPx"/> x
+        /// <paramref name="heightPx"/>, from the top-left) and to whatever of
+        /// it currently fits above the monitor's bottom edge, so the part
+        /// that has already "slid off" during auto-hide does not keep drawing
+        /// on a monitor placed below. The first matters on its own as well:
+        /// Windows keeps a top-level window at least ~39 pixels high, taller
+        /// than the widget, and the clip is what stops that surplus from
+        /// covering (and swallowing clicks on) the taskbar. The system takes
+        /// ownership of the region after SetWindowRgn; it is not released here.
         /// </summary>
         public static void ClipWindowBottom(IntPtr hwnd, int widthPx, int heightPx, int visibleHeightPx)
         {
-            if (visibleHeightPx >= heightPx)
-            {
-                if (ClippedWindows.Remove(hwnd))
-                    SetWindowRgn(hwnd, IntPtr.Zero, true);
-                return;
-            }
+            int visible = Math.Max(0, Math.Min(heightPx, visibleHeightPx));
 
-            SetWindowRgn(hwnd, CreateRectRgn(0, 0, widthPx, Math.Max(0, visibleHeightPx)), true);
-            ClippedWindows.Add(hwnd);
+            if (ClippedWindows.TryGetValue(hwnd, out var current) && current.Width == widthPx && current.Height == visible)
+                return;
+
+            SetWindowRgn(hwnd, CreateRectRgn(0, 0, widthPx, visible), true);
+            ClippedWindows[hwnd] = (widthPx, visible);
         }
         #endregion
 

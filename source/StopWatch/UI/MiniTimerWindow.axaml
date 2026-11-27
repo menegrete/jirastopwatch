@@ -1,0 +1,219 @@
+<Window x:Class="StopWatch.MiniTimerWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:StopWatch"
+        x:ClassModifier="internal"
+        Title="Jira StopWatch"
+        Width="352"
+        Height="42"
+        CanResize="False"
+        SizeToContent="Manual"
+        WindowDecorations="None"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True">
+
+    <!--
+        Borderless, transparent and rounded, as validated by the Linux spike:
+        WindowDecorations None + a transparent background + a Border with a
+        CornerRadius. The window is 12 DIPs larger than the visible pill on
+        every axis (ShadowMargin in the code-behind) so the shadow has somewhere
+        to fall. Its height is set from the code-behind, from the number of rows,
+        and never read back from layout.
+    -->
+
+    <Window.Styles>
+        <!-- A paused row is dimmed: it stays listed while it holds time not
+             yet loaded to Jira, and should not read as counting. -->
+        <Style Selector="Grid.row.paused">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+    </Window.Styles>
+
+    <Window.Resources>
+        <!-- One row of the list: a single timer's key, summary, time and its
+             own pause/resume control. With several timers running, they are
+             all listed instead of just hinted at. -->
+        <DataTemplate x:Key="TimerRow">
+            <Grid Classes="row"
+                  Classes.paused="{Binding !IsRunning}"
+                  Height="28">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <!-- stripe -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- key -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- status -->
+                    <ColumnDefinition Width="*" MinWidth="0" />
+                    <!-- summary -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- time -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- pause / resume -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Running/paused state, as a coloured stripe down the left edge.
+                     Same colour the main window uses on the time field. -->
+                <local:ThemeAnimatedBorder Grid.Column="0"
+                                           Width="4"
+                                           Margin="4,1,6,1"
+                                           CornerRadius="2"
+                                           IsActive="{Binding IsRunning}"
+                                           ActiveColor="TimerRunning"
+                                           InactiveColor="SurfaceDisabled" />
+
+                <!-- Key plus its two row actions, grouped so hovering the key
+                     specifically - not the row, and not the summary/time/pause
+                     beside it - is what reveals them. They start hidden and
+                     take no space; the Auto column they live in only grows
+                     once they show, which is what shrinks the summary column
+                     next to it.
+
+                     Background="Transparent" makes the whole Grid hit-test
+                     visible, not just the key text, so the gap between the key
+                     and where a button appears still counts as "over the key
+                     area". Visibility is toggled from the code-behind
+                     (PointerEntered/PointerExited) rather than a style, so
+                     leaving briefly through that gap - or a fast pointer jump
+                     that skips it in one event - has a grace period instead of
+                     hiding instantly out from under the cursor. -->
+                <Grid x:Name="keyArea"
+                      Grid.Column="1"
+                      Background="Transparent"
+                      PointerEntered="keyArea_PointerEntered"
+                      PointerExited="keyArea_PointerExited">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding IssueKey}"
+                               FontWeight="SemiBold" />
+
+                    <Button Grid.Column="1"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            Margin="4,0,0,0"
+                            IsVisible="False"
+                            ToolTip.Tip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <Button Grid.Column="2"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            Margin="2,0,0,0"
+                            IsVisible="False"
+                            IsEnabled="{Binding Summary, Converter={StaticResource NotEmpty}}"
+                            ToolTip.Tip="Open issue in browser"
+                            Click="btnOpen_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+                </Grid>
+
+                <!-- Jira status category; name in the tooltip. -->
+                <TemplatedControl Grid.Column="2"
+                                  Theme="{StaticResource StatusIcon}"
+                                  Margin="8,0,0,0" />
+
+                <!-- The pill is narrow by design, so the full text lives in the
+                     tooltip; only the key and the clock are guaranteed room. -->
+                <TextBlock Grid.Column="3"
+                           Classes="muted"
+                           Text="{Binding Summary}"
+                           ToolTip.Tip="{Binding Summary}"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="8,0,8,0" />
+
+                <TextBlock Grid.Column="4"
+                           Text="{Binding ElapsedText}"
+                           FontFamily="Consolas, Courier New, monospace"
+                           FontWeight="Bold"
+                           Margin="0,0,4,0" />
+
+                <Button Grid.Column="5"
+                        Classes="glyph"
+                        Click="RowToggle_Click">
+                    <Panel>
+                        <!-- pause: two bars -->
+                        <Path Classes="glyph-fill"
+                              Data="{StaticResource GlyphPause}"
+                              IsVisible="{Binding IsRunning}" />
+                        <!-- play: triangle -->
+                        <Path Classes="glyph-fill"
+                              Data="{StaticResource GlyphPlay}"
+                              IsVisible="{Binding !IsRunning}" />
+                    </Panel>
+                </Button>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Margin leaves room for the shadow to fall outside the pill. -->
+        <Border Margin="6"
+                Background="{DynamicResource Surface}"
+                BorderBrush="{DynamicResource Border}"
+                BorderThickness="1"
+                CornerRadius="10"
+                BoxShadow="0 1 10 0 #73000000">
+            <Grid>
+                <ItemsControl x:Name="rowsList"
+                              Margin="0,0,32,0"
+                              ItemTemplate="{StaticResource TimerRow}" />
+
+                <!-- Independent of the row list on purpose: with several timers
+                     shown there is exactly one way back to the full window, not
+                     one per row. Floats over the top-right corner instead of
+                     taking a column, so it stays put whether there is one row or
+                     several. -->
+                <Button x:Name="btnRestore"
+                        Classes="glyph"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,2,4,0"
+                        ToolTip.Tip="Back to the full window"
+                        Click="btnRestore_Click">
+                    <!-- arrow out of a box, pointing up-right -->
+                    <Path Classes="glyph-stroke" Data="{StaticResource GlyphOpenBrowser}" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Width grips: one per side edge, on top of the pill. They are 8
+             wide - the 6 of shadow margin plus 2 of the pill - so they sit
+             where nothing else is and never reach the restore button. The
+             fill is near-transparent rather than Transparent so the grip is
+             certain to receive the pointer. Pressing one marks the event
+             handled, so grabbing it neither drags the window nor counts as the
+             background double click that goes back to the full window. The
+             resize itself is driven from the code-behind (see
+             grip_PointerMoved). -->
+        <Border x:Name="gripLeft"
+                HorizontalAlignment="Left"
+                Width="8"
+                Background="#01000000"
+                Cursor="SizeWestEast"
+                PointerPressed="grip_PointerPressed"
+                PointerMoved="grip_PointerMoved"
+                PointerReleased="grip_PointerReleased"
+                PointerCaptureLost="grip_PointerCaptureLost" />
+
+        <Border x:Name="gripRight"
+                HorizontalAlignment="Right"
+                Width="8"
+                Background="#01000000"
+                Cursor="SizeWestEast"
+                PointerPressed="grip_PointerPressed"
+                PointerMoved="grip_PointerMoved"
+                PointerReleased="grip_PointerReleased"
+                PointerCaptureLost="grip_PointerCaptureLost" />
+    </Grid>
+</Window>

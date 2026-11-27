@@ -34,7 +34,7 @@ namespace StopWatchTest
         public void AssetFileName_SelfContained_IsTheExe()
         {
             Assert.That(
-                ReleaseAssetSelector.AssetFileName("3.1.0", selfContained: true),
+                ReleaseAssetSelector.AssetFileName("3.1.0", selfContained: true, UpdatePlatform.Windows),
                 Is.EqualTo("JiraStopWatch-v3.1.0-self-contained.exe"));
         }
 
@@ -43,7 +43,7 @@ namespace StopWatchTest
         public void AssetFileName_FrameworkDependent_IsTheZip()
         {
             Assert.That(
-                ReleaseAssetSelector.AssetFileName("3.1.0", selfContained: false),
+                ReleaseAssetSelector.AssetFileName("3.1.0", selfContained: false, UpdatePlatform.Windows),
                 Is.EqualTo("JiraStopWatch-v3.1.0-framework-dependent.zip"));
         }
 
@@ -52,8 +52,32 @@ namespace StopWatchTest
         public void ChecksumFileName_AppendsSha256ToTheAssetName()
         {
             Assert.That(
-                ReleaseAssetSelector.ChecksumFileName("3.1.0", selfContained: true),
+                ReleaseAssetSelector.ChecksumFileName("3.1.0", selfContained: true, UpdatePlatform.Windows),
                 Is.EqualTo("JiraStopWatch-v3.1.0-self-contained.exe.sha256"));
+        }
+
+
+        [TestCase("4.0.0", true, "JiraStopWatch-v4.0.0-linux-x64-self-contained.tar.gz")]
+        [TestCase("4.0.0", false, "JiraStopWatch-v4.0.0-linux-x64-framework-dependent.tar.gz")]
+        [TestCase("4.0.0-rc.1", true, "JiraStopWatch-v4.0.0-rc.1-linux-x64-self-contained.tar.gz")]
+        [TestCase("4.0.0-rc.1", false, "JiraStopWatch-v4.0.0-rc.1-linux-x64-framework-dependent.tar.gz")]
+        public void AssetFileName_OnLinux_IsTheLinuxX64Tarball(string version, bool selfContained, string expected)
+        {
+            Assert.That(ReleaseAssetSelector.AssetFileName(version, selfContained, UpdatePlatform.Linux), Is.EqualTo(expected));
+            Assert.That(ReleaseAssetSelector.ChecksumFileName(version, selfContained, UpdatePlatform.Linux), Is.EqualTo(expected + ".sha256"));
+        }
+
+
+        // The Windows names must not change between 3.x and 4.x, so that a
+        // 3.x updater finds the first cross-platform release.
+        [TestCase("4.0.0-rc.1", true, "JiraStopWatch-v4.0.0-rc.1-self-contained.exe")]
+        [TestCase("4.0.0-rc.1", false, "JiraStopWatch-v4.0.0-rc.1-framework-dependent.zip")]
+        [TestCase("4.0.0", true, "JiraStopWatch-v4.0.0-self-contained.exe")]
+        [TestCase("4.0.0", false, "JiraStopWatch-v4.0.0-framework-dependent.zip")]
+        public void AssetFileName_OnWindows_KeepsTheNamesFrom3x(string version, bool selfContained, string expected)
+        {
+            Assert.That(ReleaseAssetSelector.AssetFileName(version, selfContained, UpdatePlatform.Windows), Is.EqualTo(expected));
+            Assert.That(ReleaseAssetSelector.ChecksumFileName(version, selfContained, UpdatePlatform.Windows), Is.EqualTo(expected + ".sha256"));
         }
 
 

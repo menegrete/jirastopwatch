@@ -4,7 +4,10 @@ namespace StopWatchTest
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
+    using System.Runtime.Loader;
     using System.Threading.Tasks;
+    using Avalonia.Controls;
     using Moq;
     using NUnit.Framework;
     using StopWatch.Plugin;
@@ -20,6 +23,10 @@ namespace StopWatchTest
     [TestFixture]
     public class PluginSamplesIntegrationTest
     {
+        // The samples target plain net10.0 (contract 2.0 has no Windows-only needs),
+        // whatever the test project targets.
+        private const string SampleTargetFramework = "net10.0";
+
         private string root;
         private IReadOnlyList<PluginInfo> loaded;
         private List<string> logged;
@@ -130,17 +137,53 @@ namespace StopWatchTest
 
 
         /// <summary>
+        /// Contract 2.0: a plugin's windows derive from the host's Avalonia Window.
+        /// The plugin must not bring its own Avalonia, or its Window would be a
+        /// different type from the one the host (and IPluginHost.MainWindow) uses.
+        /// </summary>
+        [TestCase("HelloWorld", "HelloWorld.HelloWindow")]
+        [TestCase("SplitTime", "SplitTime.SplitDialog")]
+        public void Sample_WindowIsTheHostsAvaloniaWindow(string sample, string windowType)
+        {
+            Assert.That(Plugin(sample).IsLoaded, Is.True);
+
+            Assembly pluginAssembly = AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == sample);
+            Type window = pluginAssembly.GetType(windowType, true);
+
+            Assert.That(window.BaseType, Is.SameAs(typeof(Window)), "the plugin's window derives from the host's Window");
+            Assert.That(typeof(IPluginHost).GetProperty(nameof(IPluginHost.MainWindow)).PropertyType, Is.SameAs(typeof(Window)));
+            Assert.That(AssemblyLoadContext.GetLoadContext(window.BaseType.Assembly), Is.SameAs(AssemblyLoadContext.Default));
+            Assert.That(window.BaseType.Assembly.Location, Does.Not.StartWith(Path.Combine(root, sample)),
+                "Avalonia is not loaded from the plugin folder");
+        }
+
+
+        [TestCase("HelloWorld")]
+        [TestCase("HelloSqlite")]
+        [TestCase("SplitTime")]
+        public void Sample_FolderShipsNoAvalonia(string sample)
+        {
+            string[] shipped = Directory.GetFiles(Path.Combine(root, sample), "*.dll", SearchOption.AllDirectories)
+                .Select(Path.GetFileName)
+                .Where(n => n.StartsWith("Avalonia", StringComparison.OrdinalIgnoreCase) || n.StartsWith("MicroCom", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            Assert.That(shipped, Is.Empty);
+        }
+
+
+        /// <summary>
         /// The sample's build output, found from the test's own
-        /// (…\StopWatchTest\bin\&lt;Config&gt;\&lt;tfm&gt;\) location.
+        /// (…\StopWatchTest\bin\&lt;Config&gt;\&lt;tfm&gt;\) location, and the
+        /// samples' own target framework.
         /// </summary>
         private static string SampleOutput(string sample)
         {
             var tfmDir = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
-            string tfm = tfmDir.Name;
             string config = tfmDir.Parent.Name;
             string sourceDir = tfmDir.Parent.Parent.Parent.Parent.FullName;
 
-            string path = Path.Combine(sourceDir, "Samples", sample, "bin", config, tfm);
+            string path = Path.Combine(sourceDir, "Samples", sample, "bin", config, SampleTargetFramework);
             Assert.That(Directory.Exists(path), Is.True, "Sample output not built: " + path);
             return path;
         }

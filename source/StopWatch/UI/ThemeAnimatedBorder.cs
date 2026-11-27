@@ -21,10 +21,12 @@
  */
 
 using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
+using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace StopWatch
 {
@@ -34,57 +36,53 @@ namespace StopWatch
     /// or pausing, a row becoming the selected one.
     ///
     /// See the ui-theming spec, "Los cambios de estado se presentan con una
-    /// transicion", and the openspec design, D7. Three things that spec asks
-    /// for are why this is code rather than a XAML storyboard:
+    /// transicion". The crossing is a <see cref="BrushTransition"/> on
+    /// Background, which gives the things that spec asks for without a
+    /// storyboard:
     ///
-    /// - The arrival colour has to belong to the theme in effect when the
-    ///   animation ends, not when it started, so it is resolved again on
-    ///   completion.
-    /// - A second state change has to replace the animation in flight rather
-    ///   than queue behind it, so each run hands over the same brush and WPF
-    ///   drops the previous animation on it.
+    /// - The arrival colour belongs to the theme in effect now: the brush is
+    ///   looked up in the theme variant the control is actually showing, and
+    ///   again whenever that variant changes.
+    /// - A second state change replaces the transition in flight rather than
+    ///   queueing behind it (assigning Background restarts the transition from
+    ///   the current value).
     /// - The colour is never the only carrier of the state. Whoever uses this
     ///   puts a glyph or a stripe alongside it; this class only animates.
     ///
-    /// The colours are named by Theme property, not by value, so the palette
-    /// stays the single source of colour.
+    /// The colours are named by palette key (the Theme property names, as in
+    /// <see cref="ThemeBrushes"/>), not by value, so the palette stays the
+    /// single source of colour.
     /// </summary>
     internal class ThemeAnimatedBorder : Border
     {
         #region public members
         /// <summary>Which of the two colours to show.</summary>
-        public static readonly DependencyProperty IsActiveProperty =
-            DependencyProperty.Register(
-                "IsActive", typeof(bool), typeof(ThemeAnimatedBorder),
-                new PropertyMetadata(false, OnStateChanged));
+        public static readonly StyledProperty<bool> IsActiveProperty =
+            AvaloniaProperty.Register<ThemeAnimatedBorder, bool>(nameof(IsActive));
 
-        /// <summary>Name of the <see cref="Theme"/> property to use when active.</summary>
-        public static readonly DependencyProperty ActiveColorProperty =
-            DependencyProperty.Register(
-                "ActiveColor", typeof(string), typeof(ThemeAnimatedBorder),
-                new PropertyMetadata("SurfaceActive", OnStateChanged));
+        /// <summary>Palette key to use when active.</summary>
+        public static readonly StyledProperty<string> ActiveColorProperty =
+            AvaloniaProperty.Register<ThemeAnimatedBorder, string>(nameof(ActiveColor), "SurfaceActive");
 
-        /// <summary>Name of the <see cref="Theme"/> property to use when inactive.</summary>
-        public static readonly DependencyProperty InactiveColorProperty =
-            DependencyProperty.Register(
-                "InactiveColor", typeof(string), typeof(ThemeAnimatedBorder),
-                new PropertyMetadata("Surface", OnStateChanged));
+        /// <summary>Palette key to use when inactive.</summary>
+        public static readonly StyledProperty<string> InactiveColorProperty =
+            AvaloniaProperty.Register<ThemeAnimatedBorder, string>(nameof(InactiveColor), "Surface");
 
         public bool IsActive
         {
-            get { return (bool)GetValue(IsActiveProperty); }
+            get { return GetValue(IsActiveProperty); }
             set { SetValue(IsActiveProperty, value); }
         }
 
         public string ActiveColor
         {
-            get { return (string)GetValue(ActiveColorProperty); }
+            get { return GetValue(ActiveColorProperty); }
             set { SetValue(ActiveColorProperty, value); }
         }
 
         public string InactiveColor
         {
-            get { return (string)GetValue(InactiveColorProperty); }
+            get { return GetValue(InactiveColorProperty); }
             set { SetValue(InactiveColorProperty, value); }
         }
 
@@ -93,20 +91,32 @@ namespace StopWatch
         /// Long enough to read as a transition, short enough not to delay
         /// reading the new state.
         /// </summary>
-        public static readonly Duration TransitionDuration = new Duration(TimeSpan.FromMilliseconds(180));
+        public static readonly TimeSpan TransitionDuration = TimeSpan.FromMilliseconds(180);
         #endregion
 
 
         #region public methods
+        static ThemeAnimatedBorder()
+        {
+            IsActiveProperty.Changed.AddClassHandler<ThemeAnimatedBorder>((border, e) => border.Animate());
+            ActiveColorProperty.Changed.AddClassHandler<ThemeAnimatedBorder>((border, e) => border.Animate());
+            InactiveColorProperty.Changed.AddClassHandler<ThemeAnimatedBorder>((border, e) => border.Animate());
+        }
+
+
         public ThemeAnimatedBorder()
         {
-            // Its own unfrozen brush: a theme brush from the resource
-            // dictionary is frozen and shared, so animating it is neither
-            // allowed nor local to this element.
-            brush = new SolidColorBrush(Target);
-            Background = brush;
+            transitions = new Transitions
+            {
+                new BrushTransition
+                {
+                    Property = BackgroundProperty,
+                    Duration = TransitionDuration,
+                    Easing = new QuadraticEaseOut()
+                }
+            };
 
-            Loaded += ThemeAnimatedBorder_Loaded;
+            ActualThemeVariantChanged += (s, e) => SnapToState();
         }
 
 
@@ -117,77 +127,64 @@ namespace StopWatch
         /// </summary>
         public void SnapToState()
         {
-            brush.BeginAnimation(SolidColorBrush.ColorProperty, null);
-            brush.Color = Target;
+            Transitions = null;
+            Background = Target;
+            Transitions = transitions;
         }
         #endregion
 
 
-        #region private methods
-        private static void OnStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        #region protected methods
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
-            ((ThemeAnimatedBorder)d).Animate();
-        }
+            base.OnAttachedToVisualTree(e);
 
-
-        private void ThemeAnimatedBorder_Loaded(object sender, RoutedEventArgs e)
-        {
             // A row that arrives already selected, or already running, should
             // start at its colour rather than animate into it.
             SnapToState();
         }
 
 
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+        }
+        #endregion
+
+
+        #region private methods
         private void Animate()
         {
-            if (!IsLoaded)
-            {
-                SnapToState();
-                return;
-            }
-
-            var animation = new ColorAnimation
-            {
-                To = Target,
-                Duration = TransitionDuration,
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
-                FillBehavior = FillBehavior.Stop
-            };
-
-            // On completion the animation stops holding the value, so the
-            // colour has to be written for keeps - and it is read from the
-            // theme again here, which is what makes a theme change mid
-            // transition land on the new palette.
-            animation.Completed += (s, e) => brush.Color = Target;
-
-            // Handing the same brush a new animation replaces whatever was
-            // running on it; nothing queues.
-            brush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+            // Attached: the transition installed by SnapToState crosses over
+            // to the new brush, and replaces one that is still running.
+            // Detached: Background just takes the colour, nothing to animate.
+            Background = Target;
         }
 
 
-        /// <summary>The colour the current state calls for, in the active theme.</summary>
-        private Color Target
+        /// <summary>The brush the current state calls for, in the theme being shown.</summary>
+        private IBrush Target
         {
             get { return Resolve(IsActive ? ActiveColor : InactiveColor); }
         }
 
 
-        private static Color Resolve(string themeColorName)
+        private IBrush Resolve(string themeColorName)
         {
-            System.Reflection.PropertyInfo property =
-                typeof(Theme).GetProperty(themeColorName ?? "");
+            if (!string.IsNullOrEmpty(themeColorName)
+                && this.TryFindResource(themeColorName, ActualThemeVariant, out object found)
+                && found is IBrush brush)
+                return brush;
 
-            if (property == null || property.PropertyType != typeof(System.Drawing.Color))
-                return Colors.Transparent;
-
-            return ThemeBrushes.ToMediaColor((System.Drawing.Color)property.GetValue(Theme.Current));
+            // Not published yet (before the application's resources are
+            // installed): the palette itself is the fallback.
+            return ThemeBrushes.Current(themeColorName ?? "");
         }
         #endregion
 
 
         #region private members
-        private readonly SolidColorBrush brush;
+        private readonly Transitions transitions;
         #endregion
     }
 }
