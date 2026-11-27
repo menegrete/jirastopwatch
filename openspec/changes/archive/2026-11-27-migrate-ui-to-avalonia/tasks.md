@@ -62,5 +62,5 @@ La UI se migra primero sobre `net10.0-windows`, para que la app se pueda ejecuta
 - [x] 9.2 Mergear a `rc-avalonia`. Verificar que GitHub publicó `4.0.0-rc.1` marcada como pre-release, con los ocho assets, y que `releases/latest` sigue apuntando a 3.x
 - [x] 9.3 Prueba humana en Windows 11: actualización automática desde 3.16 con suscripción beta, conservación de issues, tiempos, tema y token, bandeja, vista mini, widget de taskbar y plugins 1.x informados como incompatibles
 - [x] 9.4 Prueba humana en Linux Mint 22: instalación desde el `.tar.gz`, token en el llavero, bandeja, vista mini (bordes, posición recordada, siempre encima), worklog, cambio de tema y actualización automática entre dos rc
-- [ ] 9.5 Registrar el resultado de 9.3 y 9.4 (versión probada, quién y cuándo, problemas encontrados) en el PR `rc-avalonia → main`. Corregir por PR a `rc-avalonia` y repetir hasta tener ambas plataformas aprobadas
-- [ ] 9.6 Con la aprobación humana registrada, mergear `rc-avalonia → main` y verificar que se publica `4.0.0` estable con los ocho assets y que una instalación 3.x del canal estable la recibe
+- [x] 9.5 Registrar el resultado de 9.3 y 9.4 (versión probada, quién y cuándo, problemas encontrados) en el PR `rc-avalonia → main`. Corregir por PR a `rc-avalonia` y repetir hasta tener ambas plataformas aprobadas
+- [x] 9.6 Con la aprobación humana registrada, mergear `rc-avalonia → main` y verificar que se publica `4.0.0` estable con los ocho assets y que una instalación 3.x del canal estable la recibe
