@@ -14,37 +14,44 @@ dotnet test StopWatch.sln --settings .runsettings
 Run a single test (NUnit, by fully-qualified name or a filter):
 
 ```
-dotnet test StopWatch.sln --filter "FullyQualifiedName~ScreenPlacementTest.EnsureOnScreen"
+dotnet test StopWatch.sln --filter "FullyQualifiedName~ScreenPlacementTest.A_position_on_a_connected_screen_is_kept"
 ```
 
-Releases are automated (see Changelog and Versioning below) and produce two artifacts; to reproduce either locally:
+Releases are automated (see Changelog and Versioning below) and produce four artifacts (two per OS); to reproduce any locally:
 
 ```
 dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish source/StopWatch/StopWatch.csproj -c Release -r linux-x64 --no-self-contained -p:PublishSingleFile=true
 ```
 
-The first is a self-contained executable (no runtime install needed); the second is the framework-dependent build, which requires the .NET 10 Desktop Runtime on the target machine and is what CI zips up for the framework-dependent release asset.
+The self-contained builds need no runtime install (the SkiaSharp/HarfBuzz native libraries are bundled into the single file, see `StopWatch.csproj`). The framework-dependent builds need the .NET 10 Desktop Runtime on Windows and the .NET 10 Runtime on Linux; CI zips the Windows one and tars the Linux one (`.tar.gz`, executable at mode `0755`) for the release assets. `node scripts/publish-release-artifacts.js <version>` runs all four and writes the release files, `.sha256` included, to `release-artifacts/`; the Linux builds are cross-published from the Windows runner.
 
 `TreatWarningsAsErrors` is on for `StopWatch.csproj` — a warning fails the build, not just `Release`.
 
 ## Architecture
 
-Two UI frameworks in one process: `UseWindowsForms` and `UseWPF` are both `true` on `net10.0-windows`. WinForms stays only for what WPF has no equivalent for — the tray icon (`NotifyIcon`) and screen enumeration (`System.Windows.Forms.Screen`, used by `Helpers/ScreenPlacement.cs`). Everything with a visible window (`MainWindow`, `MiniTimerWindow`, `SettingsWindow`, `WorklogWindow`, `EditTimeWindow`) is WPF. This split is deliberate and permanent — see the OpenSpec design for `migrate-ui-to-wpf` under `openspec/changes/archive/` before trying to remove either framework.
+Windows and Linux (Linux Mint, X11) from one `net10.0` code base, in three projects:
+- `StopWatch.Core` — portable, no UI and no Win32 (CA1416 is an error there, so a Windows-only call can't slip in): `Model/`, `Jira/`, `Settings/`, `Secrets/`, `Update/` (asset selection, checksum, staging) and the pure screen-geometry helpers in `Helpers/`.
+- `StopWatch` — the Avalonia app: every window (`MainWindow`, `MiniTimerWindow`, `SettingsWindow`, `WorklogWindow`, `EditTimeWindow`), the tray icon and the plugin host. It uses X11 on Linux: `Program.cs` calls `UsePlatformDetect()` and deliberately not `UseWayland()`.
+- `StopWatch.Plugin.Abstractions` — the plugin contract, version 2.0 (it references Avalonia; plugins built against 1.x are rejected as incompatible).
 
-**Model/ViewModel layer** (`source/StopWatch/Model/`) is UI-framework-agnostic and unit-tested independently of both WinForms and WPF:
+What differs per OS sits behind an interface, picked at startup: `ISecretStore` for the Jira API token (`WindowsSecretStore` = DPAPI over the old `user.config` blob, `LinuxSecretStore` = libsecret / GNOME Keyring; no plain-text fallback) and `IUpdateInstaller` for applying a staged update on exit (`UpdateApplier`'s `.cmd` helper on Windows, `LinuxUpdateInstaller`'s `sh` helper on Linux). Windows-only, guarded with `OperatingSystem.IsWindows()` / `[SupportedOSPlatform("windows")]`, are the taskbar widget (`Helpers/TaskbarInterop.cs`, `NativeMethods.cs`, `UI/TaskbarWidgetWindow`) and the single-instance "show me" message. Tests that need Win32 carry `[Platform("Win")]`. The rationale for all of this is in the OpenSpec change `migrate-ui-to-avalonia` (under `openspec/changes/archive/` once archived); the earlier WPF + WinForms design no longer applies.
+
+**Model/ViewModel layer** (`source/StopWatch.Core/Model/`) is UI-framework-agnostic and unit-tested independently of any UI:
 - `IssueListViewModel` owns the collection of issue rows and the single-timer rule: starting one timer pauses all others unless `Settings.AllowMultipleTimers` is set (`PauseAllBut`, driven by each row's `TimerStarted` event).
 - `IssueViewModel` is one row: Jira issue data plus its `WatchTimer`.
 - `ActiveTimerViewModel` answers "which issue should a compact display show" without callers walking the row collection themselves. It resolves the active issue (the one running; the last one started if several are; the last one that ran if none are; otherwise the row selected in the main window) and exposes `RunningSources` for anything that needs the full set of running rows. It takes a `Func<IEnumerable<ITimerSource>>` rather than depending on `IssueListViewModel` directly, so it can be unit-tested with fakes.
 - `WatchTimer` is the actual elapsed-time/running-state primitive each row wraps.
 
-**Jira communication** (`source/StopWatch/Jira/` and `Model/IssueJiraService.cs`) goes through `IJiraOperations` → `JiraClient` → `IJiraApiRequester`/`IJiraApiRequestFactory`, built on RestSharp. The indirection exists so tests can substitute `IJiraOperations`/`IJiraApiRequester` with Moq instead of hitting a real Jira instance.
+**Jira communication** (`source/StopWatch.Core/Jira/` and `Model/IssueJiraService.cs`) goes through `IJiraOperations` → `JiraClient` → `IJiraApiRequester`/`IJiraApiRequestFactory`, built on RestSharp. The indirection exists so tests can substitute `IJiraOperations`/`IJiraApiRequester` with Moq instead of hitting a real Jira instance.
 
-**Settings** (`source/StopWatch/Settings/Settings.cs`) is a hand-written wrapper around the generated `Properties.Settings.Default` — add a new setting in `Properties/Settings.settings` (regenerates `Settings.Designer.cs`), then read/write it in `Settings.cs`'s `ReadSettings`/`Save`, following the existing properties. `PersistedIssue` is the separate JSON-serialized blob for the issue list itself, not part of `Properties.Settings`.
+**Settings** (`source/StopWatch.Core/Settings/Settings.cs`) is a hand-written wrapper around the generated `Properties.Settings.Default` — add a new setting in `source/StopWatch.Core/Properties/Settings.settings` (regenerates `Settings.Designer.cs`), then read/write it in `Settings.cs`'s `ReadSettings`/`Save`, following the existing properties. `PersistedIssue` is the separate JSON-serialized blob for the issue list itself, not part of `Properties.Settings`.
 
-**The mini timer view** (`UI/MiniTimerWindow.xaml(.cs)`) is a separate always-on-top WPF window fed entirely by `ActiveTimerViewModel`; `MainWindow` hides itself while it's up. It runs its own 1-second `DispatcherTimer` to refresh the displayed elapsed time — `MainWindow`'s own ticker stays at 30 seconds because it's doing Jira round-trips, and the model itself has no timer of its own (`Refresh()` is called by whoever is displaying it, at whatever rate that display needs). Positioning code deliberately juggles two coordinate systems: `Screen.WorkingArea` is device pixels, WPF's `Left`/`Top`/`Width`/`Height` are device-independent units; `Helpers/ScreenPlacement.cs` holds the screen-geometry math (edge-snapping, clamping a remembered position back onto a currently-connected screen) as pure, DPI-agnostic functions so it's testable without a second monitor.
+**The mini timer view** (`UI/MiniTimerWindow.axaml(.cs)`) is a separate always-on-top Avalonia window fed entirely by `ActiveTimerViewModel`; `MainWindow` hides itself while it's up. It runs its own 1-second `DispatcherTimer` to refresh the displayed elapsed time — `MainWindow`'s own ticker stays at 30 seconds because it's doing Jira round-trips, and the model itself has no timer of its own (`Refresh()` is called by whoever is displaying it, at whatever rate that display needs). Positioning code deliberately juggles two coordinate systems: `Screen.WorkingArea` and `Window.Position` are device pixels, `Width`/`Height` are device-independent units (`Helpers/ScreenAreas.cs` converts); on X11 `Position` updates asynchronously, so never re-read it right after setting it. `StopWatch.Core/Helpers/ScreenPlacement.cs` holds the screen-geometry math (edge-snapping, clamping a remembered position back onto a currently-connected screen) as pure, DPI-agnostic functions so it's testable without a second monitor.
 
-**Theming** (`UI/Theme.cs`, `ThemeBrushes.cs`) is a semantic palette (`Background`, `Surface`, `Text`, `TimerRunning`, etc.) that both the WinForms tray icon and the WPF windows read from, so there's one source of truth for colors across both frameworks.
+**Theming** (`UI/Theme.cs`, `ThemeBrushes.cs`) is a semantic palette (`Background`, `Surface`, `Text`, `TimerRunning`, etc.) that the tray icon and every window read from, so there's one source of truth for colors.
 
 ## Planning workflow
 
@@ -54,9 +61,9 @@ Before starting a new change (`openspec new change ...`), check the current bran
 
 ## Changelog and versioning
 
-Both are automated by `semantic-release` (`release.config.js`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.
+Both are automated by `semantic-release` (`release.config.js`), triggered by the `release` job in `.github/workflows/build.yml` on every push to `main` that touches `source/StopWatch/**`, `source/StopWatch.Core/**` or `source/StopWatch.Plugin.Abstractions/**` and passes tests. Do not hand-edit `CHANGELOG.md` or bump the version attributes in `source/StopWatch/Properties/AssemblyInfo.cs` — both are machine-written by the release job and committed back to `main`.
 
-Pushes to an `rc*` branch publish `X.Y.Z-rc.N` GitHub pre-releases through the same job (`releases/latest` ignores them, and the auto-updater only offers them to users who turn on "Subscribe to beta releases" in Settings; `Update/SemanticVersion.cs` orders versions per semver, prerelease suffix included). Keep only one `rc*` branch active at a time, since the `-rc.N` counter is shared. `release.config.js` only lists the `changelog` and `git` plugins on `main`, so nothing is committed back to an `rc*` branch (avoiding version/changelog conflicts when merging it to `main`); and `scripts/set-assembly-version.js` writes the `-rc.N` suffix only into `AssemblyInformationalVersion`, since `AssemblyVersion`/`AssemblyFileVersion` must be numeric.
+Pushes to an `rc*` branch publish `X.Y.Z-rc.N` GitHub pre-releases through the same job (`releases/latest` ignores them, and the auto-updater only offers them to users who turn on "Subscribe to beta releases" in Settings; `StopWatch.Core/Update/SemanticVersion.cs` orders versions per semver, prerelease suffix included). Keep only one `rc*` branch active at a time, since the `-rc.N` counter is shared. `release.config.js` only lists the `changelog` and `git` plugins on `main`, so nothing is committed back to an `rc*` branch (avoiding version/changelog conflicts when merging it to `main`); and `scripts/set-assembly-version.js` writes the `-rc.N` suffix only into `AssemblyInformationalVersion`, since `AssemblyVersion`/`AssemblyFileVersion` must be numeric.
 
 What this means for making changes: write commit messages as Conventional Commits (`feat:`, `fix:`, `BREAKING CHANGE:` footer, etc.) — that's the sole input `semantic-release` uses to decide whether a release happens, what the next version is, and what the generated `CHANGELOG.md` entry (in Keep a Changelog categories, via `release.config.js`'s `release-notes-generator` config) says. `chore:`/`docs:`/`refactor:`/etc. commits don't trigger a release. See the `automated-releases` capability spec (`openspec/changes/add-automated-releases/specs/` until archived, then `openspec/specs/`) for the full design.
 

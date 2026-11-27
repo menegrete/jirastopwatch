@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="HelloWorld.HelloWindow"
+        x:ClassModifier="internal"
+        Title="Hello from a plugin"
+        Width="360" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <!-- The window uses the host's Avalonia application, so its theme
+         resources apply: Window gets Background and Foreground from the host's
+         palette, and {DynamicResource ...} keys such as Text or Accent follow
+         the application's theme. -->
+    <StackPanel Margin="16">
+        <TextBlock Text="Hello, World!" FontSize="18" />
+        <TextBlock x:Name="lblInfo" Margin="0,8,0,0" TextWrapping="Wrap" />
+        <Button x:Name="btnClose"
+                Content="Close"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right"
+                IsDefault="True"
+                IsCancel="True" />
+    </StackPanel>
+</Window>

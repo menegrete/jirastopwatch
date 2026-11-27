@@ -7,7 +7,7 @@ on:
   push:
     branches: [main, 'rc*']
   pull_request:
-    branches: [main]
+    branches: [main, 'rc*']
     types:
       - opened
       - edited
@@ -26,11 +26,18 @@ concurrency:
 jobs:
   build:
     name: "Build"
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     # Debug failures never block anything downstream; Release failures must
     # fail this job so the release job's `needs: [build]` actually gates on
     # tests passing, instead of continue-on-error masking a red Release run.
+    # The release job waits for every matrix leg, so a Release failure on
+    # either OS (e.g. a test that only fails on Linux) blocks the release.
     continue-on-error: ${{ matrix.configuration == 'Debug' }}
+
+    # The steps are written in PowerShell syntax, which ubuntu-latest also has.
+    defaults:
+      run:
+        shell: pwsh
 
     strategy:
       fail-fast: false
@@ -40,6 +47,9 @@ jobs:
           - Release
         dotnet-version:
           - 10.0.x
+        os:
+          - windows-latest
+          - ubuntu-latest
 
     env:
       CONFIGURATION: '${{ matrix.configuration }}'
@@ -133,6 +143,8 @@ jobs:
           filters: |
             app:
               - 'source/StopWatch/**'
+              - 'source/StopWatch.Core/**'
+              - 'source/StopWatch.Plugin.Abstractions/**'
 
       - if: steps.changed-files.outputs.app == 'true'
         id: setup-dotnet

@@ -24,13 +24,6 @@ using System.Drawing;
 
 namespace StopWatch
 {
-    public enum ThemeMode
-    {
-        Dark = 0,
-        Light = 1
-    }
-
-
     /// <summary>
     /// Semantic colour palette. Nothing in the UI should reference a literal
     /// colour or a SystemColors member - everything goes through the active theme,
@@ -142,7 +135,7 @@ namespace StopWatch
 
 
         /// <summary>
-        /// The theme every form and control paints itself with. Set once at
+        /// The theme every window and control paints itself with. Set once at
         /// startup from settings, and again when the user changes the setting.
         /// </summary>
         public static Theme Current { get; set; } = Dark;
@@ -152,13 +145,61 @@ namespace StopWatch
         {
             return mode == ThemeMode.Light ? Light : Dark;
         }
+
+
+        /// <summary>
+        /// The palette entries by name, which are also the resource keys
+        /// ThemeBrushes publishes.
+        /// </summary>
+        public static readonly string[] ColorNames =
+        {
+            "Background", "Surface", "SurfaceActive", "SurfaceDisabled", "Border",
+            "Text", "TextMuted", "Accent", "AccentText", "Link",
+            "Success", "Danger", "DangerSurface", "TimerRunning",
+            "StatusToDo", "StatusInProgress", "StatusDone",
+            "ButtonHover", "ButtonPressed"
+        };
+        #endregion
+
+
+        #region public methods
+        /// <summary>A palette entry by its property name; Transparent for an unknown name.</summary>
+        public Color Get(string name)
+        {
+            switch (name)
+            {
+                case "Background": return Background;
+                case "Surface": return Surface;
+                case "SurfaceActive": return SurfaceActive;
+                case "SurfaceDisabled": return SurfaceDisabled;
+                case "Border": return Border;
+                case "Text": return Text;
+                case "TextMuted": return TextMuted;
+                case "Accent": return Accent;
+                case "AccentText": return AccentText;
+                case "Link": return Link;
+                case "Success": return Success;
+                case "Danger": return Danger;
+                case "DangerSurface": return DangerSurface;
+                case "TimerRunning": return TimerRunning;
+                case "StatusToDo": return StatusToDo;
+                case "StatusInProgress": return StatusInProgress;
+                case "StatusDone": return StatusDone;
+                case "ButtonHover": return ButtonHover;
+                case "ButtonPressed": return ButtonPressed;
+                default: return Color.Transparent;
+            }
+        }
         #endregion
 
 
         #region private methods
         private static Color ColorFrom(string hex)
         {
-            return ColorTranslator.FromHtml(hex);
+            // System.Drawing.Common's ColorTranslator is not available without
+            // WinForms, and the palette only ever uses #RRGGBB.
+            int rgb = int.Parse(hex.TrimStart('#'), System.Globalization.NumberStyles.HexNumber);
+            return Color.FromArgb(0xFF, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
         }
         #endregion
     }

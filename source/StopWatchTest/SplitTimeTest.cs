@@ -67,11 +67,11 @@ namespace StopWatchTest
             public int LastTotal;
             public Func<int, SplitPlan> Plan;
 
-            public SplitPlan Ask(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes)
+            public Task<SplitPlan> AskAsync(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes)
             {
                 Asked++;
                 LastTotal = totalMinutes;
-                return Plan?.Invoke(totalMinutes);
+                return Task.FromResult(Plan?.Invoke(totalMinutes));
             }
         }
 

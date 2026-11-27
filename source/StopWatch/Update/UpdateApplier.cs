@@ -167,7 +167,7 @@ namespace StopWatch.Update
         }
 
 
-        private static bool IsWritable(string dir)
+        internal static bool IsWritable(string dir)
         {
             try
             {

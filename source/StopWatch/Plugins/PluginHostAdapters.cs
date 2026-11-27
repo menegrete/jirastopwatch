@@ -4,8 +4,8 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Threading;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using StopWatch.Logging;
 using StopWatch.Plugin;
 
@@ -43,7 +43,7 @@ namespace StopWatch.Plugins
 
         public Dispatcher Dispatcher
         {
-            get { return mainWindow.Dispatcher; }
+            get { return Dispatcher.UIThread; }
         }
 
         public string DataDirectory

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>StopWatchTest</RootNamespace>
     <AssemblyName>StopWatchTest</AssemblyName>
     <IsPackable>false</IsPackable>
@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StopWatch\StopWatch.csproj" />
+    <ProjectReference Include="..\StopWatch.Core\StopWatch.Core.csproj" />
     <ProjectReference Include="..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj" />
 
     <!-- Built first so the plugin integration test can load their output;

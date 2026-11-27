@@ -27,6 +27,7 @@ namespace StopWatchTest
 
 
     [TestFixture]
+    [Platform("Win")]
     public class UpdateApplierTest
     {
         // Regression test: AppContext.BaseDirectory (what MainWindow passes

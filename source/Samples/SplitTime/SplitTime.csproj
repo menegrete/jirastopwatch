@@ -5,8 +5,7 @@
        %LocalAppData%\StopWatch\plugins\SplitTime\ (see docs/plugins.md).
        Not shipped with the application. -->
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>SplitTime</RootNamespace>
     <AssemblyName>SplitTime</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -21,6 +20,14 @@
     <ProjectReference Include="..\..\StopWatch.Plugin.Abstractions\StopWatch.Plugin.Abstractions.csproj">
       <Private>false</Private>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The host's Avalonia is the one used at runtime: ExcludeAssets="runtime"
+         keeps the plugin folder free of a second copy (a second copy would
+         make Window a different type from the host's). In a plugin repository
+         this is the same reference, with the host's Avalonia version. -->
+    <PackageReference Include="Avalonia" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>

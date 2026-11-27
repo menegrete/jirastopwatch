@@ -88,6 +88,10 @@ plugins.push([
       { path: "release-artifacts/JiraStopWatch-v*-self-contained.exe.sha256", label: "JiraStopWatch-v${nextRelease.version}-self-contained.exe.sha256" },
       { path: "release-artifacts/JiraStopWatch-v*-framework-dependent.zip", label: "JiraStopWatch-v${nextRelease.version}-framework-dependent.zip" },
       { path: "release-artifacts/JiraStopWatch-v*-framework-dependent.zip.sha256", label: "JiraStopWatch-v${nextRelease.version}-framework-dependent.zip.sha256" },
+      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-self-contained.tar.gz", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-self-contained.tar.gz" },
+      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-self-contained.tar.gz.sha256", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-self-contained.tar.gz.sha256" },
+      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-framework-dependent.tar.gz", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-framework-dependent.tar.gz" },
+      { path: "release-artifacts/JiraStopWatch-v*-linux-x64-framework-dependent.tar.gz.sha256", label: "JiraStopWatch-v${nextRelease.version}-linux-x64-framework-dependent.tar.gz.sha256" },
     ],
   },
 ]);

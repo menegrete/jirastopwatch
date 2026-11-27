@@ -22,26 +22,21 @@
 
 using System;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
+using Avalonia.Controls;
 
 namespace StopWatch
 {
     /// <summary>
     /// The one Win32 message the application still needs: the broadcast a
     /// second instance sends so that the one already running comes to the
-    /// front. App.OnStartup posts it; the main window picks it off its own
-    /// handle with a hook.
+    /// front. App posts it; the main window picks it off its own handle with
+    /// a hook (Avalonia.Win32.Win32Properties.AddWndProcHookCallback).
     ///
-    /// What used to be here besides this was a block of dark-mode interop -
-    /// DwmSetWindowAttribute, SetWindowTheme, and SetPreferredAppMode reached
-    /// through uxtheme by ordinal because it has no exported name. That block
-    /// existed to make WinForms CONTROLS respect a dark palette, and with the
-    /// UI in WPF none of it is needed for that. DwmSetWindowAttribute came
-    /// back on its own, though: it is what the OS actually reads to decide
-    /// whether a window's own title bar (which WPF does not draw or theme at
-    /// all - it is non-client area, owned by DWM) is light or dark, and
-    /// nothing about that changed by moving the client area to WPF.
+    /// DwmSetWindowAttribute is what the OS reads to decide whether a
+    /// window's own title bar (non-client area, owned by DWM) is light or
+    /// dark; Avalonia does not follow the app's theme variant for it on its
+    /// own. Every member here is Windows-only: callers guard with
+    /// OperatingSystem.IsWindows().
     /// </summary>
     class NativeMethods
     {
@@ -58,13 +53,13 @@ namespace StopWatch
 
         /// <summary>
         /// Tells DWM whether this window's own title bar should be dark or
-        /// light. A no-op before the window's handle exists (i.e. before
-        /// SourceInitialized) - callers made before then are expected to rely
-        /// on a later call, not on this one retrying.
+        /// light. A no-op before the window's handle exists (i.e. before the
+        /// window is opened) - callers are expected to call it again from the
+        /// window's Opened event, not to rely on this retrying.
         /// </summary>
         public static void SetTitleBarDarkMode(Window window, bool dark)
         {
-            IntPtr hwnd = new WindowInteropHelper(window).Handle;
+            IntPtr hwnd = window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
             if (hwnd == IntPtr.Zero)
                 return;
 
@@ -77,13 +72,5 @@ namespace StopWatch
 
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
-    }
-
-    public enum EstimateUpdateMethods
-    {
-        Auto,
-        Leave,
-        SetTo,
-        ManualDecrease
     }
 }

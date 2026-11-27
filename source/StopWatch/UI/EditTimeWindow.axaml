@@ -1,0 +1,33 @@
+<Window x:Class="StopWatch.EditTimeWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="Edit Timer"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        FontSize="12">
+
+    <StackPanel Margin="16" Width="240">
+        <TextBlock Text="Edit timer" FontWeight="SemiBold" />
+
+        <TextBox x:Name="tbTime"
+                 Margin="0,8,0,0"
+                 TextAlignment="Right" />
+
+        <TextBlock Margin="0,6,0,0"
+                   Classes="muted"
+                   TextWrapping="Wrap"
+                   Text="Supported formats:&#10;2h 15m, 2.25h and 2:15" />
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,16,0,0">
+            <Button Content="OK" IsDefault="True" Click="btnOk_Click" />
+            <Button Content="Cancel" IsCancel="True" Click="btnCancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2023 Y. Meyer-Norwood
  * Copyright 2020 Dan Tulloh
  * Copyright 2016 Carsten Gehling
@@ -20,14 +20,16 @@
  * limitations under the License.
  */
 
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 
 namespace StopWatch
 {
     /// <summary>
-    /// What windows used to get from System.Windows.Forms.Application: opening
-    /// a URL in the browser.
+    /// What the windows used to get from System.Windows.Forms.Application:
+    /// the version, the per-user data folder and opening a URL in the browser.
     /// </summary>
     internal static class AppInfo
     {
@@ -55,6 +57,29 @@ namespace StopWatch
 #else
             false;
 #endif
+
+        /// <summary>
+        /// The per-user folder for the log file: %AppData%\company\product\version,
+        /// created if missing. Composed by hand with the same rules as
+        /// System.Windows.Forms.Application.UserAppDataPath (empty parts are
+        /// skipped), so an existing user's log stays where they know it.
+        /// </summary>
+        public static string UserDataPath
+        {
+            get
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                string company = assembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company ?? "";
+                string product = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
+
+                string path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    company, product, Version);
+
+                Directory.CreateDirectory(path);
+                return path;
+            }
+        }
 
         /// <summary>
         /// Opens a URL in the user's browser. UseShellExecute has to be set

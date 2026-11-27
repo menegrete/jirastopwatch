@@ -1,0 +1,637 @@
+<Window x:Class="StopWatch.MainWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:StopWatch"
+        x:ClassModifier="internal"
+        Title="Jira StopWatch"
+        Icon="avares://StopWatch/stopwatchicon.ico"
+        MinWidth="620"
+        SizeToContent="Height"
+        CanResize="True"
+        UseLayoutRounding="True"
+        FontSize="12">
+
+    <!--
+        The height is derived, not chosen: SizeToContent="Height" makes the
+        window as tall as the rows need, which is why a row is free to be one or
+        two lines tall. CanResize stays true so the user can drag the width; a
+        drag on the bottom edge is undone (see MainWindow.axaml.cs), which is
+        the issue-list spec's "el alto no cambia".
+
+        MaxHeight is set from the working area in code, and the list sits in a
+        ScrollViewer so that a list taller than the screen can still be reached.
+    -->
+
+    <Window.Resources>
+
+        <!-- ==================== the row, twice ==================== -->
+
+        <!--
+            Compact and spacious are two templates rather than one template
+            scaled by a factor. They differ in padding and type size today, and
+            the split leaves room for them to differ in more than that. See the
+            openspec design, D6. MainWindow picks between them by assigning the
+            list's ItemTemplate (see ApplyDensity): change the density and
+            every row is re-templated, timers and order untouched.
+
+            Everything below binds to IssueViewModel. The height of each row is
+            whatever its own content needs: the summary wraps to a second line
+            when the width no longer fits it, and the row grows with it.
+
+            WPF's template triggers are bindings here: the hover-only buttons
+            are visible while the pointer is over the row (#row.IsPointerOver)
+            AND their own condition holds (resolved issue, has a parent, not
+            first, not last).
+        -->
+
+        <!-- Compact: what the WinForms window looked like. -->
+        <DataTemplate x:Key="IssueRowCompact">
+            <local:ThemeAnimatedBorder x:Name="row"
+                                       IsActive="{Binding IsCurrent}"
+                                       ActiveColor="SurfaceActive"
+                                       InactiveColor="Surface"
+                                       Padding="8,2"
+                                       PointerReleased="Row_PointerReleased">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="109" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="0" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Selection, said again without colour: the transition is
+                         never the only carrier of the state. -->
+                    <Border Grid.Column="0"
+                            Width="3"
+                            Margin="0,1,5,1"
+                            CornerRadius="2"
+                            Background="{DynamicResource Accent}"
+                            IsVisible="{Binding IsCurrent}" />
+
+                    <!-- The Paste of the field's own context menu is
+                         intercepted (PastingFromClipboard), so that it parses
+                         a URL to a key like Ctrl+V does (see
+                         MainWindow_PreviewKeyDown). -->
+                    <TextBox Grid.Column="1"
+                             FontSize="12"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
+                             LostFocus="tbIssueKey_LostFocus"
+                             KeyDown="tbIssueKey_KeyDown"
+                             GotFocus="Row_Selected"
+                             PastingFromClipboard="tbIssueKey_PastingFromClipboard" />
+
+                    <!-- Copy the parent's key. Overlaid on the key field, to
+                         the left of the issue key's own copy icon below. Only
+                         ever shown, while the pointer is over the row, for a
+                         subtask with a parent key - see the parent-issue-summary
+                         spec, "Sin interaccion sobre el parent mas alla de
+                         copiar su key". -->
+                    <Button Grid.Column="1"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,22,0"
+                            ToolTip.Tip="Copy parent issue key"
+                            Click="btnCopyParentKey_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="HasParent" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <!-- Copy the issue key. Overlaid on the key field itself,
+                         rather than a column of its own, so it costs no width
+                         and only shows up while it might be wanted - and only
+                         once there is a resolved issue to copy (same rule as
+                         opening in the browser). -->
+                    <Button Grid.Column="1"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            ToolTip.Tip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="CanOpen" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <Button Grid.Column="2"
+                            Classes="glyph"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanOpen}"
+                            ToolTip.Tip="Open issue in browser (CTRL-O)"
+                            Click="btnOpen_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+
+                    <!-- Jira status category; name in the tooltip. -->
+                    <TemplatedControl Grid.Column="3"
+                                      Theme="{StaticResource StatusIcon}"
+                                      Margin="6,0,0,0" />
+
+                    <!-- Up to two lines, then trimmed at the end of the second.
+                         The row is as tall as this ends up being. -->
+                    <TextBlock Grid.Column="4"
+                               Text="{Binding Summary}"
+                               ToolTip.Tip="{Binding Summary}"
+                               Margin="8,0"
+                               FontSize="12"
+                               LineHeight="15"
+                               MaxLines="2"
+                               MaxHeight="30"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+
+                    <!-- Move up/down. Overlaid on the summary column's right
+                         edge - which has slack to spare, unlike the Auto
+                         columns either side of it - rather than a column of
+                         its own, just left of start/stop, side by side (same
+                         width/margin pattern as the copy buttons above).
+                         Shown only on hover, and only when there is somewhere
+                         to move to. -->
+                    <Button Grid.Column="4"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,22,0"
+                            ToolTip.Tip="Move issue up (CTRL-SHIFT-UP)"
+                            Click="btnMoveUp_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="!IsFirst" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-fill" Width="9" Height="4.5" Data="{StaticResource GlyphTriangleUp}" />
+                    </Button>
+
+                    <Button Grid.Column="4"
+                            Classes="glyph"
+                            Width="18" Height="18"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            ToolTip.Tip="Move issue down (CTRL-SHIFT-DOWN)"
+                            Click="btnMoveDown_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="!IsLast" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-fill" Width="9" Height="4.5" Data="{StaticResource GlyphTriangleDown}" />
+                    </Button>
+
+                    <Button Grid.Column="5"
+                            Classes="glyph"
+                            Width="24" Height="24"
+                            Click="btnStartStop_Click">
+                        <ToolTip.Tip>
+                            <MultiBinding Converter="{StaticResource StartStopTooltip}">
+                                <Binding Path="IsRunning" />
+                                <Binding Path="$parent[Window].DataContext.AtConcurrencyLimit" />
+                            </MultiBinding>
+                        </ToolTip.Tip>
+                        <Panel>
+                            <!-- Running or not, said with a shape as well as
+                                 with the colour of the field beside it. -->
+                            <Path Classes="glyph-fill"
+                                  Data="{StaticResource GlyphPause}"
+                                  IsVisible="{Binding IsRunning}" />
+                            <Path Classes="glyph-fill"
+                                  Data="{StaticResource GlyphPlay}"
+                                  IsVisible="{Binding !IsRunning}" />
+                        </Panel>
+                    </Button>
+
+                    <local:ThemeAnimatedBorder Grid.Column="6"
+                                               IsActive="{Binding IsRunning}"
+                                               ActiveColor="TimerRunning"
+                                               InactiveColor="SurfaceDisabled"
+                                               BorderBrush="{DynamicResource Border}"
+                                               BorderThickness="1"
+                                               CornerRadius="3"
+                                               Width="100"
+                                               Padding="4,2"
+                                               ToolTip.Tip="Double-click to edit the time (CTRL-E)"
+                                               PointerReleased="Row_PointerReleased"
+                                               DoubleTapped="Time_DoubleTapped">
+                        <TextBlock Text="{Binding TimeElapsedText}"
+                                   FontSize="12"
+                                   FontFamily="Consolas, Courier New, monospace"
+                                   TextAlignment="Right" />
+                    </local:ThemeAnimatedBorder>
+
+                    <Button Grid.Column="7"
+                            Classes="glyph"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanPost}"
+                            ToolTip.Tip="Submit worklog to Jira and reset timer (CTRL-L)"
+                            Click="btnPost_Click">
+                        <Panel>
+                            <Path Classes="glyph-stroke" Data="{StaticResource GlyphPost}" />
+                            <!-- A comment is waiting to go with the worklog. -->
+                            <Ellipse Width="4" Height="4"
+                                     Fill="{DynamicResource Success}"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     IsVisible="{Binding HasComment}" />
+                        </Panel>
+                    </Button>
+
+                    <Button Grid.Column="8"
+                            Classes="glyph"
+                            Width="24" Height="24"
+                            IsEnabled="{Binding CanReset}"
+                            ToolTip.Tip="Reset timer (CTRL-R)"
+                            Click="btnReset_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphReset}" />
+                    </Button>
+
+                    <Button Grid.Column="9"
+                            Classes="glyph"
+                            Width="24" Height="24"
+                            ToolTip.Tip="Remove issue row (CTRL-DEL)"
+                            Click="btnRemove_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphRemove}" />
+                    </Button>
+                </Grid>
+            </local:ThemeAnimatedBorder>
+        </DataTemplate>
+
+        <!-- Spacious: the same row, given room to breathe. -->
+        <DataTemplate x:Key="IssueRowSpacious">
+            <local:ThemeAnimatedBorder x:Name="row"
+                                       IsActive="{Binding IsCurrent}"
+                                       ActiveColor="SurfaceActive"
+                                       InactiveColor="Surface"
+                                       Padding="8,6"
+                                       PointerReleased="Row_PointerReleased">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="123" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="0" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Selection, said again without colour: the transition is
+                         never the only carrier of the state. -->
+                    <Border Grid.Column="0"
+                            Width="3"
+                            Margin="0,1,5,1"
+                            CornerRadius="2"
+                            Background="{DynamicResource Accent}"
+                            IsVisible="{Binding IsCurrent}" />
+
+                    <!-- See IssueRowCompact for the Paste interception. -->
+                    <TextBox Grid.Column="1"
+                             FontSize="13"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding IssueKey, UpdateSourceTrigger=LostFocus}"
+                             LostFocus="tbIssueKey_LostFocus"
+                             KeyDown="tbIssueKey_KeyDown"
+                             GotFocus="Row_Selected"
+                             PastingFromClipboard="tbIssueKey_PastingFromClipboard" />
+
+                    <!-- Copy the parent's key; see IssueRowCompact. -->
+                    <Button Grid.Column="1"
+                            Classes="glyph"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,24,0"
+                            ToolTip.Tip="Copy parent issue key"
+                            Click="btnCopyParentKey_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="HasParent" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <!-- Copy the issue key; see IssueRowCompact. -->
+                    <Button Grid.Column="1"
+                            Classes="glyph"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            ToolTip.Tip="Copy issue key"
+                            Click="btnCopyKey_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="CanOpen" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphCopy}" />
+                    </Button>
+
+                    <Button Grid.Column="2"
+                            Classes="glyph"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanOpen}"
+                            ToolTip.Tip="Open issue in browser (CTRL-O)"
+                            Click="btnOpen_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphOpenBrowser}" />
+                    </Button>
+
+                    <!-- Jira status category; name in the tooltip. -->
+                    <TemplatedControl Grid.Column="3"
+                                      Theme="{StaticResource StatusIcon}"
+                                      Margin="6,0,0,0" />
+
+                    <!-- Up to two lines, then trimmed at the end of the second.
+                         The row is as tall as this ends up being. -->
+                    <TextBlock Grid.Column="4"
+                               Text="{Binding Summary}"
+                               ToolTip.Tip="{Binding Summary}"
+                               Margin="8,0"
+                               FontSize="13"
+                               LineHeight="18"
+                               MaxLines="2"
+                               MaxHeight="36"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+
+                    <!-- Move up/down; see IssueRowCompact (20px icon here,
+                         24px-then-2px margin). -->
+                    <Button Grid.Column="4"
+                            Classes="glyph"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,24,0"
+                            ToolTip.Tip="Move issue up (CTRL-SHIFT-UP)"
+                            Click="btnMoveUp_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="!IsFirst" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-fill" Width="10" Height="5" Data="{StaticResource GlyphTriangleUp}" />
+                    </Button>
+
+                    <Button Grid.Column="4"
+                            Classes="glyph"
+                            Width="20" Height="20"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,2,0"
+                            ToolTip.Tip="Move issue down (CTRL-SHIFT-DOWN)"
+                            Click="btnMoveDown_Click">
+                        <Button.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="#row.IsPointerOver" />
+                                <Binding Path="!IsLast" />
+                            </MultiBinding>
+                        </Button.IsVisible>
+                        <Path Classes="glyph-fill" Width="10" Height="5" Data="{StaticResource GlyphTriangleDown}" />
+                    </Button>
+
+                    <Button Grid.Column="5"
+                            Classes="glyph"
+                            Width="28" Height="28"
+                            Click="btnStartStop_Click">
+                        <ToolTip.Tip>
+                            <MultiBinding Converter="{StaticResource StartStopTooltip}">
+                                <Binding Path="IsRunning" />
+                                <Binding Path="$parent[Window].DataContext.AtConcurrencyLimit" />
+                            </MultiBinding>
+                        </ToolTip.Tip>
+                        <Panel>
+                            <!-- Running or not, said with a shape as well as
+                                 with the colour of the field beside it. -->
+                            <Path Classes="glyph-fill"
+                                  Data="{StaticResource GlyphPause}"
+                                  IsVisible="{Binding IsRunning}" />
+                            <Path Classes="glyph-fill"
+                                  Data="{StaticResource GlyphPlay}"
+                                  IsVisible="{Binding !IsRunning}" />
+                        </Panel>
+                    </Button>
+
+                    <local:ThemeAnimatedBorder Grid.Column="6"
+                                               IsActive="{Binding IsRunning}"
+                                               ActiveColor="TimerRunning"
+                                               InactiveColor="SurfaceDisabled"
+                                               BorderBrush="{DynamicResource Border}"
+                                               BorderThickness="1"
+                                               CornerRadius="3"
+                                               Width="112"
+                                               Padding="4,2"
+                                               ToolTip.Tip="Double-click to edit the time (CTRL-E)"
+                                               PointerReleased="Row_PointerReleased"
+                                               DoubleTapped="Time_DoubleTapped">
+                        <TextBlock Text="{Binding TimeElapsedText}"
+                                   FontSize="13"
+                                   FontFamily="Consolas, Courier New, monospace"
+                                   TextAlignment="Right" />
+                    </local:ThemeAnimatedBorder>
+
+                    <Button Grid.Column="7"
+                            Classes="glyph"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanPost}"
+                            ToolTip.Tip="Submit worklog to Jira and reset timer (CTRL-L)"
+                            Click="btnPost_Click">
+                        <Panel>
+                            <Path Classes="glyph-stroke" Data="{StaticResource GlyphPost}" />
+                            <!-- A comment is waiting to go with the worklog. -->
+                            <Ellipse Width="4" Height="4"
+                                     Fill="{DynamicResource Success}"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     IsVisible="{Binding HasComment}" />
+                        </Panel>
+                    </Button>
+
+                    <Button Grid.Column="8"
+                            Classes="glyph"
+                            Width="28" Height="28"
+                            IsEnabled="{Binding CanReset}"
+                            ToolTip.Tip="Reset timer (CTRL-R)"
+                            Click="btnReset_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphReset}" />
+                    </Button>
+
+                    <Button Grid.Column="9"
+                            Classes="glyph"
+                            Width="28" Height="28"
+                            ToolTip.Tip="Remove issue row (CTRL-DEL)"
+                            Click="btnRemove_Click">
+                        <Path Classes="glyph-stroke" Data="{StaticResource GlyphRemove}" />
+                    </Button>
+                </Grid>
+            </local:ThemeAnimatedBorder>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- ==================== the list ==================== -->
+
+        <ScrollViewer Grid.Row="0"
+                      x:Name="issueScroller"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False">
+            <ItemsControl x:Name="issueList"
+                          ItemsSource="{Binding Issues}" />
+        </ScrollViewer>
+
+        <!-- ==================== status bar ==================== -->
+
+        <!--
+            One line: add / mini view / settings / connection status, then
+            whatever room is left, then the total. DockPanel with
+            LastChildFill="False" - every child docks to a side and eats its
+            own strip, so the gap between the last Left child and the first
+            Right child is the free space, with no filler element needed.
+
+            The total's right edge is approximated to the time column's with a
+            trailing spacer the width of the row's own trailing buttons.
+        -->
+        <StackPanel Grid.Row="1">
+            <Border Classes="divider" Margin="0" />
+
+            <DockPanel Margin="8,4" LastChildFill="False">
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnAddIssue"
+                        Classes="glyph"
+                        ToolTip.Tip="Add another issue row (CTRL-N)"
+                        Click="btnAddIssue_Click">
+                    <Path Classes="glyph-stroke" Data="{StaticResource GlyphAdd}" />
+                </Button>
+
+                <!-- Hidden when minimizing already goes to the taskbar widget;
+                     see MainWindow.UpdateMiniViewButtonVisibility. -->
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnMiniView"
+                        Classes="glyph"
+                        ToolTip.Tip="Shrink to the floating mini timer"
+                        Click="btnMiniView_Click">
+                    <Path Classes="glyph-stroke" Data="{StaticResource GlyphMiniView}" />
+                </Button>
+
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnSettings"
+                        Classes="glyph"
+                        ToolTip.Tip="Settings"
+                        Click="btnSettings_Click">
+                    <Panel Width="11" Height="11">
+                        <Path Classes="glyph-stroke"
+                              Data="{StaticResource GlyphSettingsBars}"
+                              HorizontalAlignment="Stretch" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource Text}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 Margin="2.5,0.5,0,0" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource Text}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                 Margin="5,0,0,0.5" />
+                    </Panel>
+                </Button>
+
+                <!-- Only shown when there is a plugins folder with something
+                     in it; see MainWindow.SetPlugins. -->
+                <Button DockPanel.Dock="Left"
+                        x:Name="btnPlugins"
+                        Classes="glyph"
+                        ToolTip.Tip="Plugins"
+                        IsVisible="False"
+                        Click="btnPlugins_Click">
+                    <TextBlock Text="&#x29C9;"
+                               FontSize="14" />
+                </Button>
+
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblConnectionStatus"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           PointerReleased="lblConnectionStatus_Click" />
+
+                <!-- Shown once an auto-update has been downloaded and
+                     verified; stays hidden otherwise. See MainWindow's
+                     CheckForUpdatesAsync. -->
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblUpdateReady"
+                           Classes="danger-bold"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           IsVisible="False" />
+
+                <!-- The one notice that is not a message box: a plugin failed
+                     before writing anything and the standard load ran. Click
+                     dismisses it; see MainWindow.ShowTimeLoadNotice. -->
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblTimeLoadNotice"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           MaxWidth="260"
+                           TextTrimming="CharacterEllipsis"
+                           Cursor="Hand"
+                           IsVisible="False"
+                           PointerReleased="lblTimeLoadNotice_Click" />
+
+                <TextBlock DockPanel.Dock="Left"
+                           x:Name="lblUpdateWhatsNew"
+                           Classes="link"
+                           Text="What's new"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"
+                           IsVisible="False"
+                           PointerReleased="lblUpdateWhatsNew_Click" />
+
+                <!--
+                    Unlabelled spacer, docked first so it claims the
+                    rightmost strip: the width of the row's post/reset/remove
+                    buttons, so the total's right edge lines up with the time
+                    column's right edge above it.
+                -->
+                <Border DockPanel.Dock="Right" Width="72" />
+
+                <!-- Right-docked children carve from the right inward, so the
+                     value has to be listed before its label to end up to the
+                     label's right. -->
+                <TextBox DockPanel.Dock="Right"
+                         Width="90"
+                         IsReadOnly="True"
+                         TextAlignment="Right"
+                         FontFamily="Consolas, Courier New, monospace"
+                         Text="{Binding TotalTimeText, Mode=OneWay}" />
+
+                <TextBlock DockPanel.Dock="Right"
+                           Text="Total"
+                           Classes="muted"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+            </DockPanel>
+        </StackPanel>
+    </Grid>
+</Window>

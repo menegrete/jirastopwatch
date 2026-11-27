@@ -37,7 +37,7 @@ namespace StopWatchTest
         {
             return new PluginLoader(
                 new[] { pluginsRoot ?? root },
-                new Version(1, 0),
+                new Version(2, 0),
                 id => new Mock<IPluginHost>().Object,
                 (message, ex) => logged.Add(message));
         }
@@ -90,6 +90,11 @@ namespace StopWatchTest
 
 
         #region contract version
+        [TestCase("2.0", "2.0", true)]
+        [TestCase("2.1", "2.0", true)]
+        [TestCase("2.0", "2.1", false)]
+        [TestCase("2.0", "1.2", false)]
+        [TestCase("1.2", "2.0", false)]
         [TestCase("1.0", "1.0", true)]
         [TestCase("1.1", "1.0", true)]
         [TestCase("1.1", "1.1", true)]
@@ -104,9 +109,9 @@ namespace StopWatchTest
         }
 
         [Test]
-        public void ContractVersion_IsOnePointTwo()
+        public void ContractVersion_IsTwoPointZero()
         {
-            Assert.That(PluginContract.ContractVersion, Is.EqualTo(new Version(1, 2)));
+            Assert.That(PluginContract.ContractVersion, Is.EqualTo(new Version(2, 0)));
         }
         #endregion
 
@@ -137,12 +142,30 @@ namespace StopWatchTest
         [Test]
         public void LoadAll_IncompatibleContract_IsRejectedWithBothVersions()
         {
-            MakePluginFolder("Future", Manifest("Future", "2.0"));
+            MakePluginFolder("Future", Manifest("Future", "3.0"));
 
             PluginInfo info = NewLoader().LoadAll().Single();
 
             Assert.That(info.IsLoaded, Is.False);
-            Assert.That(info.Reason, Does.Contain("2.0").And.Contain("1.0"));
+            Assert.That(info.Reason, Does.Contain("3.0").And.Contain("2.0"));
+        }
+
+
+        [Test]
+        public void LoadAll_Contract12PluginOn20Host_IsRejectedWithBothVersions_AndOthersAreStillProcessed()
+        {
+            MakePluginFolder("Legacy", Manifest("Legacy", "1.2"));
+            MakePluginFolder("Current", Manifest("Current", "2.0"));
+
+            IReadOnlyList<PluginInfo> all = NewLoader().LoadAll();
+
+            PluginInfo legacy = all.Single(p => p.Id == "Legacy");
+            Assert.That(legacy.IsLoaded, Is.False);
+            Assert.That(legacy.Reason, Does.Contain("1.2").And.Contain("2.0"));
+
+            // The 2.0 plugin gets past the contract check (it has no assembly, so it fails there).
+            PluginInfo current = all.Single(p => p.Id == "Current");
+            Assert.That(current.Reason, Does.Not.Contain("Incompatible"));
         }
 
 

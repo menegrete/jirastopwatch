@@ -267,5 +267,38 @@ namespace StopWatchTest
             Assert.That(ScreenPlacement.ClampWidth(1081, 620, tiny), Is.EqualTo(620));
         }
         #endregion
+
+
+        #region nearest area
+        [Test]
+        public void The_area_that_contains_the_point_is_the_nearest()
+        {
+            var areas = new[] { Primary, Secondary };
+
+            Assert.That(ScreenPlacement.NearestArea(new Point(-300, 200), areas, Primary), Is.EqualTo(Secondary));
+            Assert.That(ScreenPlacement.NearestArea(new Point(300, 200), areas, Primary), Is.EqualTo(Primary));
+        }
+
+
+        [Test]
+        public void A_point_on_no_area_belongs_to_the_closest_one()
+        {
+            var areas = new[] { Primary, Secondary };
+
+            // On the taskbar, just below the primary working area.
+            Assert.That(ScreenPlacement.NearestArea(new Point(100, 1060), areas, Primary), Is.EqualTo(Primary));
+
+            // Past the left edge of the secondary monitor.
+            Assert.That(ScreenPlacement.NearestArea(new Point(-1400, 500), areas, Primary), Is.EqualTo(Secondary));
+        }
+
+
+        [Test]
+        public void With_no_areas_at_all_the_primary_is_the_answer()
+        {
+            Assert.That(ScreenPlacement.NearestArea(new Point(10, 10), new Rectangle[0], Primary), Is.EqualTo(Primary));
+            Assert.That(ScreenPlacement.NearestArea(new Point(10, 10), null, Primary), Is.EqualTo(Primary));
+        }
+        #endregion
     }
 }

@@ -1,0 +1,105 @@
+<Window x:Class="StopWatch.TaskbarWidgetWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:StopWatch"
+        x:ClassModifier="internal"
+        Title="Jira StopWatch"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        WindowDecorations="None"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True">
+
+    <!-- Windows only: the window is docked to the Windows taskbar through
+         Win32 (see TaskbarInterop). The same palette as the mini view's rows.
+         One row: the active issue's key, summary (hidden first when space is
+         tight - see TryFit), elapsed time and a pause/resume control.
+         The pill is top-aligned and the window is clipped to it (see
+         TaskbarInterop.ClipWindowBottom): Windows will not make a top-level
+         window this short, so the window itself is taller than the pill. -->
+    <Border x:Name="pill"
+            VerticalAlignment="Top"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Border}"
+            BorderThickness="1"
+            CornerRadius="6"
+            PointerPressed="Pill_PointerPressed">
+
+        <!-- The Monitor submenu's items are rebuilt in code-behind each time
+             the menu opens, from the currently connected monitors and
+             settings. -->
+        <Border.ContextMenu>
+            <ContextMenu Opening="WidgetMenu_Opening"
+                         Opened="WidgetMenu_Opened"
+                         Closed="WidgetMenu_Closed">
+                <MenuItem x:Name="menuMonitor"
+                          Header="Monitor"
+                          SubmenuOpened="MonitorSubmenu_Opened" />
+                <Separator />
+                <MenuItem Header="Restore" Click="MenuRestore_Click" />
+                <MenuItem Header="Exit" Click="MenuExit_Click" />
+            </ContextMenu>
+        </Border.ContextMenu>
+
+        <Grid Height="26">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <!-- stripe -->
+                <ColumnDefinition Width="Auto" />
+                <!-- key -->
+                <ColumnDefinition Width="Auto" />
+                <!-- summary -->
+                <ColumnDefinition Width="Auto" />
+                <!-- time -->
+                <ColumnDefinition Width="Auto" />
+                <!-- pause / resume -->
+            </Grid.ColumnDefinitions>
+
+            <local:ThemeAnimatedBorder Grid.Column="0"
+                                       Width="4"
+                                       Margin="4,3,6,3"
+                                       CornerRadius="2"
+                                       IsActive="{Binding IsRunning}"
+                                       ActiveColor="TimerRunning"
+                                       InactiveColor="SurfaceDisabled" />
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding IssueKey}"
+                       FontWeight="SemiBold" />
+
+            <TextBlock x:Name="txtSummary"
+                       Grid.Column="2"
+                       Classes="muted"
+                       Text="{Binding Summary}"
+                       ToolTip.Tip="{Binding Summary}"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="8,0,8,0" />
+
+            <TextBlock Grid.Column="3"
+                       Text="{Binding ElapsedText}"
+                       FontFamily="Consolas, Courier New, monospace"
+                       FontWeight="Bold"
+                       Margin="0,0,4,0" />
+
+            <Button Grid.Column="4"
+                    Classes="glyph"
+                    Margin="0,0,4,0"
+                    Click="PauseResume_Click">
+                <Panel>
+                    <!-- pause: two bars -->
+                    <Path Classes="glyph-fill"
+                          Data="{StaticResource GlyphPause}"
+                          IsVisible="{Binding IsRunning}" />
+                    <!-- play: triangle -->
+                    <Path Classes="glyph-fill"
+                          Data="{StaticResource GlyphPlay}"
+                          IsVisible="{Binding !IsRunning}" />
+                </Panel>
+            </Button>
+        </Grid>
+    </Border>
+</Window>

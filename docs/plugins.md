@@ -32,7 +32,7 @@ Each plugin gets its own data folder, `%LocalAppData%\StopWatch\plugin-data\<Id>
   "id": "HelloWorld",
   "name": "Hello World",
   "version": "1.0.0",
-  "contractVersion": "1.0"
+  "contractVersion": "2.0"
 }
 ```
 
@@ -54,10 +54,11 @@ A plugin is compatible when its `contractVersion` has the **same major** as the 
 | 1.0 | Commands, issue list, `IJiraApi` (summary, time tracking, worklog, comment) |
 | 1.1 | Subtasks (`GetSubtasksAsync`, `CreateSubtaskAsync`), a worklog overload with the estimate, and time loading (`IPluginHost.TimeLoad`, `IPluginHost.TimeLoader`). Everything in 1.1 is additive: a plugin built against 1.0 loads and works on a 1.1 host, while one declaring 1.1 is not loaded by a 1.0 host. |
 | 1.2 | Choosing the subtask type: `CreateSubtaskAsync(parentKey, summary, issueTypeName)`, `PluginSubtask.IssueType` and `GetSubtaskTypesAsync(projectKey)`. Everything in 1.2 is additive: a plugin built against 1.1 loads and works on a 1.2 host, while one declaring 1.2 is not loaded by a 1.1 host. |
+| 2.0 | **Breaking.** The host's UI types are Avalonia's, not WPF's: `IPluginHost.MainWindow` is an `Avalonia.Controls.Window` and `IPluginHost.Dispatcher` an `Avalonia.Threading.Dispatcher`, so plugin windows work on Windows and Linux. Everything else is as in 1.2. No 1.x plugin loads on a 2.0 host, and a 2.0 plugin is not loaded by a 1.x host (see [Migrating a 1.x plugin](#migrating-a-1x-plugin-to-20)). |
 
 ## Writing a plugin
 
-Start from `source/Samples/HelloWorld`, the template. A plugin is a class library (`net10.0-windows`, `UseWPF` if it has windows) that:
+Start from `source/Samples/HelloWorld`, the template. A plugin is a class library (`net10.0`; a plugin with windows also references Avalonia, see [Referencing Avalonia](#referencing-avalonia)) that:
 
 1. references **only** `StopWatch.Plugin.Abstractions` — never `StopWatch.exe`. In a plugin repository use the private NuGet package from GitHub Packages with `ExcludeAssets="runtime"` (the host already has the assembly loaded; the plugin must not ship its own copy);
 2. contains exactly one public class implementing `IPlugin` with a parameterless constructor;
@@ -75,7 +76,7 @@ public class MyPlugin : IPlugin
         yield return new PluginCommand("open", "Open my window", Open, PluginCommandLocation.Both);
     }
 
-    private void Open() => new MyWindow { Owner = host.MainWindow }.Show();
+    private void Open() => _ = new MyWindow().ShowDialog(host.MainWindow);
 }
 ```
 
@@ -105,10 +106,28 @@ public class MyPlugin : IPlugin
 3. Reference the package with `ExcludeAssets="runtime"`, so the plugin does not copy the contract assembly into its output (the host already has it loaded):
 
    ```xml
-   <PackageReference Include="StopWatch.Plugin.Abstractions" Version="1.0.0" ExcludeAssets="runtime" />
+   <PackageReference Include="StopWatch.Plugin.Abstractions" Version="2.0.0" ExcludeAssets="runtime" />
    ```
 
-Use the package version that matches the `contractVersion` you declare in `plugin.json`: package `1.0.x` is contract `1.0`.
+Use the package version that matches the `contractVersion` you declare in `plugin.json`: package `2.0.x` is contract `2.0`.
+
+### Referencing Avalonia
+
+The contract exposes Avalonia types, so the host's copy of Avalonia is part of it. A plugin with windows references the same Avalonia version as the host (see `Directory.Packages.props`) with `ExcludeAssets="runtime"`, exactly like the contract package:
+
+```xml
+<PackageReference Include="Avalonia" Version="12.2.0" ExcludeAssets="runtime" />
+```
+
+Compile-time assets (including the XAML compiler for `.axaml` files) still apply; only the runtime assemblies are left out. The plugin folder must not contain `Avalonia*.dll`: plugins load into the host's default load context, and a second copy would make the plugin's `Window` a different type from the host's, so `window.ShowDialog(host.MainWindow)` would fail. If the plugin has `CopyLocalLockFileAssemblies` on, the packages Avalonia depends on (for example `MicroCom.Runtime`) are copied too; see `Samples/HelloSqlite` for a build target that removes them. Do not reference `Avalonia.Desktop` or `Avalonia.Themes.Fluent`: the host already runs the application and its theme.
+
+### Migrating a 1.x plugin to 2.0
+
+1. Set `<TargetFramework>net10.0</TargetFramework>` and remove `UseWPF`. A plugin with no Windows-only code runs on every platform.
+2. Reference the 2.0 package and Avalonia as above, and declare `"contractVersion": "2.0"` in `plugin.json`.
+3. Port the windows: `Window` is `Avalonia.Controls.Window`, XAML files are `.axaml` (`xmlns="https://github.com/avaloniaui"`), `ResizeMode="NoResize"` is `CanResize="False"`, `IsDefault`/`IsCancel` stay on `Button`, and `MessageBox` has no equivalent (build a small window, as `Samples/HelloSqlite` does).
+4. Replace `Owner = host.MainWindow` and the blocking `ShowDialog()` with `window.ShowDialog(host.MainWindow)`, which returns a `Task`. A dialog never blocks the calling thread, so code that needed its answer synchronously becomes `async` (`Samples/SplitTime`: `ISplitPrompt.AskAsync`). Use `window.Show(host.MainWindow)` for a non-modal window.
+5. A dialog result is set with `Close(value)` and read from the `ShowDialog<T>` task, not from `DialogResult`.
 
 ### Lifecycle
 
@@ -116,8 +135,8 @@ The host loads the plugin, calls `Initialize(host)` once on the UI thread, then 
 
 ### What `IPluginHost` offers
 
-- `MainWindow` — use as `Owner` of your windows.
-- `Dispatcher` — the UI dispatcher.
+- `MainWindow` — an Avalonia `Window`: the owner of your windows (`ShowDialog(host.MainWindow)` or `Show(host.MainWindow)`).
+- `Dispatcher` — the UI dispatcher (`Dispatcher.UIThread`).
 - `DataDirectory` — a folder private to the plugin, created on first use.
 - `Logger` — writes to the application log, tagged with your id.
 - `Issues` — read-only issue list: `GetIssues()`, `GetActiveIssue()`, and the `IssueAdded` / `IssueRemoved` events. These are plain public types (`PluginIssue`), never the host's view models.
@@ -131,14 +150,16 @@ A command is data (`Id`, `Title`, optional `Icon` glyph, `Location`) plus an act
 
 ### Windows and theme
 
-Open windows with `Owner = host.MainWindow`. The host applies its theme brushes at application level, so a plugin window that references them dynamically follows the theme, including when the user changes it:
+Open windows with `window.ShowDialog(host.MainWindow)` or `window.Show(host.MainWindow)`. A plugin window opened in the host's application is themed without any code: `Window` takes its background and text colour from the host's palette, and a plugin that needs other colours references the palette brushes dynamically, so it follows the theme, including when the user changes it:
 
 ```xml
-<Window Background="{DynamicResource Background}">
-    <TextBlock Foreground="{DynamicResource Text}" ... />
+<Border Background="{DynamicResource Surface}">
+    <TextBlock Foreground="{DynamicResource TextMuted}" ... />
 ```
 
-Plugin assemblies load into the application's default load context, so XAML compiled into them (pack URIs, BAML) works normally.
+The palette keys are `Background`, `Surface`, `SurfaceActive`, `SurfaceDisabled`, `Border`, `Text`, `TextMuted`, `Accent`, `AccentText`, `Link`, `Success`, `Danger`, `DangerSurface`, `TimerRunning`, `StatusToDo`, `StatusInProgress`, `StatusDone`, `ButtonHover` and `ButtonPressed`.
+
+Plugin assemblies load into the application's default load context, so XAML compiled into them (`avares://<assembly>/...` resources) works normally.
 
 ## Time loading
 
@@ -219,7 +240,7 @@ A plugin may bring its own libraries, **copied loose into its folder**:
 - **Managed** dependencies are found in the plugin's folder (using its `.deps.json` when present). Set `CopyLocalLockFileAssemblies` to `true` in the plugin project so package dependencies land next to it.
 - **Native** libraries are found in the folder, or in `runtimes\win-<arch>\native\`, for the plugin and for every assembly it ships. `Samples/HelloSqlite` is the worked example: it uses `Microsoft.Data.Sqlite` (no database types appear in the contract) and runs a query, which forces the native `e_sqlite3.dll` to load.
 
-Avoid redistributing assemblies the host already ships (for example RestSharp or MaterialDesignThemes): in the default load context the host's copy wins.
+Avoid redistributing assemblies the host already ships (for example RestSharp or Avalonia): in the default load context the host's copy wins.
 
 This works with the single-file published application, because plugins are loose files on disk. It is also the check to run on a new machine: install `HelloSqlite` and run its command; if it loads there, plugins with private dependencies will.
 

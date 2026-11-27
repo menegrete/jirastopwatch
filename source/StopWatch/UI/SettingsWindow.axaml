@@ -1,0 +1,200 @@
+<Window x:Class="StopWatch.SettingsWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="StopWatch Settings"
+        SizeToContent="Height"
+        Width="470"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        FontSize="12">
+
+    <Window.Styles>
+        <!-- Fluent boxes are 32 high; the forms were compact. -->
+        <Style Selector="CheckBox, RadioButton">
+            <Setter Property="MinHeight" Value="24" />
+        </Style>
+
+        <!-- Fluent's tab header is sized for a 24px font; keep all four on one row. -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+    </Window.Styles>
+
+    <Window.Resources>
+        <!-- Renders a Choice by its Text, not its ToString(). Used instead of
+             DisplayMemberBinding so a dropdown never falls back to showing
+             the option's runtime type name. -->
+        <DataTemplate x:Key="ChoiceTemplate">
+            <TextBlock Text="{Binding Text}" />
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel Margin="16">
+
+        <!-- The buttons stay outside the tabs, so OK and Cancel work from any
+             of them. -->
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,12,0,0">
+            <Button Content="OK" IsDefault="True" Click="btnOk_Click" />
+            <Button Content="Cancel" IsCancel="True" Click="btnCancel_Click" />
+        </StackPanel>
+
+        <!-- One tab per group, so the dialog fits without scrolling. The
+             height is fixed to the tallest tab, so switching tabs does not
+             resize the window. -->
+        <TabControl x:Name="tabsSettings" Height="372">
+            <TabItem Header="Connection">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,12,12,0">
+                        <TextBlock Text="JIRA base url" />
+                        <TextBox x:Name="tbJiraBaseUrl" Margin="0,3,0,8" />
+
+                        <TextBlock Text="Username" />
+                        <TextBox x:Name="tbUsername" Margin="0,3,0,8" />
+
+                        <TextBlock Text="API Token" />
+                        <TextBox x:Name="tbApiToken" PasswordChar="*" Margin="0,3,0,3" />
+                        <TextBlock x:Name="lnkApiToken" Classes="link" Text="Get an API Token" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Display">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,12,12,0">
+                        <CheckBox x:Name="cbAlwaysOnTop" Content="Always keep window on top" />
+                        <CheckBox x:Name="cbIncludeProjectName" Content="Include project name in issue summary" />
+
+                        <!-- Minimize behavior: Mini View and Tray everywhere the tray
+                             exists, plus Taskbar Widget on Windows only. -->
+                        <Grid x:Name="gridMinimizeBehavior" ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Minimize to" />
+                            <ComboBox Grid.Column="1" x:Name="cbMinimizeBehavior" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <!-- Only shown on Windows with Taskbar Widget selected above;
+                             populated in code-behind, one radio button per connected
+                             monitor (single choice - the widget shows on one monitor
+                             only). -->
+                        <Grid x:Name="gridTaskbarWidgetMonitors" ColumnDefinitions="215,*" Margin="0,6,0,0" IsVisible="False">
+                            <TextBlock Grid.Column="0" Text="Taskbar widget monitor" VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="1" x:Name="panelTaskbarWidgetMonitors" Orientation="Vertical" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Theme" />
+                            <ComboBox Grid.Column="1" x:Name="cbTheme" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <!-- How much room a row takes. -->
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Issue list density" />
+                            <ComboBox Grid.Column="1" x:Name="cbListDensity" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Time display format" />
+                            <ComboBox Grid.Column="1" x:Name="cbTimeDisplayFormat" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Max. display issues" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                                <TextBox x:Name="tbMaxIssues"
+                                         Width="40"
+                                         TextAlignment="Right"
+                                         ToolTip.Tip="Between 1 and 40" />
+                                <StackPanel Orientation="Vertical" Margin="2,0,0,0" VerticalAlignment="Center">
+                                    <RepeatButton Classes="stepper" Click="MaxIssuesUp_Click">
+                                        <Path Classes="glyph-fill" Width="8" Height="4" Data="{StaticResource GlyphTriangleUp}" />
+                                    </RepeatButton>
+                                    <RepeatButton Classes="stepper" Click="MaxIssuesDown_Click">
+                                        <Path Classes="glyph-fill" Width="8" Height="4" Data="{StaticResource GlyphTriangleDown}" />
+                                    </RepeatButton>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Timers">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,12,12,0">
+                        <CheckBox x:Name="cbAllowMultipleTimers" Content="Allow running multiple timers simultaneously" />
+
+                        <Grid x:Name="gridMaxConcurrentTimers" ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Max. simultaneous timers" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                                <TextBox x:Name="tbMaxConcurrentTimers"
+                                         Width="40"
+                                         TextAlignment="Right"
+                                         ToolTip.Tip="Between 2 and 20" />
+                                <StackPanel Orientation="Vertical" Margin="2,0,0,0" VerticalAlignment="Center">
+                                    <RepeatButton Classes="stepper" Click="MaxConcurrentTimersUp_Click">
+                                        <Path Classes="glyph-fill" Width="8" Height="4" Data="{StaticResource GlyphTriangleUp}" />
+                                    </RepeatButton>
+                                    <RepeatButton Classes="stepper" Click="MaxConcurrentTimersDown_Click">
+                                        <Path Classes="glyph-fill" Width="8" Height="4" Data="{StaticResource GlyphTriangleDown}" />
+                                    </RepeatButton>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Save timer states on program exit" TextWrapping="Wrap" />
+                            <ComboBox Grid.Column="1" x:Name="cbSaveTimerState" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="Pause timer on session lock" TextWrapping="Wrap" />
+                            <ComboBox Grid.Column="1" x:Name="cbPauseOnSessionLock" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="215,*" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="0" Text="How to post the worklog comment" TextWrapping="Wrap" />
+                            <ComboBox Grid.Column="1" x:Name="cbPostWorklogComment" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource ChoiceTemplate}" />
+                        </Grid>
+
+                        <TextBlock Text="Possible state changes when pressing play (seperate by newline)"
+                                   Margin="0,8,0,0"
+                                   TextWrapping="Wrap" />
+                        <TextBox x:Name="tbStartTransitions"
+                                 Margin="0,3,0,0"
+                                 Height="60"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Advanced">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,12,12,0">
+                        <CheckBox x:Name="cbCheckForUpdates" Content="Automatically check for and install updates" />
+                        <CheckBox x:Name="cbSubscribeToBetaReleases"
+                                  Content="Subscribe to beta releases"
+                                  Margin="20,3,0,3"
+                                  IsEnabled="{Binding #cbCheckForUpdates.IsChecked}"
+                                  ToolTip.Tip="Also receive pre-release (beta) versions. They may be unstable. Turning this off later keeps the version you have until a newer stable release is out." />
+
+                        <Border Classes="divider" />
+
+                        <CheckBox x:Name="cbLoggingEnabled" Content="Enable debug logging" />
+                        <TextBlock x:Name="lnkLogFolder" Classes="link" Text="Open log folder" HorizontalAlignment="Left" Margin="0,3,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

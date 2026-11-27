@@ -1,11 +1,14 @@
 using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Controls;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
 using StopWatch.Plugin;
 
 namespace SplitTime
 {
-    /// <summary>Shows the dialog on the UI thread, as the handler already runs there.</summary>
+    /// <summary>Shows the dialog on the UI thread, whichever thread the handler runs on.</summary>
     internal sealed class SplitDialogPrompt : ISplitPrompt
     {
         private readonly IPluginHost host;
@@ -15,11 +18,14 @@ namespace SplitTime
             this.host = host;
         }
 
-        public SplitPlan Ask(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes)
+        public Task<SplitPlan> AskAsync(string issueKey, IReadOnlyList<PluginSubtask> subtasks, int totalMinutes)
         {
-            var dialog = new SplitDialog(issueKey, subtasks, totalMinutes) { Owner = host.MainWindow };
-            dialog.ShowDialog();
-            return dialog.Result;
+            return host.Dispatcher.InvokeAsync(async () =>
+            {
+                var dialog = new SplitDialog(issueKey, subtasks, totalMinutes);
+                await dialog.ShowDialog(host.MainWindow);
+                return dialog.Result;
+            });
         }
     }
 
@@ -49,10 +55,8 @@ namespace SplitTime
             Title = $"Split {totalMinutes} min of {issueKey}";
             Width = 420;
             SizeToContent = SizeToContent.Height;
-            ResizeMode = ResizeMode.NoResize;
+            CanResize = false;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            SetResourceReference(BackgroundProperty, "Background");
-            status.SetResourceReference(TextBlock.ForegroundProperty, "Text");
 
             var panel = new StackPanel { Margin = new Thickness(16) };
             panel.Children.Add(Label($"Minutes for each subtask (they must add up to {totalMinutes}):", 0));
@@ -85,8 +89,10 @@ namespace SplitTime
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
             ok.Click += (s, e) => Accept();
+            var cancel = new Button { Content = "Cancel", IsCancel = true, Padding = new Thickness(16, 4, 16, 4) };
+            cancel.Click += (s, e) => Close(false);
             buttons.Children.Add(ok);
-            buttons.Children.Add(new Button { Content = "Cancel", IsCancel = true, Padding = new Thickness(16, 4, 16, 4) });
+            buttons.Children.Add(cancel);
             panel.Children.Add(buttons);
 
             Content = panel;
@@ -96,15 +102,13 @@ namespace SplitTime
 
         private static TextBlock Label(string text, double top)
         {
-            var label = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, top, 0, 0) };
-            label.SetResourceReference(TextBlock.ForegroundProperty, "Text");
-            return label;
+            return new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, top, 0, 0) };
         }
 
 
         private static int Minutes(TextBox box)
         {
-            return int.TryParse(box.Text.Trim(), out int value) && value >= 0 ? value : -1;
+            return int.TryParse((box.Text ?? string.Empty).Trim(), out int value) && value >= 0 ? value : -1;
         }
 
 
@@ -131,7 +135,7 @@ namespace SplitTime
                 return false;
             }
 
-            string summary = newSummary.Text.Trim();
+            string summary = (newSummary.Text ?? string.Empty).Trim();
             if (extra > 0 && summary.Length == 0)
             {
                 problem = "Give the new subtask a name, or set its minutes to 0.";
@@ -164,7 +168,7 @@ namespace SplitTime
             if (TryBuild(out SplitPlan plan, out _))
             {
                 Result = plan;
-                DialogResult = true;
+                Close(true);
             }
         }
     }
