@@ -184,7 +184,7 @@ namespace StopWatch
             {
                 Task closed = MessageDialog.Show(
                     null,
-                    string.Format("Jira StopWatch encountered an unhandled error. A logfile has been created. If the error continues to occur, please send the logfile content to carsten@sarum.dk.\n\nSee more details in the logfile:\n\n{0}", LogPath),
+                    string.Format("Jira StopWatch encountered an unhandled error. A logfile has been created. If the error continues to occur, please report an issue at https://github.com/menegrete/jirastopwatch/issues and attach the logfile content.\n\nSee more details in the logfile:\n\n{0}", LogPath),
                     "Unhandled error occurred");
 
                 closed.ContinueWith(t => reportingError = false, TaskScheduler.Default);
