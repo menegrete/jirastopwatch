@@ -1455,6 +1455,12 @@ namespace StopWatch
         /// </summary>
         private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Tab)
+            {
+                CommitKeyBeforeTab(e.Source);
+                return;
+            }
+
             if (e.KeyModifiers == KeyModifiers.Control)
             {
                 switch (e.Key)
@@ -1513,6 +1519,27 @@ namespace StopWatch
 
                 e.Handled = true;
             }
+        }
+
+
+        /// <summary>
+        /// Stores an edited key before Tab picks where focus goes next. The
+        /// key field's binding only commits on LostFocus, which Avalonia
+        /// raises after it has already chosen the target. A new key hides
+        /// the copy-key button and disables open-in-browser, so the target
+        /// could vanish while taking focus, leaving its focus adorner behind.
+        /// The next Tab to that button then added the adorner a second time
+        /// and threw (seen on X11).
+        /// </summary>
+        private void CommitKeyBeforeTab(object source)
+        {
+            TextBox field = source as TextBox;
+            IssueViewModel issue = RowOf(field);
+            if (issue == null || KeyFieldOf(issue) != field)
+                return;
+
+            if (issue.IssueKey != field.Text)
+                issue.IssueKey = field.Text;
         }
 
 
